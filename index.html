@@ -1,0 +1,2022 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>DishScan — Snap it. Cook it. Find it.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --sage: #4a7c59;
+    --sage-light: #e8f0eb;
+    --sage-dark: #3d6b4c;
+    --sage-50: #f3f7f4;
+    --amber: #d4791a;
+    --amber-light: #fdf0e0;
+    --amber-dark: #7a4d10;
+    --bg: #faf8f4;
+    --surface: #ffffff;
+    --surface2: #f4f2ee;
+    --surface3: #ede9e0;
+    --border: rgba(0,0,0,0.08);
+    --border-med: rgba(0,0,0,0.14);
+    --text: #1a1917;
+    --text2: #6b6860;
+    --text3: #a09d99;
+    --radius-sm: 6px;
+    --radius: 10px;
+    --radius-lg: 14px;
+    --radius-xl: 20px;
+    --font-display: 'Playfair Display', Georgia, serif;
+    --font-body: 'DM Sans', system-ui, sans-serif;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+    --shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #161614;
+      --surface: #1f1f1d;
+      --surface2: #28282 6;
+      --surface3: #2f2f2c;
+      --border: rgba(255,255,255,0.06);
+      --border-med: rgba(255,255,255,0.12);
+      --text: #f0ede8;
+      --text2: #a09d99;
+      --text3: #6b6860;
+      --sage-light: #1e2e23;
+      --sage-50: #1a2620;
+      --amber-light: #2a1e0a;
+    }
+  }
+  body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+  }
+  .page { max-width: 720px; margin: 0 auto; padding: 0 1.25rem 5rem; }
+
+  /* ── Header ── */
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.5rem 0 1.25rem;
+    border-bottom: 0.5px solid var(--border);
+    margin-bottom: 2rem;
+  }
+  .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+  .logo-icon {
+    width: 40px; height: 40px;
+    background: var(--sage);
+    border-radius: 11px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: var(--shadow-sm);
+  }
+  .logo-icon i { color: #fff; font-size: 21px; }
+  .logo-name {
+    font-family: var(--font-display);
+    font-size: 23px;
+    font-weight: 500;
+    color: var(--text);
+    letter-spacing: -0.01em;
+    line-height: 1.1;
+  }
+  .logo-tag {
+    font-size: 10px;
+    color: var(--text3);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-top: 2px;
+    font-weight: 500;
+  }
+
+  /* ── Upload Zone ── */
+  .upload-zone {
+    border: 2px dashed var(--border-med);
+    border-radius: var(--radius-lg);
+    padding: 3.5rem 2rem;
+    text-align: center;
+    cursor: pointer;
+    background: var(--surface2);
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 1.25rem;
+  }
+  .upload-zone:hover, .upload-zone.drag {
+    border-color: var(--sage);
+    background: var(--sage-50);
+  }
+  .upload-zone.has-image {
+    padding: 0;
+    border-style: solid;
+    border-color: var(--sage);
+    min-height: 280px;
+    box-shadow: var(--shadow);
+  }
+  .upload-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    pointer-events: none;
+  }
+  .upload-icon-wrap {
+    width: 56px; height: 56px;
+    background: var(--surface);
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 4px;
+    border: 0.5px solid var(--border);
+  }
+  .upload-title {
+    font-family: var(--font-display);
+    font-size: 22px;
+    color: var(--text);
+    font-weight: 500;
+  }
+  .upload-sub {
+    font-size: 14px;
+    color: var(--text2);
+    line-height: 1.6;
+    max-width: 320px;
+  }
+  .fmt-pills {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 6px;
+  }
+  .fmt-pill {
+    font-size: 10px;
+    padding: 4px 10px;
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: 20px;
+    color: var(--text3);
+    font-weight: 500;
+    letter-spacing: 0.04em;
+  }
+  .dish-preview {
+    width: 100%; height: 280px; object-fit: cover;
+    border-radius: calc(var(--radius-lg) - 1px); display: none;
+  }
+  .dish-preview.visible { display: block; }
+  .preview-overlay {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.75), rgba(0,0,0,0.3) 60%, transparent);
+    padding: 2rem 1.5rem 1.25rem;
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    display: none;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+  .preview-overlay.visible { display: flex; }
+  .dish-detected-label {
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 20px;
+    letter-spacing: -0.01em;
+  }
+  .change-btn {
+    font-size: 12px;
+    color: #fff;
+    background: rgba(255,255,255,0.18);
+    border: 0.5px solid rgba(255,255,255,0.3);
+    border-radius: var(--radius-sm);
+    padding: 6px 12px;
+    cursor: pointer;
+    font-family: var(--font-body);
+    font-weight: 500;
+    backdrop-filter: blur(8px);
+    transition: background 0.15s;
+  }
+  .change-btn:hover { background: rgba(255,255,255,0.25); }
+  #fileInput { display: none; }
+
+  /* ── Upload Action Buttons ── */
+  .upload-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 1.25rem;
+  }
+  .upload-action-btn {
+    flex: 1;
+    padding: 14px;
+    background: var(--surface);
+    border: 0.5px solid var(--border-med);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.15s ease;
+  }
+  .upload-action-btn:hover {
+    background: var(--sage-50);
+    border-color: var(--sage);
+    color: var(--sage);
+  }
+  .upload-action-btn i { font-size: 18px; }
+  .upload-actions.hidden { display: none; }
+
+  /* ── Guided Camera Modal ── */
+  .camera-modal {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 9999;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .camera-modal.open { display: flex; }
+
+  .camera-tips {
+    flex: 1;
+    background: var(--bg);
+    color: var(--text);
+    padding: 1.5rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .tips-header {
+    position: relative;
+    text-align: center;
+    margin: 1rem 0 2rem;
+  }
+  .tips-close {
+    position: absolute;
+    top: 0; right: 0;
+    background: var(--surface2);
+    border: 0.5px solid var(--border);
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text);
+  }
+  .tips-close i { font-size: 18px; }
+  .tips-title {
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+  .tips-subtitle {
+    font-size: 14px;
+    color: var(--text2);
+  }
+  .tips-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 2rem;
+    max-width: 480px;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .tip-card {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem 1rem;
+    text-align: center;
+  }
+  .tip-icon {
+    width: 44px; height: 44px;
+    background: var(--sage-light);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 10px;
+  }
+  .tip-icon i { font-size: 22px; color: var(--sage); }
+  .tip-text {
+    font-size: 12px;
+    color: var(--text2);
+    line-height: 1.5;
+  }
+  .tip-text strong {
+    color: var(--text);
+    font-weight: 500;
+    display: block;
+    margin-bottom: 2px;
+    font-size: 13px;
+  }
+  .start-camera-btn {
+    margin: auto auto 0;
+    max-width: 480px;
+    width: 100%;
+    padding: 16px;
+    background: var(--sage);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    font-family: var(--font-body);
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .camera-stream {
+    flex: 1;
+    position: relative;
+    background: #000;
+    overflow: hidden;
+  }
+  #cameraVideo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .camera-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+  .frame-guide {
+    position: relative;
+    width: min(85vw, 380px);
+    aspect-ratio: 1;
+    transition: all 0.3s ease;
+  }
+  .frame-guide.ready .frame-corner { border-color: #4ade80; }
+  .frame-corner {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    border: 3px solid #fff;
+    transition: border-color 0.3s ease;
+  }
+  .frame-corner.tl { top: 0; left: 0; border-right: none; border-bottom: none; border-top-left-radius: 8px; }
+  .frame-corner.tr { top: 0; right: 0; border-left: none; border-bottom: none; border-top-right-radius: 8px; }
+  .frame-corner.bl { bottom: 0; left: 0; border-right: none; border-top: none; border-bottom-left-radius: 8px; }
+  .frame-corner.br { bottom: 0; right: 0; border-left: none; border-top: none; border-bottom-right-radius: 8px; }
+  .frame-status {
+    position: absolute;
+    top: -42px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(10px);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: all 0.3s ease;
+  }
+  .frame-guide.ready .frame-status {
+    background: rgba(74, 222, 128, 0.95);
+    color: #fff;
+  }
+  .frame-guide.ready .frame-status::before {
+    content: '✓ ';
+    font-weight: 700;
+  }
+
+  .camera-controls {
+    position: absolute;
+    bottom: 30px;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+    padding: 0 2rem;
+  }
+  .cam-cancel, .cam-flip {
+    width: 48px; height: 48px;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(10px);
+    border: 0.5px solid rgba(255,255,255,0.2);
+    border-radius: 50%;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .cam-cancel i, .cam-flip i { font-size: 22px; }
+  .cam-shutter {
+    width: 76px; height: 76px;
+    background: rgba(255,255,255,0.2);
+    border: 4px solid #fff;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: transform 0.1s;
+  }
+  .cam-shutter:active { transform: scale(0.95); }
+  .shutter-inner {
+    width: 100%; height: 100%;
+    background: #fff;
+    border-radius: 50%;
+    transform: scale(0.85);
+    transition: all 0.2s;
+  }
+  .cam-shutter.ready .shutter-inner { background: #4ade80; }
+
+  .cam-error {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 2rem;
+    text-align: center;
+    color: #fff;
+    background: #000;
+  }
+  .cam-error i { font-size: 48px; color: #f5a9a9; margin-bottom: 1rem; }
+  .cam-error-title { font-size: 18px; margin-bottom: 8px; font-weight: 500; }
+  .cam-error-msg { font-size: 14px; color: #ccc; max-width: 320px; margin-bottom: 1.5rem; line-height: 1.5; }
+  .cam-error button {
+    padding: 12px 24px;
+    background: rgba(255,255,255,0.15);
+    border: 0.5px solid rgba(255,255,255,0.3);
+    border-radius: var(--radius);
+    color: #fff;
+    cursor: pointer;
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  /* ── Analyze Button ── */
+  .analyze-btn {
+    width: 100%;
+    padding: 16px;
+    background: var(--sage);
+    border: none;
+    border-radius: var(--radius);
+    color: #fff;
+    font-family: var(--font-body);
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.15s ease;
+    margin-bottom: 1.5rem;
+    letter-spacing: 0.01em;
+    box-shadow: var(--shadow-sm);
+  }
+  .analyze-btn:hover:not(:disabled) {
+    background: var(--sage-dark);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow);
+  }
+  .analyze-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ── Loading ── */
+  .loading-section { display: none; text-align: center; padding: 3rem 1rem; margin-bottom: 1.5rem; }
+  .loading-section.visible { display: block; }
+  .spinner {
+    width: 40px; height: 40px;
+    border: 3px solid var(--border);
+    border-top-color: var(--sage);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 1.25rem;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-title {
+    font-family: var(--font-display);
+    font-size: 17px;
+    color: var(--text);
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+  }
+  .loading-step {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--text3);
+    justify-content: center;
+    margin-bottom: 10px;
+    transition: color 0.3s;
+  }
+  .loading-step.done { color: var(--sage); }
+  .loading-step i { font-size: 16px; }
+
+  /* ── Error ── */
+  .error-banner {
+    background: #fcecea;
+    border: 0.5px solid #f5a9a9;
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.25rem;
+    font-size: 13px;
+    color: #7a2020;
+    display: none;
+    line-height: 1.6;
+  }
+  .error-banner.visible { display: block; }
+
+  /* ── Results ── */
+  .results-section { display: none; }
+  .results-section.visible { display: block; }
+  .tabs {
+    display: flex;
+    border-bottom: 0.5px solid var(--border);
+    margin-bottom: 1.75rem;
+    gap: 4px;
+  }
+  .tab {
+    padding: 12px 18px;
+    font-size: 13px;
+    color: var(--text2);
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-family: var(--font-body);
+    font-weight: 500;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -0.5px;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    letter-spacing: 0.01em;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active {
+    color: var(--sage);
+    border-bottom-color: var(--sage);
+  }
+  .tab i { font-size: 16px; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── Recipe ── */
+  .recipe-name {
+    font-family: var(--font-display);
+    font-size: 30px;
+    font-weight: 500;
+    margin-bottom: 12px;
+    letter-spacing: -0.015em;
+    line-height: 1.15;
+  }
+  .recipe-meta {
+    display: flex;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.75rem;
+  }
+  .meta-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--text2);
+    font-weight: 500;
+  }
+  .meta-chip i { font-size: 15px; color: var(--sage); }
+
+  .calorie-banner {
+    background: var(--amber-light);
+    border: 0.5px solid #f0c07a;
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .cal-icon-wrap {
+    width: 44px; height: 44px;
+    background: rgba(212, 121, 26, 0.15);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .cal-icon-wrap i { font-size: 22px; color: var(--amber); }
+  .cal-value {
+    font-family: var(--font-body);
+    font-size: 28px;
+    font-weight: 500;
+    color: var(--amber-dark);
+    line-height: 1;
+  }
+  .cal-label {
+    font-size: 11px;
+    color: #8a5a1a;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+  .cal-unit { font-size: 12px; color: #8a5a1a; font-weight: 500; }
+  .lower-btn {
+    padding: 9px 16px;
+    background: var(--amber);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.15s;
+  }
+  .lower-btn:hover { background: #b8650f; }
+
+  /* ── Cost Banner ── */
+  .cost-banner {
+    background: var(--sage-50);
+    border: 0.5px solid #b8d4be;
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .cost-icon-wrap {
+    width: 44px; height: 44px;
+    background: rgba(74, 124, 89, 0.15);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .cost-icon-wrap i { font-size: 22px; color: var(--sage); }
+  .cost-value {
+    font-family: var(--font-body);
+    font-size: 28px;
+    font-weight: 500;
+    color: var(--sage-dark);
+    line-height: 1;
+  }
+  .cost-label {
+    font-size: 11px;
+    color: var(--sage-dark);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+  .cost-sub { font-size: 12px; color: var(--sage-dark); font-weight: 500; }
+  .cost-disclaimer {
+    font-size: 11px;
+    color: var(--text3);
+    text-align: right;
+    font-style: italic;
+    max-width: 160px;
+    line-height: 1.4;
+  }
+
+  .ing-cost {
+    margin-left: auto;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--sage);
+    background: var(--sage-light);
+    padding: 3px 9px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  .swap-panel {
+    background: var(--surface2);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.25rem;
+    display: none;
+    border: 0.5px solid var(--border);
+  }
+  .swap-panel.visible { display: block; }
+  .swap-title {
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--sage);
+  }
+  .swap-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    font-size: 13px;
+  }
+  .swap-from {
+    color: var(--text3);
+    text-decoration: line-through;
+    flex: 1;
+  }
+  .swap-to {
+    flex: 1;
+    font-weight: 500;
+    color: var(--sage);
+  }
+  .swap-saving {
+    font-size: 11px;
+    color: var(--text3);
+    white-space: nowrap;
+    background: var(--surface3);
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-weight: 500;
+  }
+  .swap-total {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 0.5px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .swap-total-label { font-size: 13px; color: var(--text2); }
+  .swap-total-val {
+    font-family: var(--font-body);
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--sage);
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text3);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .ingredients-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 2rem;
+  }
+  .ingredient-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 15px;
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 0.5px solid var(--border);
+    transition: all 0.15s;
+  }
+  .ingredient-item > div:not(.ing-cost) {
+    flex: 1;
+    min-width: 0;
+  }
+  .ingredient-item:hover {
+    border-color: var(--border-med);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+  }
+  .ing-emoji { font-size: 24px; flex-shrink: 0; }
+  .ing-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1.3;
+  }
+  .ing-qty { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+  .steps-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 2.5rem;
+  }
+  .step-item {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  .step-num {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--sage-light);
+    color: var(--sage);
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .step-text {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text2);
+    padding-top: 5px;
+  }
+
+  /* ── Stores & Restaurants ── */
+  .location-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .location-input {
+    flex: 1;
+    min-width: 200px;
+    padding: 12px 16px;
+    border: 0.5px solid var(--border-med);
+    border-radius: var(--radius);
+    font-family: var(--font-body);
+    font-size: 14px;
+    background: var(--surface);
+    color: var(--text);
+    transition: border-color 0.15s;
+  }
+  .location-input:focus {
+    outline: none;
+    border-color: var(--sage);
+    box-shadow: 0 0 0 3px var(--sage-light);
+  }
+  .geo-btn {
+    padding: 12px 14px;
+    background: none;
+    border: 0.5px solid var(--border-med);
+    border-radius: var(--radius);
+    cursor: pointer;
+    color: var(--text2);
+    display: flex;
+    align-items: center;
+    transition: all 0.15s;
+  }
+  .geo-btn:hover { background: var(--surface2); color: var(--sage); }
+  .search-btn {
+    padding: 12px 20px;
+    background: var(--sage);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    white-space: nowrap;
+    transition: background 0.15s;
+  }
+  .search-btn:hover { background: var(--sage-dark); }
+
+  .place-card {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 12px;
+    transition: all 0.15s;
+  }
+  .place-card:hover {
+    border-color: var(--border-med);
+    box-shadow: var(--shadow-sm);
+  }
+  .place-card.top-pick {
+    border-color: var(--sage);
+    border-width: 1.5px;
+  }
+  .place-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+    gap: 10px;
+  }
+  .place-name {
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+  }
+  .top-badge {
+    font-size: 9px;
+    padding: 3px 10px;
+    background: var(--sage-light);
+    color: var(--sage);
+    border-radius: 20px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-family: var(--font-body);
+  }
+  .place-rating {
+    font-size: 13px;
+    color: var(--text2);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 500;
+  }
+  .place-address {
+    font-size: 12px;
+    color: var(--text2);
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .place-open { font-size: 12px; margin-top: 8px; font-weight: 500; }
+  .open { color: #3a7d44; }
+  .closed { color: #c94f3b; }
+
+  .empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text2);
+    font-size: 14px;
+    line-height: 1.7;
+  }
+  .empty-icon {
+    width: 56px; height: 56px;
+    background: var(--surface2);
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 14px;
+    border: 0.5px solid var(--border);
+  }
+  .empty-icon i { font-size: 24px; color: var(--text3); }
+
+  .results-meta {
+    font-size: 12px;
+    color: var(--text3);
+    margin-bottom: 1rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+  }
+
+  /* ── Cooked Button ── */
+  .cooked-btn {
+    width: 100%;
+    padding: 16px;
+    background: var(--sage);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    font-family: var(--font-body);
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 1rem;
+    transition: all 0.15s ease;
+    box-shadow: var(--shadow-sm);
+  }
+  .cooked-btn:hover { background: var(--sage-dark); transform: translateY(-1px); box-shadow: var(--shadow); }
+  .cooked-btn.cooked {
+    background: var(--surface2);
+    color: var(--text2);
+    border: 0.5px solid var(--border-med);
+    box-shadow: none;
+    cursor: default;
+  }
+  .cooked-btn.cooked:hover { transform: none; }
+
+  /* ── History Panel ── */
+  .history-section { margin-bottom: 2rem; }
+  .history-section-title {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 500;
+    margin-bottom: 1rem;
+    color: var(--text);
+  }
+  .stats-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 1.5rem;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+    text-align: center;
+  }
+  .stat-value {
+    font-family: var(--font-body);
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--sage);
+    line-height: 1.1;
+    margin-bottom: 4px;
+  }
+  .stat-label {
+    font-size: 10px;
+    color: var(--text3);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  /* ── Calorie Chart ── */
+  .chart-card {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+  .chart-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .chart-sub {
+    font-size: 11px;
+    color: var(--text3);
+    margin-bottom: 1.25rem;
+    letter-spacing: 0.04em;
+  }
+  .chart-wrap {
+    position: relative;
+    height: 180px;
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    padding-bottom: 24px;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .chart-bar-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    justify-content: flex-end;
+    position: relative;
+  }
+  .chart-bar {
+    width: 100%;
+    max-width: 36px;
+    background: linear-gradient(to top, var(--sage), var(--sage-light));
+    border-radius: 6px 6px 0 0;
+    min-height: 2px;
+    transition: all 0.3s ease;
+    position: relative;
+  }
+  .chart-bar:hover { opacity: 0.85; }
+  .chart-bar-val {
+    position: absolute;
+    top: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    color: var(--text2);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .chart-bar-label {
+    position: absolute;
+    bottom: -22px;
+    font-size: 10px;
+    color: var(--text3);
+    font-weight: 500;
+  }
+  .chart-empty {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: var(--text2);
+    font-size: 13px;
+  }
+
+  /* ── History Card ── */
+  .history-card {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px;
+    margin-bottom: 10px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    transition: all 0.15s;
+  }
+  .history-card:hover {
+    border-color: var(--border-med);
+    box-shadow: var(--shadow-sm);
+  }
+  .history-thumb {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: var(--surface2);
+  }
+  .history-info { flex: 1; min-width: 0; }
+  .history-name {
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 500;
+    margin-bottom: 2px;
+    line-height: 1.2;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .history-meta {
+    font-size: 11px;
+    color: var(--text2);
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .history-meta span {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+  .history-status {
+    flex-shrink: 0;
+  }
+  .status-pill {
+    font-size: 10px;
+    padding: 4px 8px;
+    border-radius: 20px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .status-pill.cooked {
+    background: var(--sage-light);
+    color: var(--sage);
+  }
+  .status-pill.uncooked {
+    background: var(--surface2);
+    color: var(--text3);
+    cursor: pointer;
+  }
+  .status-pill.uncooked:hover {
+    background: var(--sage-light);
+    color: var(--sage);
+  }
+  .clear-history-btn {
+    width: 100%;
+    padding: 11px;
+    background: none;
+    border: 0.5px solid var(--border-med);
+    border-radius: var(--radius);
+    color: var(--text2);
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-top: 1rem;
+    transition: all 0.15s;
+  }
+  .clear-history-btn:hover {
+    background: #fcecea;
+    border-color: #f5a9a9;
+    color: #7a2020;
+  }
+
+  .new-analysis-btn {
+    width: 100%;
+    padding: 12px;
+    background: none;
+    border: 0.5px solid var(--border-med);
+    border-radius: var(--radius);
+    color: var(--text2);
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-bottom: 1.5rem;
+    display: none;
+    transition: all 0.15s;
+  }
+  .new-analysis-btn:hover {
+    background: var(--surface2);
+    color: var(--text);
+    border-color: var(--text3);
+  }
+  .new-analysis-btn.visible { display: block; }
+
+  .toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--text);
+    color: var(--bg);
+    padding: 14px 22px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 999;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    white-space: nowrap;
+    box-shadow: var(--shadow);
+  }
+  .toast.show { opacity: 1; }
+
+  @media (max-width: 500px) {
+    .ingredients-grid { grid-template-columns: 1fr; }
+    .recipe-name { font-size: 24px; }
+    .tab { padding: 10px 12px; font-size: 12px; }
+    .tab i { font-size: 14px; }
+    .logo-name { font-size: 20px; }
+    .upload-zone { padding: 2.5rem 1.25rem; }
+    .calorie-banner { padding: 1rem 1.25rem; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <a class="logo" href="#">
+      <div class="logo-icon"><i class="ti ti-chef-hat"></i></div>
+      <div>
+        <div class="logo-name">DishScan</div>
+        <div class="logo-tag">Snap it · Cook it · Find it</div>
+      </div>
+    </a>
+  </header>
+
+  <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()" role="button" tabindex="0" aria-label="Upload a dish photo">
+    <div class="upload-placeholder" id="uploadPlaceholder">
+      <div class="upload-icon-wrap"><i class="ti ti-camera-plus" style="font-size:26px;color:var(--text3);"></i></div>
+      <div class="upload-title">Upload a dish photo</div>
+      <div class="upload-sub">Screenshot from Instagram, TikTok, Google Images, or any saved food photo</div>
+      <div class="fmt-pills">
+        <span class="fmt-pill">JPG</span><span class="fmt-pill">PNG</span>
+        <span class="fmt-pill">WEBP</span><span class="fmt-pill">Screenshot</span>
+      </div>
+    </div>
+    <img class="dish-preview" id="dishPreview" alt="Uploaded dish" />
+    <div class="preview-overlay" id="previewOverlay">
+      <div class="dish-detected-label" id="dishDetectedLabel">Photo ready — click Analyze</div>
+      <button class="change-btn" onclick="event.stopPropagation(); resetApp()">Change</button>
+    </div>
+  </div>
+  <input type="file" id="fileInput" accept="image/*" />
+  <input type="file" id="cameraInputFallback" accept="image/*" capture="environment" style="display:none;" />
+
+  <div class="upload-actions" id="uploadActions">
+    <button class="upload-action-btn" onclick="openGuidedCamera()">
+      <i class="ti ti-camera"></i> Take Photo
+    </button>
+    <button class="upload-action-btn" onclick="document.getElementById('fileInput').click()">
+      <i class="ti ti-photo"></i> Choose Photo
+    </button>
+  </div>
+
+  <!-- Guided Camera Modal -->
+  <div class="camera-modal" id="cameraModal">
+    <div class="camera-tips" id="cameraTips">
+      <div class="tips-header">
+        <button class="tips-close" onclick="closeCameraModal()" aria-label="Close"><i class="ti ti-x"></i></button>
+        <div class="tips-title">For best results</div>
+        <div class="tips-subtitle">A few quick tips before you snap</div>
+      </div>
+      <div class="tips-grid">
+        <div class="tip-card">
+          <div class="tip-icon"><i class="ti ti-bulb"></i></div>
+          <div class="tip-text"><strong>Good lighting</strong><br>Natural light works best</div>
+        </div>
+        <div class="tip-card">
+          <div class="tip-icon"><i class="ti ti-crop"></i></div>
+          <div class="tip-text"><strong>Fill the frame</strong><br>Center the dish</div>
+        </div>
+        <div class="tip-card">
+          <div class="tip-icon"><i class="ti ti-aperture"></i></div>
+          <div class="tip-text"><strong>Steady shot</strong><br>Hold camera straight above</div>
+        </div>
+        <div class="tip-card">
+          <div class="tip-icon"><i class="ti ti-eye"></i></div>
+          <div class="tip-text"><strong>Show the whole dish</strong><br>Don't crop edges</div>
+        </div>
+      </div>
+      <button class="start-camera-btn" onclick="startCameraStream()">
+        <i class="ti ti-camera"></i> Open Camera
+      </button>
+    </div>
+
+    <div class="camera-stream" id="cameraStream" style="display:none;">
+      <video id="cameraVideo" autoplay playsinline muted></video>
+      <canvas id="cameraCanvas" style="display:none;"></canvas>
+
+      <div class="camera-overlay">
+        <div class="frame-guide" id="frameGuide">
+          <div class="frame-corner tl"></div>
+          <div class="frame-corner tr"></div>
+          <div class="frame-corner bl"></div>
+          <div class="frame-corner br"></div>
+          <div class="frame-status" id="frameStatus">Position dish in frame</div>
+        </div>
+      </div>
+
+      <div class="camera-controls">
+        <button class="cam-cancel" onclick="closeCameraModal()" aria-label="Cancel">
+          <i class="ti ti-x"></i>
+        </button>
+        <button class="cam-shutter" id="shutterBtn" onclick="capturePhoto()" aria-label="Take photo">
+          <div class="shutter-inner"></div>
+        </button>
+        <button class="cam-flip" onclick="flipCamera()" aria-label="Flip camera">
+          <i class="ti ti-rotate"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <button class="analyze-btn" id="analyzeBtn" disabled onclick="runAnalysis()">
+    <i class="ti ti-wand"></i> Analyze Dish
+  </button>
+
+  <div class="error-banner" id="errorBanner"></div>
+
+  <div class="loading-section" id="loadingSection">
+    <div class="spinner"></div>
+    <div class="loading-title">Analyzing your dish</div>
+    <div class="loading-step" id="ls1"><i class="ti ti-circle"></i> Sending image to Claude AI</div>
+    <div class="loading-step" id="ls2"><i class="ti ti-circle"></i> Identifying dish &amp; building recipe</div>
+    <div class="loading-step" id="ls3"><i class="ti ti-circle"></i> Calculating calories &amp; substitutions</div>
+  </div>
+
+  <button class="new-analysis-btn" id="newAnalysisBtn" onclick="resetApp()">
+    <i class="ti ti-refresh" style="font-size:14px;vertical-align:-2px;margin-right:6px;"></i> Analyze another dish
+  </button>
+
+  <div class="results-section" id="resultsSection">
+    <div class="tabs" role="tablist">
+      <button class="tab active" role="tab" onclick="switchTab('recipe',this)"><i class="ti ti-book"></i> Recipe</button>
+      <button class="tab" role="tab" onclick="switchTab('stores',this)"><i class="ti ti-building-store"></i> Stores</button>
+      <button class="tab" role="tab" onclick="switchTab('history',this); renderHistory();"><i class="ti ti-history"></i> History</button>
+    </div>
+
+    <div class="tab-panel active" id="panel-recipe">
+      <div class="recipe-name" id="recipeName"></div>
+      <div class="recipe-meta" id="recipeMeta"></div>
+      <div class="calorie-banner">
+        <div style="display:flex;align-items:center;gap:14px;">
+          <div class="cal-icon-wrap"><i class="ti ti-flame"></i></div>
+          <div>
+            <div class="cal-label">Estimated Calories</div>
+            <div style="display:flex;align-items:baseline;gap:6px;">
+              <span class="cal-value" id="calValue">—</span>
+              <span class="cal-unit">kcal / serving</span>
+            </div>
+          </div>
+        </div>
+        <button class="lower-btn" onclick="toggleSwap()"><i class="ti ti-leaf" style="font-size:14px;"></i> Lower calories</button>
+      </div>
+      <div class="swap-panel" id="swapPanel">
+        <div class="swap-title"><i class="ti ti-exchange"></i> Healthier substitutions</div>
+        <div id="swapRows"></div>
+        <div class="swap-total">
+          <span class="swap-total-label">New estimated total</span>
+          <span class="swap-total-val" id="newCalVal">—</span>
+        </div>
+      </div>
+      <div class="cost-banner" id="costBanner" style="display:none;">
+        <div style="display:flex;align-items:center;gap:14px;">
+          <div class="cost-icon-wrap"><i class="ti ti-shopping-cart"></i></div>
+          <div>
+            <div class="cost-label">Estimated Grocery Cost</div>
+            <div style="display:flex;align-items:baseline;gap:6px;">
+              <span class="cost-value" id="costValue">—</span>
+              <span class="cost-sub">total</span>
+            </div>
+          </div>
+        </div>
+        <div class="cost-disclaimer" id="costDisclaimer">Based on US national average prices</div>
+      </div>
+      <div class="section-label">Ingredients</div>
+      <div class="ingredients-grid" id="ingredientsGrid"></div>
+      <div class="section-label">Method</div>
+      <div class="steps-list" id="stepsList"></div>
+
+      <button class="cooked-btn" id="cookedBtn" onclick="markAsCooked()">
+        <i class="ti ti-checks"></i> I cooked this dish
+      </button>
+    </div>
+
+    <div class="tab-panel" id="panel-stores">
+      <div class="location-row">
+        <input class="location-input" type="text" id="storeAddressInput" placeholder="Enter your address or zip code…" />
+        <button class="geo-btn" onclick="geoLocate('store')" title="Use my location"><i class="ti ti-current-location" style="font-size:18px;"></i></button>
+        <button class="search-btn" onclick="searchPlaces('stores')"><i class="ti ti-map-pin" style="font-size:15px;"></i> Find stores</button>
+      </div>
+      <div id="storesResults"><div class="empty-state"><div class="empty-icon"><i class="ti ti-building-store"></i></div>Enter your address above to find nearby grocery stores.</div></div>
+    </div>
+
+    <div class="tab-panel" id="panel-history">
+      <div id="historyContent">
+        <!-- Filled by renderHistory() -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  let uploadedBase64 = null, uploadedMediaType = null, detectedDish = '', userLat = null, userLng = null;
+  let currentRecipeId = null;
+
+  // ── History Storage ──
+  const STORAGE_KEY = 'dishscan_history_v1';
+
+  function getHistory() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+    catch { return []; }
+  }
+
+  function saveHistory(arr) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); }
+    catch (e) { console.warn('Could not save history:', e); }
+  }
+
+  function addToHistory(recipe, thumbBase64) {
+    const history = getHistory();
+    const id = 'r_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
+    const entry = {
+      id,
+      dish: recipe.dish,
+      calories: recipe.calories,
+      time: recipe.time,
+      servings: recipe.servings,
+      thumb: thumbBase64,
+      timestamp: Date.now(),
+      cooked: false,
+      cookedAt: null
+    };
+    history.unshift(entry);
+    // Keep last 5 only
+    const trimmed = history.slice(0, 5);
+    saveHistory(trimmed);
+    return id;
+  }
+
+  function toggleCookedInHistory(id) {
+    const history = getHistory();
+    const entry = history.find(h => h.id === id);
+    if (entry) {
+      entry.cooked = !entry.cooked;
+      entry.cookedAt = entry.cooked ? Date.now() : null;
+      saveHistory(history);
+    }
+  }
+
+  function clearAllHistory() {
+    if (!confirm('Clear all scan history? This cannot be undone.')) return;
+    localStorage.removeItem(STORAGE_KEY);
+    renderHistory();
+  }
+
+  function markAsCooked() {
+    if (!currentRecipeId) return;
+    toggleCookedInHistory(currentRecipeId);
+    const btn = document.getElementById('cookedBtn');
+    const history = getHistory();
+    const entry = history.find(h => h.id === currentRecipeId);
+    if (entry && entry.cooked) {
+      btn.classList.add('cooked');
+      btn.innerHTML = '<i class="ti ti-check"></i> Marked as cooked';
+      showToast('Logged ' + entry.calories + ' kcal to your history');
+    } else {
+      btn.classList.remove('cooked');
+      btn.innerHTML = '<i class="ti ti-checks"></i> I cooked this dish';
+    }
+  }
+
+  function renderHistory() {
+    const container = document.getElementById('historyContent');
+    const history = getHistory();
+    const cooked = history.filter(h => h.cooked);
+
+    if (history.length === 0) {
+      container.innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="ti ti-history"></i></div>No scanned dishes yet.<br>Upload a photo to start your history.</div>';
+      return;
+    }
+
+    // Stats
+    const totalCalories = cooked.reduce((sum, h) => sum + (h.calories || 0), 0);
+    const avgCalories = cooked.length ? Math.round(totalCalories / cooked.length) : 0;
+
+    let html = '<div class="stats-row">';
+    html += '<div class="stat-card"><div class="stat-value">' + history.length + '</div><div class="stat-label">Scanned</div></div>';
+    html += '<div class="stat-card"><div class="stat-value">' + cooked.length + '</div><div class="stat-label">Cooked</div></div>';
+    html += '<div class="stat-card"><div class="stat-value">' + (avgCalories || '—') + '</div><div class="stat-label">Avg kcal</div></div>';
+    html += '</div>';
+
+    // Chart
+    html += '<div class="chart-card">';
+    html += '<div class="chart-title">Calories from cooked dishes</div>';
+    html += '<div class="chart-sub">LAST 7 DAYS</div>';
+
+    if (cooked.length === 0) {
+      html += '<div class="chart-empty">Tap "I cooked this dish" on any recipe to start tracking calories here.</div>';
+    } else {
+      // Build last 7 days
+      const today = new Date(); today.setHours(0,0,0,0);
+      const days = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(today); d.setDate(today.getDate() - i);
+        days.push({ date: d, calories: 0, label: d.toLocaleDateString('en-US', { weekday: 'short' })[0] });
+      }
+      cooked.forEach(h => {
+        if (!h.cookedAt) return;
+        const cDate = new Date(h.cookedAt); cDate.setHours(0,0,0,0);
+        const day = days.find(d => d.date.getTime() === cDate.getTime());
+        if (day) day.calories += (h.calories || 0);
+      });
+
+      const maxCal = Math.max(...days.map(d => d.calories), 100);
+      html += '<div class="chart-wrap">';
+      days.forEach(d => {
+        const pct = (d.calories / maxCal) * 100;
+        const valLabel = d.calories > 0 ? d.calories : '';
+        html += '<div class="chart-bar-col">';
+        html += '<div class="chart-bar" style="height:' + pct + '%;">';
+        if (valLabel) html += '<div class="chart-bar-val">' + valLabel + '</div>';
+        html += '</div>';
+        html += '<div class="chart-bar-label">' + d.label + '</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+    html += '</div>';
+
+    // Recent dishes list
+    html += '<div class="history-section-title" style="margin-top:1.5rem;">Recent dishes</div>';
+    history.forEach(h => {
+      const date = new Date(h.timestamp);
+      const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+      const statusHtml = h.cooked
+        ? '<span class="status-pill cooked"><i class="ti ti-check" style="font-size:10px;"></i> Cooked</span>'
+        : '<span class="status-pill uncooked" onclick="toggleHistoryItem(\'' + h.id + '\')">Mark cooked</span>';
+      html += '<div class="history-card">';
+      html += h.thumb
+        ? '<img class="history-thumb" src="' + h.thumb + '" alt="" />'
+        : '<div class="history-thumb" style="display:flex;align-items:center;justify-content:center;"><i class="ti ti-photo" style="color:var(--text3);font-size:22px;"></i></div>';
+      html += '<div class="history-info">';
+      html += '<div class="history-name">' + h.dish + '</div>';
+      html += '<div class="history-meta">';
+      html += '<span><i class="ti ti-calendar" style="font-size:11px;"></i> ' + dateStr + ' · ' + timeStr + '</span>';
+      if (h.calories) html += '<span><i class="ti ti-flame" style="font-size:11px;"></i> ' + h.calories + ' kcal</span>';
+      html += '</div></div>';
+      html += '<div class="history-status">' + statusHtml + '</div>';
+      html += '</div>';
+    });
+
+    html += '<button class="clear-history-btn" onclick="clearAllHistory()"><i class="ti ti-trash" style="font-size:13px;vertical-align:-2px;margin-right:5px;"></i> Clear all history</button>';
+
+    container.innerHTML = html;
+  }
+
+  function toggleHistoryItem(id) {
+    toggleCookedInHistory(id);
+    renderHistory();
+    showToast('Updated');
+  }
+
+  function showToast(msg, ms = 3000) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), ms);
+  }
+
+  const fileInput = document.getElementById('fileInput');
+  const cameraInputFallback = document.getElementById('cameraInputFallback');
+  const uploadZone = document.getElementById('uploadZone');
+
+  function handleFileSelect(e) {
+    const file = e.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const url = ev.target.result;
+      uploadedBase64 = url.split(',')[1];
+      uploadedMediaType = url.split(';')[0].split(':')[1];
+      document.getElementById('dishPreview').src = url;
+      document.getElementById('dishPreview').classList.add('visible');
+      document.getElementById('previewOverlay').classList.add('visible');
+      document.getElementById('uploadPlaceholder').style.display = 'none';
+      document.getElementById('uploadActions').classList.add('hidden');
+      uploadZone.classList.add('has-image');
+      document.getElementById('analyzeBtn').disabled = false;
+      hideError();
+    };
+    reader.readAsDataURL(file);
+  }
+
+  fileInput.addEventListener('change', handleFileSelect);
+  cameraInputFallback.addEventListener('change', handleFileSelect);
+
+  // ── Guided Camera ──
+  let cameraStream = null;
+  let currentFacingMode = 'environment';
+  let brightnessCheckInterval = null;
+
+  function openGuidedCamera() {
+    document.getElementById('cameraModal').classList.add('open');
+    document.getElementById('cameraTips').style.display = 'flex';
+    document.getElementById('cameraStream').style.display = 'none';
+  }
+
+  function closeCameraModal() {
+    stopCameraStream();
+    document.getElementById('cameraModal').classList.remove('open');
+    document.getElementById('cameraTips').style.display = 'flex';
+    document.getElementById('cameraStream').style.display = 'none';
+  }
+
+  async function startCameraStream() {
+    document.getElementById('cameraTips').style.display = 'none';
+    document.getElementById('cameraStream').style.display = 'block';
+
+    try {
+      const constraints = {
+        video: {
+          facingMode: currentFacingMode,
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        },
+        audio: false
+      };
+
+      cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+      const video = document.getElementById('cameraVideo');
+      video.srcObject = cameraStream;
+
+      // Start brightness/quality check
+      startBrightnessCheck();
+
+    } catch (err) {
+      showCameraError(err);
+    }
+  }
+
+  function stopCameraStream() {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(t => t.stop());
+      cameraStream = null;
+    }
+    if (brightnessCheckInterval) {
+      clearInterval(brightnessCheckInterval);
+      brightnessCheckInterval = null;
+    }
+  }
+
+  function flipCamera() {
+    currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
+    stopCameraStream();
+    startCameraStream();
+  }
+
+  function startBrightnessCheck() {
+    const video = document.getElementById('cameraVideo');
+    const canvas = document.getElementById('cameraCanvas');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    const frameGuide = document.getElementById('frameGuide');
+    const frameStatus = document.getElementById('frameStatus');
+    const shutterBtn = document.getElementById('shutterBtn');
+
+    brightnessCheckInterval = setInterval(() => {
+      if (!video.videoWidth) return;
+
+      // Sample a small region from center of video
+      const sampleSize = 100;
+      canvas.width = sampleSize;
+      canvas.height = sampleSize;
+      const sx = (video.videoWidth - sampleSize) / 2;
+      const sy = (video.videoHeight - sampleSize) / 2;
+      ctx.drawImage(video, sx, sy, sampleSize, sampleSize, 0, 0, sampleSize, sampleSize);
+
+      const imageData = ctx.getImageData(0, 0, sampleSize, sampleSize);
+      const data = imageData.data;
+
+      // Calculate average brightness
+      let totalBrightness = 0;
+      for (let i = 0; i < data.length; i += 4) {
+        totalBrightness += (data[i] + data[i+1] + data[i+2]) / 3;
+      }
+      const avgBrightness = totalBrightness / (data.length / 4);
+
+      // Update UI based on brightness
+      if (avgBrightness < 50) {
+        frameStatus.textContent = 'Too dark — find more light';
+        frameGuide.classList.remove('ready');
+        shutterBtn.classList.remove('ready');
+      } else if (avgBrightness > 230) {
+        frameStatus.textContent = 'Too bright — reduce glare';
+        frameGuide.classList.remove('ready');
+        shutterBtn.classList.remove('ready');
+      } else {
+        frameStatus.textContent = 'Looks great — tap to capture';
+        frameGuide.classList.add('ready');
+        shutterBtn.classList.add('ready');
+      }
+    }, 300);
+  }
+
+  function capturePhoto() {
+    const video = document.getElementById('cameraVideo');
+    const canvas = document.getElementById('cameraCanvas');
+    const ctx = canvas.getContext('2d');
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    ctx.drawImage(video, 0, 0);
+
+    canvas.toBlob(blob => {
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const url = ev.target.result;
+        uploadedBase64 = url.split(',')[1];
+        uploadedMediaType = url.split(';')[0].split(':')[1];
+        document.getElementById('dishPreview').src = url;
+        document.getElementById('dishPreview').classList.add('visible');
+        document.getElementById('previewOverlay').classList.add('visible');
+        document.getElementById('uploadPlaceholder').style.display = 'none';
+        document.getElementById('uploadActions').classList.add('hidden');
+        uploadZone.classList.add('has-image');
+        document.getElementById('analyzeBtn').disabled = false;
+        hideError();
+        closeCameraModal();
+      };
+      reader.readAsDataURL(blob);
+    }, 'image/jpeg', 0.92);
+  }
+
+  function showCameraError(err) {
+    const stream = document.getElementById('cameraStream');
+    let msg = 'Could not access camera.';
+    if (err.name === 'NotAllowedError') {
+      msg = 'Camera permission denied. Please allow camera access in your browser settings to use this feature.';
+    } else if (err.name === 'NotFoundError') {
+      msg = 'No camera detected on this device.';
+    } else if (err.name === 'NotReadableError') {
+      msg = 'Camera is already in use by another app.';
+    }
+    stream.innerHTML = '<div class="cam-error"><i class="ti ti-camera-off"></i><div class="cam-error-title">Camera unavailable</div><div class="cam-error-msg">' + msg + '</div><button onclick="closeCameraModal(); document.getElementById(\'cameraInputFallback\').click();">Use Photo Library Instead</button></div>';
+  }
+
+  uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag'); });
+  uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag'));
+  uploadZone.addEventListener('drop', e => {
+    e.preventDefault(); uploadZone.classList.remove('drag');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+      const dt = new DataTransfer(); dt.items.add(file);
+      fileInput.files = dt.files; fileInput.dispatchEvent(new Event('change'));
+    }
+  });
+
+  function showError(msg) {
+    const b = document.getElementById('errorBanner');
+    b.innerHTML = '<i class="ti ti-alert-circle" style="font-size:15px;vertical-align:-2px;margin-right:6px;"></i>' + msg;
+    b.classList.add('visible');
+  }
+  function hideError() { document.getElementById('errorBanner').classList.remove('visible'); }
+
+  function markStep(id) {
+    const el = document.getElementById(id);
+    el.innerHTML = '<i class="ti ti-circle-check"></i> ' + el.innerText.trim();
+    el.classList.add('done');
+  }
+
+  async function runAnalysis() {
+    if (!uploadedBase64) return;
+    hideError();
+    document.getElementById('analyzeBtn').disabled = true;
+    document.getElementById('loadingSection').classList.add('visible');
+    document.getElementById('resultsSection').classList.remove('visible');
+    document.getElementById('newAnalysisBtn').classList.remove('visible');
+    ['ls1','ls2','ls3'].forEach(id => {
+      const el = document.getElementById(id);
+      el.classList.remove('done');
+      el.querySelector('i').className = 'ti ti-circle';
+    });
+
+    try {
+      markStep('ls1');
+      const response = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image_data: uploadedBase64, media_type: uploadedMediaType })
+      });
+
+      markStep('ls2');
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error || 'Analysis failed (' + response.status + '). Please try again.');
+      }
+
+      const recipe = await response.json();
+      markStep('ls3');
+      detectedDish = recipe.searchKeyword || recipe.dish;
+
+      // Save to history with thumbnail
+      const thumbBase64 = 'data:' + uploadedMediaType + ';base64,' + uploadedBase64;
+      currentRecipeId = addToHistory(recipe, thumbBase64);
+
+      // Reset cooked button
+      const btn = document.getElementById('cookedBtn');
+      btn.classList.remove('cooked');
+      btn.innerHTML = '<i class="ti ti-checks"></i> I cooked this dish';
+
+      renderRecipe(recipe);
+      document.getElementById('dishDetectedLabel').textContent = recipe.dish + ' detected';
+
+      setTimeout(() => {
+        document.getElementById('loadingSection').classList.remove('visible');
+        document.getElementById('resultsSection').classList.add('visible');
+        document.getElementById('newAnalysisBtn').classList.add('visible');
+      }, 500);
+
+    } catch(err) {
+      document.getElementById('loadingSection').classList.remove('visible');
+      document.getElementById('analyzeBtn').disabled = false;
+      showError(err.message);
+    }
+  }
+
+  function renderRecipe(r) {
+    document.getElementById('recipeName').textContent = r.dish;
+    document.getElementById('recipeMeta').innerHTML = [
+      r.time ? '<span class="meta-chip"><i class="ti ti-clock"></i> ' + r.time + '</span>' : '',
+      r.servings ? '<span class="meta-chip"><i class="ti ti-users"></i> Serves ' + r.servings + '</span>' : '',
+      r.difficulty ? '<span class="meta-chip"><i class="ti ti-flame"></i> ' + r.difficulty + '</span>' : '',
+      r.dietary ? '<span class="meta-chip"><i class="ti ti-leaf"></i> ' + r.dietary + '</span>' : '',
+    ].filter(Boolean).join('');
+    document.getElementById('calValue').textContent = r.calories;
+    document.getElementById('ingredientsGrid').innerHTML = r.ingredients.map(i => {
+      const costBadge = (i.cost !== undefined && i.cost !== null)
+        ? '<span class="ing-cost">$' + Number(i.cost).toFixed(2) + '</span>'
+        : '';
+      return '<div class="ingredient-item"><span class="ing-emoji">' + i.emoji + '</span><div><div class="ing-name">' + i.name + '</div><div class="ing-qty">' + i.qty + '</div></div>' + costBadge + '</div>';
+    }).join('');
+
+    // Cost banner
+    if (r.totalCost !== undefined && r.totalCost !== null) {
+      document.getElementById('costValue').textContent = '$' + Number(r.totalCost).toFixed(2);
+      if (r.costNote) document.getElementById('costDisclaimer').textContent = r.costNote;
+      document.getElementById('costBanner').style.display = 'flex';
+    } else {
+      document.getElementById('costBanner').style.display = 'none';
+    }
+    document.getElementById('stepsList').innerHTML = r.steps.map((s,i) =>
+      '<div class="step-item"><div class="step-num">' + (i+1) + '</div><div class="step-text">' + s + '</div></div>').join('');
+    if (r.swaps && r.swaps.length) {
+      const saved = r.swaps.reduce((a,s) => a+(s.saving||0), 0);
+      document.getElementById('swapRows').innerHTML = r.swaps.map(s =>
+        '<div class="swap-row"><span class="swap-from">' + s.from + '</span><i class="ti ti-arrow-right" style="color:var(--sage);font-size:16px;flex-shrink:0;"></i><span class="swap-to">' + s.to + '</span><span class="swap-saving">−' + s.saving + ' kcal</span></div>').join('');
+      document.getElementById('newCalVal').textContent = Math.max(0, r.calories - saved) + ' kcal';
+    }
+  }
+
+  function toggleSwap() { document.getElementById('swapPanel').classList.toggle('visible'); }
+
+  function switchTab(id, btn) {
+    document.querySelectorAll('.tab').forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected','false'); });
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active'); btn.setAttribute('aria-selected','true');
+    document.getElementById('panel-'+id).classList.add('active');
+  }
+
+  function resetApp() {
+    uploadedBase64 = null; uploadedMediaType = null; detectedDish = ''; userLat = null; userLng = null;
+    document.getElementById('analyzeBtn').disabled = true;
+    document.getElementById('loadingSection').classList.remove('visible');
+    document.getElementById('resultsSection').classList.remove('visible');
+    document.getElementById('newAnalysisBtn').classList.remove('visible');
+    document.getElementById('dishPreview').classList.remove('visible');
+    document.getElementById('previewOverlay').classList.remove('visible');
+    document.getElementById('uploadPlaceholder').style.display = 'flex';
+    document.getElementById('uploadActions').classList.remove('hidden');
+    uploadZone.classList.remove('has-image');
+    document.getElementById('swapPanel').classList.remove('visible');
+    document.getElementById('storesResults').innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="ti ti-building-store"></i></div>Enter your address above to find nearby grocery stores.</div>';
+    fileInput.value = ''; cameraInputFallback.value = ''; hideError();
+  }
+
+  function geoLocate(target) {
+    if (!navigator.geolocation) { showToast('Geolocation not supported.'); return; }
+    showToast('Getting your location…');
+    navigator.geolocation.getCurrentPosition(async pos => {
+      userLat = pos.coords.latitude; userLng = pos.coords.longitude;
+      try {
+        const r = await fetch('/api/places?type=reverse&latlng=' + userLat + ',' + userLng);
+        const d = await r.json();
+        const addr = d.results?.[0]?.formatted_address || userLat.toFixed(5) + ', ' + userLng.toFixed(5);
+        document.getElementById(target==='store'?'storeAddressInput':'restAddressInput').value = addr;
+        showToast('Location found');
+      } catch {
+        document.getElementById(target==='store'?'storeAddressInput':'restAddressInput').value = userLat.toFixed(5) + ', ' + userLng.toFixed(5);
+      }
+    }, () => showToast('Could not get location. Please enter your address manually.'));
+  }
+
+  async function geocodeAddress(addr) {
+    const r = await fetch('/api/places?type=geocode&address=' + encodeURIComponent(addr));
+    const d = await r.json();
+    if (!d.results?.length) throw new Error('Address not found. Try a more specific address or zip code.');
+    return { lat: d.results[0].geometry.location.lat, lng: d.results[0].geometry.location.lng };
+  }
+
+  async function searchPlaces(type) {
+    const isStore = type === 'stores';
+    const addr = document.getElementById(isStore?'storeAddressInput':'restAddressInput').value.trim();
+    if (!addr) { showToast('Please enter an address first.'); return; }
+    const container = document.getElementById(isStore?'storesResults':'restaurantsResults');
+    container.innerHTML = '<div class="empty-state"><div class="spinner" style="margin:0 auto 1rem;"></div>Searching nearby ' + (isStore?'grocery stores':'restaurants') + '…</div>';
+    try {
+      let lat = userLat, lng = userLng;
+      if (!lat) { const g = await geocodeAddress(addr); lat = g.lat; lng = g.lng; }
+      const keyword = isStore ? 'grocery supermarket' : (detectedDish || 'restaurant');
+      const r = await fetch('/api/places?type=nearby&lat=' + lat + '&lng=' + lng + '&keyword=' + encodeURIComponent(keyword));
+      const data = await r.json();
+      if (data.status === 'REQUEST_DENIED') throw new Error('Google API key issue. Check your Vercel environment variables.');
+      if (!data.results?.length) {
+        container.innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="ti ti-map-pin"></i></div>No ' + (isStore?'stores':'restaurants') + ' found nearby.<br>Try a different address.</div>';
+        return;
+      }
+      const places = data.results.slice(0, 6);
+      container.innerHTML = '<div class="results-meta">' + places.length + ' ' + (isStore?'grocery stores':'restaurants') + ' found near your location</div>';
+      places.forEach((p, i) => {
+        const card = document.createElement('div');
+        card.className = 'place-card' + (i===0?' top-pick':'');
+        const openHtml = p.opening_hours ? (p.opening_hours.open_now
+          ? '<span class="open"><i class="ti ti-circle-check" style="font-size:12px;"></i> Open now</span>'
+          : '<span class="closed"><i class="ti ti-circle-x" style="font-size:12px;"></i> Closed now</span>') : '';
+        const priceHtml = p.price_level ? '<span style="font-size:12px;color:var(--text2);margin-left:10px;font-weight:500;">' + '$'.repeat(p.price_level) + '</span>' : '';
+        const ratingHtml = p.rating ? '<i class="ti ti-star" style="color:var(--amber);font-size:14px;"></i> ' + p.rating.toFixed(1) : '';
+        card.innerHTML =
+          '<div class="place-header">' +
+            '<div class="place-name">' +
+              '<i class="ti ' + (isStore?'ti-building-store':'ti-tools-kitchen-2') + '" style="color:' + (i===0?'var(--sage)':'var(--text3)') + ';font-size:20px;"></i>' +
+              p.name + (i===0?'<span class="top-badge">Closest</span>':'') +
+            '</div>' +
+            '<div class="place-rating">' + ratingHtml + '</div>' +
+          '</div>' +
+          '<div class="place-address"><i class="ti ti-map-pin" style="font-size:13px;"></i> ' + p.vicinity + '</div>' +
+          '<div class="place-open">' + openHtml + priceHtml + '</div>';
+        container.appendChild(card);
+      });
+    } catch(err) {
+      container.innerHTML = '<div class="empty-state">Could not load results.<br><small style="color:var(--text3);">' + err.message + '</small></div>';
+    }
+  }
+</script>
+</body>
+</html>
