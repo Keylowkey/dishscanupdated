@@ -1093,6 +1093,156 @@
   }
   .meta-chip i { font-size: 15px; color: var(--sage); }
 
+  /* ── Allergy-friendly feature ── */
+  .allergy-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface2);
+    color: var(--text);
+    border: 0.5px solid var(--border-med);
+    border-radius: var(--radius);
+    padding: 11px 16px;
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-bottom: 1.75rem;
+  }
+  .allergy-btn i { font-size: 17px; color: var(--sage); }
+  .allergy-btn:hover { background: var(--surface3); border-color: var(--sage); }
+  .allergy-btn.flagged {
+    background: rgba(240,162,59,0.12);
+    border-color: var(--amber);
+    color: var(--amber);
+  }
+  .allergy-btn.flagged i { color: var(--amber); }
+
+  .allergy-card { max-width: 460px; position: relative; }
+  .allergy-filter-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 4px 0 16px;
+  }
+  .allergy-filter-label { font-size: 12px; color: var(--text2); font-weight: 500; }
+  .allergy-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .allergy-chip {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--surface2);
+    color: var(--text2);
+    border: 0.5px solid var(--border);
+    cursor: pointer;
+    transition: all 0.12s;
+    user-select: none;
+  }
+  .allergy-chip.on {
+    background: var(--sage);
+    color: #0a2a17;
+    border-color: var(--sage);
+  }
+
+  .allergy-loading {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 32px 0;
+  }
+  .allergy-loading.visible { display: flex; }
+  .allergy-spinner {
+    width: 36px; height: 36px;
+    border: 3px solid var(--surface3);
+    border-top-color: var(--sage);
+    border-radius: 50%;
+    animation: allergySpin 0.8s linear infinite;
+  }
+  @keyframes allergySpin { to { transform: rotate(360deg); } }
+  .allergy-loading-text { font-size: 13px; color: var(--text2); }
+
+  .allergy-results { display: none; }
+  .allergy-results.visible { display: block; }
+  .allergy-status {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: var(--radius-sm);
+    margin-bottom: 16px;
+    font-size: 13.5px;
+    line-height: 1.45;
+  }
+  .allergy-status.safe { background: var(--sage-light); color: var(--sage); }
+  .allergy-status.flagged { background: rgba(240,162,59,0.12); color: var(--amber); }
+  .allergy-status i { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+
+  .swap-card {
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 13px 14px;
+    margin-bottom: 10px;
+    background: var(--surface2);
+  }
+  .swap-card-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .swap-allergen-tag {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: rgba(240,162,59,0.18);
+    color: var(--amber);
+  }
+  .swap-ingredient { font-size: 14px; font-weight: 600; color: var(--text); }
+  .swap-arrow { color: var(--text3); font-size: 13px; margin: 0 2px; }
+  .swap-replacement {
+    font-size: 14px;
+    color: var(--sage);
+    font-weight: 600;
+  }
+  .swap-note { font-size: 12.5px; color: var(--text2); line-height: 1.45; margin-top: 4px; }
+  .swap-none {
+    font-size: 13px;
+    color: var(--text3);
+    font-style: italic;
+    padding: 4px 0;
+  }
+  .allergy-alt-dish {
+    margin-top: 14px;
+    padding: 13px 14px;
+    border-radius: var(--radius-sm);
+    background: var(--sage-light);
+    border: 0.5px solid var(--sage);
+  }
+  .allergy-alt-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--sage);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-bottom: 4px;
+  }
+  .allergy-alt-body { font-size: 13.5px; color: var(--text); line-height: 1.5; }
+  .allergy-disclaimer {
+    font-size: 11px;
+    color: var(--text3);
+    line-height: 1.45;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 0.5px solid var(--border);
+  }
+
   .calorie-banner {
     background: var(--amber-light);
     border: 0.5px solid #f0c07a;
@@ -2841,6 +2991,10 @@
       <div class="recipe-name" id="recipeName"></div>
       <div class="recipe-meta" id="recipeMeta"></div>
 
+      <button class="allergy-btn" id="allergyBtn" onclick="openAllergyCheck()">
+        <i class="ti ti-shield-heart"></i> Make this allergy-friendly
+      </button>
+
       <div class="serving-selector">
         <span class="serving-label">Serving size</span>
         <div class="serving-options" id="servingOptions">
@@ -3086,6 +3240,10 @@
 
         <div class="recipe-meta" id="copycatMeta"></div>
 
+        <button class="allergy-btn" id="copycatAllergyBtn" onclick="openAllergyCheck(null, 'copycat')">
+          <i class="ti ti-shield-heart"></i> Make this allergy-friendly
+        </button>
+
         <div class="serving-selector">
           <span class="serving-label">Serving size</span>
           <div class="serving-options" id="copycatServingOptions">
@@ -3241,6 +3399,11 @@
       <div class="avatar-icon-row" id="avatarIcons"></div>
     </div>
 
+    <div class="support-field">
+      <label>My allergies &amp; diet <span style="color:var(--text3);font-weight:400;">(we'll flag these automatically)</span></label>
+      <div class="allergy-chips" id="profileAllergyChips"></div>
+    </div>
+
     <button class="support-submit" id="saveProfileBtn" onclick="saveProfile()">
       <i class="ti ti-check"></i> Save profile
     </button>
@@ -3342,6 +3505,31 @@
   </div>
 </div>
 
+<div class="support-modal" id="allergyModal">
+  <div class="support-card allergy-card">
+    <button class="support-close" onclick="closeAllergyModal()" aria-label="Close"><i class="ti ti-x"></i></button>
+    <div class="support-card-header">
+      <div class="support-card-icon"><i class="ti ti-shield-heart"></i></div>
+      <div>
+        <div class="support-card-title">Allergy-friendly check</div>
+        <div class="support-card-sub" id="allergySub">Checking this recipe for common allergens…</div>
+      </div>
+    </div>
+
+    <div class="allergy-filter-row" id="allergyFilterRow">
+      <span class="allergy-filter-label">Checking for:</span>
+      <div class="allergy-chips" id="allergyChips"></div>
+    </div>
+
+    <div class="allergy-loading" id="allergyLoading">
+      <div class="allergy-spinner"></div>
+      <div class="allergy-loading-text">Finding safe substitutions…</div>
+    </div>
+
+    <div class="allergy-results" id="allergyResults"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -3384,6 +3572,9 @@
     document.getElementById('authScreen').classList.add('hidden');
     document.getElementById('appPage').classList.remove('hidden');
     document.body.classList.add('in-app');
+    // Load saved allergen preferences from account metadata
+    myAllergens = Array.isArray(currentUser?.user_metadata?.allergens)
+      ? currentUser.user_metadata.allergens : [];
     updateUserUI();
     loadCloudHistory();
     prefillStoreAddress();
@@ -3483,7 +3674,7 @@
           redirectTo: window.location.origin
         });
         if (error) throw error;
-        okEl.textContent = 'If an account exists for that email, a reset link is on its way.';
+        okEl.innerHTML = '✓ Check your inbox! If an account exists for <strong>' + email + '</strong>, we\'ve sent a password reset link. It may take a minute to arrive — don\'t forget to check your spam folder.';
         okEl.classList.add('visible');
       } else {
         // Forgot username — ask our serverless endpoint to email the username
@@ -3493,7 +3684,7 @@
           body: JSON.stringify({ email })
         });
         // Always show a neutral success message (don't reveal whether the email exists)
-        okEl.textContent = 'If an account exists for that email, we just sent the username to it.';
+        okEl.innerHTML = '✓ Check your inbox! If an account exists for <strong>' + email + '</strong>, we\'ve just emailed you your username. It may take a minute to arrive — don\'t forget to check your spam folder.';
         okEl.classList.add('visible');
       }
     } catch (e) {
@@ -4195,6 +4386,30 @@
   let baseServings = 1;        // servings the AI recipe was written for
   let currentServings = 1;     // user-selected serving count
 
+  // ── Allergy-friendly feature ──
+  // The six common allergens we check for, each with detection keywords.
+  const ALLERGENS = {
+    nuts:     { label: 'Nuts',     keywords: ['almond','walnut','pecan','cashew','pistachio','hazelnut','macadamia','peanut','pine nut','nut butter','nutmeg','marzipan','praline','nutella','chestnut',' nut','nuts'] },
+    dairy:    { label: 'Dairy',    keywords: ['milk','butter','cheese','cream','yogurt','yoghurt','ghee','custard','whey','casein','parmesan','mozzarella','ricotta','cheddar','feta','mascarpone','buttermilk','half-and-half','ice cream'] },
+    eggs:     { label: 'Eggs',     keywords: ['egg','eggs','mayonnaise','mayo','meringue','aioli','albumin','custard'] },
+    gluten:   { label: 'Gluten',   keywords: ['flour','wheat','bread','pasta','noodle','barley','rye','breadcrumb','panko','cracker','crouton','tortilla','soy sauce','seitan','semolina','couscous','farro','bulgur','biscuit','batter','dough'] },
+    shellfish:{ label: 'Shellfish',keywords: ['shrimp','prawn','crab','lobster','clam','mussel','oyster','scallop','crawfish','crayfish','squid','calamari','octopus','shellfish'] },
+    soy:      { label: 'Soy',      keywords: ['soy','soya','tofu','edamame','tempeh','miso','soy sauce','tamari','soybean'] },
+  };
+  let myAllergens = [];        // user's profile allergen selections (keys of ALLERGENS)
+  let lastAllergyScan = [];    // allergens detected in the current recipe
+
+  // Detect which allergens appear in a recipe's ingredient list.
+  function detectAllergens(recipe) {
+    if (!recipe || !Array.isArray(recipe.ingredients)) return [];
+    const hay = recipe.ingredients.map(i => (i.name || '').toLowerCase()).join(' | ');
+    const found = [];
+    for (const key in ALLERGENS) {
+      if (ALLERGENS[key].keywords.some(kw => hay.includes(kw))) found.push(key);
+    }
+    return found;
+  }
+
   function renderRecipe(r) {
     baseRecipe = r;
     baseServings = (r.servings && r.servings > 0) ? r.servings : 1;
@@ -4226,6 +4441,26 @@
     currentServings = nearestServingOption(baseServings);
     renderAtServings(currentServings);
     highlightServing(currentServings);
+
+    // Allergy scan: flag the button, and auto-open if the recipe contains an
+    // allergen the user flagged in their profile.
+    lastAllergyScan = detectAllergens(r);
+    const allergyBtn = document.getElementById('allergyBtn');
+    const userHits = lastAllergyScan.filter(a => myAllergens.includes(a));
+    if (allergyBtn) {
+      if (userHits.length) {
+        allergyBtn.classList.add('flagged');
+        allergyBtn.innerHTML = '<i class="ti ti-alert-triangle"></i> Contains ' +
+          userHits.map(a => ALLERGENS[a].label.toLowerCase()).join(', ') + ' — see safe swaps';
+      } else {
+        allergyBtn.classList.remove('flagged');
+        allergyBtn.innerHTML = '<i class="ti ti-shield-heart"></i> Make this allergy-friendly';
+      }
+    }
+    // Auto-trigger the popup when a flagged allergen is detected for this user
+    if (userHits.length) {
+      setTimeout(() => openAllergyCheck(userHits), 600);
+    }
   }
 
   // Scale a numeric quantity string like "1 cup", "1.5 lb", "2", "1/2 tsp"
@@ -4325,6 +4560,160 @@
   }
 
   function toggleSwap() { document.getElementById('swapPanel').classList.toggle('visible'); }
+
+  // ── Allergy check modal ──
+  // The set of allergens the popup will check against. If the user has profile
+  // allergens, default to those; otherwise check all six.
+  let activeAllergyFilter = [];
+  let allergyRecipe = null;   // the recipe the modal is currently checking
+
+  function closeAllergyModal() {
+    document.getElementById('allergyModal').classList.remove('open');
+  }
+
+  function renderAllergyChips() {
+    const wrap = document.getElementById('allergyChips');
+    wrap.innerHTML = Object.keys(ALLERGENS).map(key =>
+      '<span class="allergy-chip ' + (activeAllergyFilter.includes(key) ? 'on' : '') +
+      '" onclick="toggleAllergyFilter(\'' + key + '\')">' + ALLERGENS[key].label + '</span>'
+    ).join('');
+  }
+
+  function toggleAllergyFilter(key) {
+    const i = activeAllergyFilter.indexOf(key);
+    if (i >= 0) activeAllergyFilter.splice(i, 1);
+    else activeAllergyFilter.push(key);
+    renderAllergyChips();
+    runAllergyCheck();   // re-run with the new filter
+  }
+
+  // Open the modal.
+  //   preselect (optional): array of allergen keys to check.
+  //   source (optional): 'copycat' to check the takeout recipe, else the cook recipe.
+  function openAllergyCheck(preselect, source) {
+    allergyRecipe = (source === 'copycat') ? baseCopycat : baseRecipe;
+    if (!allergyRecipe) { showToast('Open a recipe first.'); return; }
+    // Decide what to check: explicit preselect → profile allergens → all six
+    if (Array.isArray(preselect) && preselect.length) {
+      activeAllergyFilter = [...preselect];
+    } else if (myAllergens.length) {
+      activeAllergyFilter = [...myAllergens];
+    } else {
+      activeAllergyFilter = Object.keys(ALLERGENS);
+    }
+    renderAllergyChips();
+    document.getElementById('allergyModal').classList.add('open');
+    runAllergyCheck();
+  }
+
+  async function runAllergyCheck() {
+    const loading = document.getElementById('allergyLoading');
+    const results = document.getElementById('allergyResults');
+    const sub = document.getElementById('allergySub');
+    const recipe = allergyRecipe;
+    if (!recipe) return;
+
+    // Which of the active filters actually appear in this recipe?
+    const detected = detectAllergens(recipe).filter(a => activeAllergyFilter.includes(a));
+
+    // Nothing flagged → safe, no AI call needed.
+    if (!detected.length) {
+      loading.classList.remove('visible');
+      results.classList.add('visible');
+      sub.textContent = 'Good news!';
+      results.innerHTML =
+        '<div class="allergy-status safe"><i class="ti ti-circle-check"></i>' +
+        '<div>This recipe looks free of the allergens you\'re checking for ' +
+        '(' + activeAllergyFilter.map(a => ALLERGENS[a].label.toLowerCase()).join(', ') + '). ' +
+        'Always double-check ingredient labels to be safe.</div></div>' +
+        allergyDisclaimerHTML();
+      return;
+    }
+
+    // Flagged → ask the AI for substitutions.
+    sub.textContent = 'We found some ingredients to flag';
+    results.classList.remove('visible');
+    loading.classList.add('visible');
+
+    try {
+      const res = await fetch('/api/allergy-swaps', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          dish: recipe.dish,
+          ingredients: recipe.ingredients.map(i => i.name),
+          allergens: detected.map(a => ALLERGENS[a].label)
+        })
+      });
+      if (!res.ok) throw new Error('Request failed');
+      const data = await res.json();
+      renderAllergyResults(detected, data);
+    } catch (e) {
+      console.warn('Allergy check failed:', e);
+      loading.classList.remove('visible');
+      results.classList.add('visible');
+      results.innerHTML =
+        '<div class="allergy-status flagged"><i class="ti ti-alert-triangle"></i>' +
+        '<div>We couldn\'t load substitutions right now. Please try again in a moment.</div></div>';
+    }
+  }
+
+  function renderAllergyResults(detected, data) {
+    const loading = document.getElementById('allergyLoading');
+    const results = document.getElementById('allergyResults');
+    loading.classList.remove('visible');
+    results.classList.add('visible');
+
+    let html =
+      '<div class="allergy-status flagged"><i class="ti ti-alert-triangle"></i>' +
+      '<div>This recipe contains <strong>' +
+      detected.map(a => ALLERGENS[a].label.toLowerCase()).join(', ') +
+      '</strong>. Here are some swaps to make it safer for you:</div></div>';
+
+    // Per-ingredient substitution cards
+    const swaps = Array.isArray(data.swaps) ? data.swaps : [];
+    if (swaps.length) {
+      swaps.forEach(s => {
+        html += '<div class="swap-card"><div class="swap-card-head">' +
+          '<span class="swap-allergen-tag">' + escapeHtml(s.allergen || '') + '</span>' +
+          '<span class="swap-ingredient">' + escapeHtml(s.ingredient || '') + '</span>';
+        if (s.replacement && s.replacement.toLowerCase() !== 'none') {
+          html += '<span class="swap-arrow"><i class="ti ti-arrow-right"></i></span>' +
+            '<span class="swap-replacement">' + escapeHtml(s.replacement) + '</span>';
+        }
+        html += '</div>';
+        if (s.replacement && s.replacement.toLowerCase() !== 'none') {
+          if (s.note) html += '<div class="swap-note">' + escapeHtml(s.note) + '</div>';
+        } else {
+          html += '<div class="swap-none">This one can\'t be easily swapped.</div>';
+        }
+        html += '</div>';
+      });
+    }
+
+    // Alternative dish (when something couldn't be swapped) or "no replacements"
+    if (data.alternativeDish && data.alternativeDish.toLowerCase() !== 'none') {
+      html += '<div class="allergy-alt-dish">' +
+        '<div class="allergy-alt-title"><i class="ti ti-bulb"></i> A similar dish to try instead</div>' +
+        '<div class="allergy-alt-body">' + escapeHtml(data.alternativeDish) + '</div></div>';
+    } else if (data.noReplacements) {
+      html += '<div class="allergy-alt-dish" style="background:var(--surface2);border-color:var(--border);">' +
+        '<div class="allergy-alt-body" style="color:var(--text2);">There are no close replacements for this dish without the flagged ingredients.</div></div>';
+    }
+
+    html += allergyDisclaimerHTML();
+    results.innerHTML = html;
+  }
+
+  function allergyDisclaimerHTML() {
+    return '<div class="allergy-disclaimer">⚠️ This is an automated check based on ingredient names and may not catch everything (including hidden ingredients or cross-contamination). If you have a serious allergy, always verify labels and ingredients yourself.</div>';
+  }
+
+  function escapeHtml(str) {
+    return String(str || '').replace(/[&<>"']/g, c =>
+      ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+  }
+
 
   // ── Collapsible recipe sections ──
   function toggleSection(which) {
@@ -4474,7 +4863,7 @@
         redirectTo: window.location.origin
       });
       if (error) throw error;
-      showToast('Password reset link sent to ' + currentUser.email);
+      showToast('✓ Password reset link sent to ' + currentUser.email + '. Check your inbox (and spam folder).');
     } catch (e) {
       showToast('Could not send reset email. Please try again.');
       console.warn('Reset password failed:', e);
@@ -4558,8 +4947,26 @@
       color: current.color || AVATAR_COLORS[0],
       icon: current.icon || AVATAR_ICONS[0]
     };
+    pendingAllergens = [...myAllergens];
     renderAvatarPicker();
+    renderProfileAllergyChips();
     document.getElementById('profileModal').classList.add('open');
+  }
+
+  let pendingAllergens = [];
+  function renderProfileAllergyChips() {
+    const wrap = document.getElementById('profileAllergyChips');
+    if (!wrap) return;
+    wrap.innerHTML = Object.keys(ALLERGENS).map(key =>
+      '<span class="allergy-chip ' + (pendingAllergens.includes(key) ? 'on' : '') +
+      '" onclick="toggleProfileAllergen(\'' + key + '\')">' + ALLERGENS[key].label + '</span>'
+    ).join('');
+  }
+  function toggleProfileAllergen(key) {
+    const i = pendingAllergens.indexOf(key);
+    if (i >= 0) pendingAllergens.splice(i, 1);
+    else pendingAllergens.push(key);
+    renderProfileAllergyChips();
   }
 
   function closeProfileModal() {
@@ -4592,9 +4999,10 @@
     btn.innerHTML = '<i class="ti ti-loader-2"></i> Saving…';
     try {
       const { error } = await supaClient.auth.updateUser({
-        data: { avatar_color: pendingAvatar.color, avatar_icon: pendingAvatar.icon }
+        data: { avatar_color: pendingAvatar.color, avatar_icon: pendingAvatar.icon, allergens: pendingAllergens }
       });
       if (error) throw error;
+      myAllergens = [...pendingAllergens];
       // Refresh local user
       const { data } = await supaClient.auth.getUser();
       if (data?.user) currentUser = data.user;
@@ -5127,6 +5535,24 @@
     expandAllCopycatSections();
 
     document.getElementById('copycatResult').classList.add('visible');
+
+    // Allergy scan for the takeout/copycat recipe (mirrors the Cook tab).
+    const cScan = detectAllergens(r);
+    const cBtn = document.getElementById('copycatAllergyBtn');
+    const cHits = cScan.filter(a => myAllergens.includes(a));
+    if (cBtn) {
+      if (cHits.length) {
+        cBtn.classList.add('flagged');
+        cBtn.innerHTML = '<i class="ti ti-alert-triangle"></i> Contains ' +
+          cHits.map(a => ALLERGENS[a].label.toLowerCase()).join(', ') + ' — see safe swaps';
+      } else {
+        cBtn.classList.remove('flagged');
+        cBtn.innerHTML = '<i class="ti ti-shield-heart"></i> Make this allergy-friendly';
+      }
+    }
+    if (cHits.length) {
+      setTimeout(() => openAllergyCheck(cHits, 'copycat'), 600);
+    }
   }
 
   function renderCopycatAtServings(servings) {
