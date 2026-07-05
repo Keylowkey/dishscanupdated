@@ -51,8 +51,10 @@ export default async function handler(req, res) {
     } else {
       // Instagram / TikTok / other → thumbnail image
       const thumb = await ogImage(url);
-      if (!thumb) {
-        return res.status(422).json({ error: "Couldn't read that link. Try sharing a screenshot of the dish instead." });
+      if (!thumb || !isRealThumb(thumb, platform)) {
+        return res.status(422).json({ error: platform === 'instagram'
+          ? "Instagram didn't share the dish this time (they block servers from reading reels). Screenshot the reel and use “Choose Photo” instead."
+          : "Couldn't read that link. Try sharing a screenshot of the dish instead." });
       }
       const img = await fetchImageAsBase64(thumb);
       if (!img) return res.status(422).json({ error: "Couldn't load the video's thumbnail." });
@@ -64,6 +66,11 @@ export default async function handler(req, res) {
 
     const recipe = await callAnthropic(ANTHROPIC_KEY, content);
     if (recipe && recipe.error) return res.status(502).json(recipe);
+    // Guard: if the AI ended up describing a logo / brand image / screenshot chrome
+    // rather than a dish, don't return a junk recipe.
+    if (recipe && /\b(logo|instagram|tiktok|youtube|screenshot|watermark|app icon|profile (picture|photo)|placeholder)\b/i.test(String(recipe.dish || ''))) {
+      return res.status(422).json({ error: "Couldn't read a dish from that link. Try sharing a screenshot of the dish instead." });
+    }
     if (sourceTitle && recipe) recipe.sourceTitle = sourceTitle;
     return res.status(200).json(recipe);
   } catch (err) {
@@ -76,6 +83,16 @@ function detectPlatform(url) {
   if (/instagram\.com/i.test(url)) return 'instagram';
   if (/tiktok\.com/i.test(url)) return 'tiktok';
   return 'other';
+}
+
+// True only if the thumbnail looks like real post CONTENT (not a brand logo /
+// static asset served on a login/blocked page).
+function isRealThumb(u, platform) {
+  if (!/^https?:\/\//i.test(u || '')) return false;
+  if (/\/static\/|logo|sprite|favicon|\bicon\b|placeholder/i.test(u)) return false;
+  if (platform === 'instagram') return /cdninstagram\.com|fbcdn\.net|scontent/i.test(u);
+  if (platform === 'tiktok') return /tiktokcdn|ibyteimg|muscdn|p\d+-sign/i.test(u);
+  return true;
 }
 
 async function youtubeInfo(url) {
