@@ -8,6 +8,8 @@
 //   list_requests           -> pending requests aimed at me
 //   list_following          -> ids I follow (accepted)
 
+import { verifyToken } from '../lib/auth.js';
+
 const ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY ||
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNudnpycXBjYmJseHB5cGFvZW52Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MzA4OTYsImV4cCI6MjA5NTMwNjg5Nn0.pIVpjNCeKlVpLGyr_PEKECHAbHJvyGjkTZj8jikBshY';
 
@@ -23,19 +25,10 @@ export default async function handler(req, res) {
   if (!SUPABASE_URL || !SERVICE_KEY) return res.status(500).json({ error: 'Server missing config.' });
   const H = { 'apikey': SERVICE_KEY, 'Authorization': `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json' };
 
-  // Identify caller from JWT (avoids 520-prone auth call).
-  function uidFromToken(tok) {
-    try {
-      const p = JSON.parse(Buffer.from(tok.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'), 'base64').toString('utf8'));
-      if (p.exp && Date.now()/1000 > p.exp) return null;
-      return p.sub || null;
-    } catch (e) { return null; }
-  }
-
   try {
     const { access_token, action } = req.body || {};
     if (!access_token) return res.status(401).json({ error: 'Missing token.' });
-    const me = uidFromToken(access_token);
+    const me = verifyToken(access_token);
     if (!me) return res.status(401).json({ error: 'Invalid or expired session.' });
 
     if (action === 'follow') {

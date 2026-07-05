@@ -5,6 +5,8 @@
 //   record { post_id }            -> upsert my view, return { count }
 //   counts { post_ids: [ids] }    -> return { counts: { post_id: n, ... } }
 
+import { verifyToken } from '../lib/auth.js';
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -16,14 +18,6 @@ export default async function handler(req, res) {
   const SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
   if (!SUPABASE_URL || !SERVICE_KEY) return res.status(500).json({ error: 'Server missing config.' });
   const H = { 'apikey': SERVICE_KEY, 'Authorization': `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json' };
-
-  function uidFromToken(tok) {
-    try {
-      const p = JSON.parse(Buffer.from(tok.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'), 'base64').toString('utf8'));
-      if (p.exp && Date.now()/1000 > p.exp) return null;
-      return p.sub || null;
-    } catch (e) { return null; }
-  }
 
   async function countFor(postId) {
     const r = await fetch(`${SUPABASE_URL}/rest/v1/post_views?select=id&post_id=eq.${encodeURIComponent(postId)}`, {
@@ -53,7 +47,7 @@ export default async function handler(req, res) {
     if (action === 'record') {
       const { post_id } = req.body;
       if (!post_id) return res.status(400).json({ error: 'Missing post_id.' });
-      const me = access_token ? uidFromToken(access_token) : null;
+      const me = access_token ? verifyToken(access_token) : null;
       // Anonymous viewers can't be de-duplicated; just return the count.
       if (!me) return res.status(200).json({ count: await countFor(post_id) });
       // Upsert my view (unique constraint makes repeats a no-op).

@@ -3,6 +3,8 @@
 // favorites public, their favorite dishes. Read server-side so it works in
 // Chrome (no direct third-party request to supabase.co).
 
+import { verifyToken } from '../lib/auth.js';
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -18,7 +20,7 @@ export default async function handler(req, res) {
   const headers = { 'apikey': SERVICE_KEY, 'Authorization': `Bearer ${SERVICE_KEY}` };
 
   try {
-    const { user_id } = req.body || {};
+    const { user_id, access_token } = req.body || {};
     if (!user_id) return res.status(400).json({ error: 'Missing user_id.' });
 
     // Profile (public read)
@@ -30,8 +32,20 @@ export default async function handler(req, res) {
     const profile = (profArr && profArr[0]) || null;
     if (!profile) return res.status(404).json({ error: 'User not found.' });
 
+    // Private accounts only expose posts/favorites to the owner or accepted followers.
+    const viewerId = access_token ? verifyToken(access_token) : null;
+    let canSeeContent = !(profile.is_private === true) || (viewerId && viewerId === user_id);
+    if (!canSeeContent && viewerId) {
+      const fr = await fetch(
+        `${SUPABASE_URL}/rest/v1/follows?select=id&follower_id=eq.${encodeURIComponent(viewerId)}&following_id=eq.${encodeURIComponent(user_id)}&status=eq.accepted&limit=1`,
+        { headers }
+      );
+      const frows = fr.ok ? await fr.json() : [];
+      if (frows.length) canSeeContent = true;
+    }
+
     let favorites = [];
-    if (profile.favorites_public) {
+    if (canSeeContent && profile.favorites_public) {
       const favRes = await fetch(
         `${SUPABASE_URL}/rest/v1/dishes?select=id,dish_name,recipe_data,image_url,calories,created_at&user_id=eq.${encodeURIComponent(user_id)}&favorite=eq.true&order=created_at.desc&limit=50`,
         { headers }
@@ -54,15 +68,18 @@ export default async function handler(req, res) {
       followingCount = await countRows(`follower_id=eq.${encodeURIComponent(user_id)}&status=eq.accepted`);
     } catch (e) { /* counts default 0 */ }
 
-    // The user's community posts (newest first).
+    // The user's community posts (newest first). Hidden for private accounts
+    // unless the viewer is the owner or an accepted follower.
     let posts = [];
-    try {
-      const postsRes = await fetch(
-        `${SUPABASE_URL}/rest/v1/posts?select=id,image_url,caption,created_at&user_id=eq.${encodeURIComponent(user_id)}&order=created_at.desc&limit=50`,
-        { headers }
-      );
-      posts = postsRes.ok ? await postsRes.json() : [];
-    } catch (e) { /* posts default empty */ }
+    if (canSeeContent) {
+      try {
+        const postsRes = await fetch(
+          `${SUPABASE_URL}/rest/v1/posts?select=id,image_url,caption,created_at&user_id=eq.${encodeURIComponent(user_id)}&order=created_at.desc&limit=50`,
+          { headers }
+        );
+        posts = postsRes.ok ? await postsRes.json() : [];
+      } catch (e) { /* posts default empty */ }
+    }
 
     return res.status(200).json({
       profile: {

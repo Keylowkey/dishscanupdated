@@ -3,6 +3,8 @@
 // author is anonymized to "[deleted user]" so threads stay intact.
 // Verifies the caller via their own access token before deleting.
 
+import { verifyToken } from '../lib/auth.js';
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -28,47 +30,9 @@ export default async function handler(req, res) {
     const { access_token } = req.body || {};
     if (!access_token) return res.status(401).json({ error: 'Missing access token.' });
 
-    // Get the caller's user id from their JWT directly. The access token is a
-    // signed JWT whose payload contains "sub" (the user id). We read it locally
-    // to avoid a network round-trip to /auth/v1/user that has been returning
-    // Cloudflare 520 errors. We still verify the token is REAL below by using it
-    // against the auth endpoint with one retry — but we don't hard-fail on a 520.
-    let uid = null;
-    try {
-      const parts = access_token.split('.');
-      const payloadStr = Buffer.from(parts[1].replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8');
-      const payload = JSON.parse(payloadStr);
-      uid = payload.sub || null;
-      // Reject obviously expired tokens.
-      if (payload.exp && Date.now() / 1000 > payload.exp) {
-        return res.status(401).json({ error: 'Your session has expired. Please sign in again.' });
-      }
-    } catch (e) {
-      return res.status(401).json({ error: 'Could not read session token.' });
-    }
-    if (!uid) return res.status(401).json({ error: 'Could not verify user.' });
-
-    // Best-effort confirm the token is valid (retry once; tolerate 520s).
-    let confirmed = false;
-    for (let attempt = 0; attempt < 2 && !confirmed; attempt++) {
-      try {
-        const whoRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-          headers: { 'apikey': ANON_KEY, 'Authorization': `Bearer ${access_token}` }
-        });
-        if (whoRes.ok) {
-          const u = await whoRes.json();
-          if (u && u.id) { uid = u.id; confirmed = true; break; }
-        } else if (whoRes.status === 401 || whoRes.status === 403) {
-          // Token genuinely rejected — stop and report.
-          return res.status(401).json({ error: 'Your session is no longer valid. Please sign in again.' });
-        }
-        // Other statuses (520, 5xx) → retry.
-      } catch (e) { /* network hiccup → retry */ }
-      await new Promise(r => setTimeout(r, 400));
-    }
-    // If we couldn't confirm due to infra errors but the JWT looked valid and
-    // unexpired, proceed using the uid from the token (it's cryptographically
-    // the user's own token, sent over HTTPS from their authenticated session).
+    // Cryptographically verify the caller's token (HS256) and read their id from it.
+    const uid = verifyToken(access_token);
+    if (!uid) return res.status(401).json({ error: 'Your session is invalid or expired. Please sign in again.' });
 
     // 1) Anonymize their posts so community threads survive as "[deleted user]".
     //    (We blank the username on their profile row; posts read author from it.)

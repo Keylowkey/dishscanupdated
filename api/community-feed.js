@@ -4,6 +4,8 @@
 // default via third-party cookie/request restrictions. Mirrors how Cook/Takeout
 // already talk to Supabase from the server.
 
+import { verifyToken } from '../lib/auth.js';
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -27,13 +29,7 @@ export default async function handler(req, res) {
     // Identify the caller (optional) so we can mark which reactions are theirs.
     let callerId = null;
     const { access_token, mode } = req.body || {};
-    if (access_token) {
-      try {
-        const parts = access_token.split('.');
-        const payload = JSON.parse(Buffer.from(parts[1].replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8'));
-        callerId = payload.sub || null;
-      } catch (e) { /* anonymous is fine */ }
-    }
+    if (access_token) callerId = verifyToken(access_token); // invalid/forged → treated as anonymous
 
     // If "following" mode, get the ids the caller follows (accepted only).
     // Returns an empty feed if they follow no one.

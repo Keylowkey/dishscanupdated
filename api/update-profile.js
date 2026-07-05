@@ -3,6 +3,8 @@
 // Vercel's network instead of the user's (sometimes flaky) device connection.
 // This mirrors how analyze/support/etc. already talk to Supabase from the server.
 
+import { verifyToken } from '../lib/auth.js';
+
 export default async function handler(req, res) {
   // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -26,19 +28,9 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing profile data.' });
     }
 
-    // 1) Read the user id from the JWT locally (avoids the 520-prone auth call).
-    let uid = null;
-    try {
-      const parts = access_token.split('.');
-      const payload = JSON.parse(Buffer.from(parts[1].replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8'));
-      uid = payload.sub || null;
-      if (payload.exp && Date.now() / 1000 > payload.exp) {
-        return res.status(401).json({ error: 'Your session has expired. Please sign in again.' });
-      }
-    } catch (e) {
-      return res.status(401).json({ error: 'Could not read session token.' });
-    }
-    if (!uid) return res.status(401).json({ error: 'Could not verify user.' });
+    // Cryptographically verify the caller's token (HS256) and read their id from it.
+    const uid = verifyToken(access_token);
+    if (!uid) return res.status(401).json({ error: 'Your session is invalid or expired. Please sign in again.' });
 
     // Fetch the user's existing metadata via the Admin API (service key path).
     let existingMeta = {};
