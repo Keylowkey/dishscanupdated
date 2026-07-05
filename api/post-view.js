@@ -47,7 +47,7 @@ export default async function handler(req, res) {
     if (action === 'record') {
       const { post_id } = req.body;
       if (!post_id) return res.status(400).json({ error: 'Missing post_id.' });
-      const me = access_token ? verifyToken(access_token) : null;
+      const me = access_token ? await verifyToken(access_token) : null;
       // Anonymous viewers can't be de-duplicated; just return the count.
       if (!me) return res.status(200).json({ count: await countFor(post_id) });
       // Upsert my view (unique constraint makes repeats a no-op).

@@ -29,7 +29,7 @@ export default async function handler(req, res) {
     }
 
     // Cryptographically verify the caller's token (HS256) and read their id from it.
-    const uid = verifyToken(access_token);
+    const uid = await verifyToken(access_token);
     if (!uid) return res.status(401).json({ error: 'Your session is invalid or expired. Please sign in again.' });
 
     // Fetch the user's existing metadata via the Admin API (service key path).

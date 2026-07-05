@@ -29,7 +29,7 @@ export default async function handler(req, res) {
     // Identify the caller (optional) so we can mark which reactions are theirs.
     let callerId = null;
     const { access_token, mode } = req.body || {};
-    if (access_token) callerId = verifyToken(access_token); // invalid/forged → treated as anonymous
+    if (access_token) callerId = await verifyToken(access_token); // invalid/forged → treated as anonymous
 
     // If "following" mode, get the ids the caller follows (accepted only).
     // Returns an empty feed if they follow no one.

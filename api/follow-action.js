@@ -28,7 +28,7 @@ export default async function handler(req, res) {
   try {
     const { access_token, action } = req.body || {};
     if (!access_token) return res.status(401).json({ error: 'Missing token.' });
-    const me = verifyToken(access_token);
+    const me = await verifyToken(access_token);
     if (!me) return res.status(401).json({ error: 'Invalid or expired session.' });
 
     if (action === 'follow') {

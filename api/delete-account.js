@@ -31,7 +31,7 @@ export default async function handler(req, res) {
     if (!access_token) return res.status(401).json({ error: 'Missing access token.' });
 
     // Cryptographically verify the caller's token (HS256) and read their id from it.
-    const uid = verifyToken(access_token);
+    const uid = await verifyToken(access_token);
     if (!uid) return res.status(401).json({ error: 'Your session is invalid or expired. Please sign in again.' });
 
     // 1) Anonymize their posts so community threads survive as "[deleted user]".

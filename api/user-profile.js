@@ -33,7 +33,7 @@ export default async function handler(req, res) {
     if (!profile) return res.status(404).json({ error: 'User not found.' });
 
     // Private accounts only expose posts/favorites to the owner or accepted followers.
-    const viewerId = access_token ? verifyToken(access_token) : null;
+    const viewerId = access_token ? await verifyToken(access_token) : null;
     let canSeeContent = !(profile.is_private === true) || (viewerId && viewerId === user_id);
     if (!canSeeContent && viewerId) {
       const fr = await fetch(
