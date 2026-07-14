@@ -2,11 +2,34 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<script>
+  // Capacitor native shim: when running inside the native app shell (localhost/capacitor: origin),
+  // rewrite root-relative "/api/..." (and other "/path") fetches to the live backend.
+  // On the real website (captureandcook.com) this is a no-op.
+  (function () {
+    var isNative = location.protocol === 'capacitor:' ||
+                   location.hostname === 'localhost' ||
+                   location.hostname === '';
+    if (!isNative) return;
+    var API_ORIGIN = 'https://www.captureandcook.com';
+    var _fetch = window.fetch.bind(window);
+    window.fetch = function (input, init) {
+      try {
+        if (typeof input === 'string' && input.charAt(0) === '/') {
+          input = API_ORIGIN + input;
+        } else if (input && typeof input.url === 'string' && input.url.charAt(0) === '/') {
+          input = new Request(API_ORIGIN + input.url, input);
+        }
+      } catch (e) {}
+      return _fetch(input, init);
+    };
+  })();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
 <title>Capture &amp; Cook — Capture it. Cook it. Serve it.</title>
 <meta name="theme-color" content="#121212" media="(prefers-color-scheme: dark)" />
 <meta name="theme-color" content="#f7f7f5" media="(prefers-color-scheme: light)" />
-<link rel="apple-touch-icon" href="/icon-192.png" />
+<link rel="apple-touch-icon" href="/icon-192.png?v=2" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
@@ -74,7 +97,7 @@
     -webkit-font-smoothing: antialiased;
     line-height: 1.5;
   }
-  .page { max-width: 720px; margin: 0 auto; padding: 0 1.25rem 5rem; }
+  .page { max-width: 720px; margin: 0 auto; padding: env(safe-area-inset-top) 1.25rem calc(5rem + env(safe-area-inset-bottom)); }
 
   .page.hidden { display: none; }
 
@@ -84,7 +107,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 1.5rem;
+    padding: calc(1.5rem + env(safe-area-inset-top)) 1.5rem calc(1.5rem + env(safe-area-inset-bottom));
     background: var(--bg);
     position: relative;
     overflow: hidden;
@@ -314,6 +337,29 @@
   }
   .google-icon {
     width: 18px; height: 18px;
+  }
+  .apple-btn {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    background: #000;
+    border: 0.5px solid #000;
+    border-radius: var(--radius);
+    color: #fff;
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.15s;
+  }
+  .apple-btn:hover { background: #1a1a1a; }
+  .apple-icon {
+    width: 17px; height: 17px;
+    margin-top: -2px;
   }
   .auth-error {
     background: #fcecea;
@@ -2345,7 +2391,7 @@
     border-radius: var(--radius);
     font-size: 13px;
     font-weight: 500;
-    z-index: 999;
+    z-index: 100010; /* above modals (100001-100002) so toasts never hide behind a popup */
     opacity: 0;
     transition: opacity 0.3s;
     pointer-events: none;
@@ -3294,6 +3340,106 @@
     .upload-zone { padding: 2.5rem 1.25rem; }
     .calorie-banner { padding: 1rem 1.25rem; }
   }
+
+  /* ── Cook It! button ── */
+  .cookit-btn {
+    position: relative; overflow: hidden;
+    width: 100%; padding: 17px; margin-bottom: 12px;
+    background: linear-gradient(135deg, var(--sage-dark), var(--sage));
+    color: #fff; border: none; border-radius: var(--radius);
+    font-family: var(--font-body); font-size: 16px; font-weight: 700;
+    letter-spacing: .2px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 9px;
+    box-shadow: 0 10px 24px -10px var(--sage-dark);
+    transition: transform .15s ease;
+  }
+  .cookit-btn i { font-size: 20px; }
+  .cookit-btn:active { transform: scale(.985); }
+  .cookit-btn-glow {
+    position: absolute; top: 0; left: -60%; width: 45%; height: 100%;
+    background: linear-gradient(100deg, transparent, rgba(255,255,255,.35), transparent);
+    transform: skewX(-18deg); animation: cookitShine 3.6s ease-in-out infinite;
+  }
+  @keyframes cookitShine { 0%,55% { left: -60%; } 100% { left: 140%; } }
+
+  /* ── Cook Mode overlay ── */
+  .cook-overlay {
+    position: fixed; inset: 0; z-index: 4000; background: var(--bg);
+    display: flex; flex-direction: column; padding-top: env(safe-area-inset-top);
+    opacity: 0; pointer-events: none; transform: translateY(14px);
+    transition: opacity .28s ease, transform .28s ease;
+  }
+  .cook-overlay.open { opacity: 1; pointer-events: auto; transform: none; }
+  .cook-top { display: flex; align-items: center; gap: 12px; padding: 14px 18px 12px; }
+  .cook-close {
+    width: 38px; height: 38px; border-radius: 50%; border: none; flex-shrink: 0;
+    background: var(--surface2); color: var(--text); font-size: 22px; line-height: 1;
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+  }
+  .cook-progress-wrap { flex: 1; }
+  .cook-step-count { font-size: 12px; font-weight: 700; color: var(--text3); margin-bottom: 6px; letter-spacing: .3px; }
+  .cook-progress { height: 6px; background: var(--surface2); border-radius: 999px; overflow: hidden; }
+  .cook-progress-fill { height: 100%; background: var(--sage); border-radius: 999px; width: 0%; transition: width .4s ease; }
+  .cook-body { flex: 1; overflow-y: auto; padding: 6px 22px 18px; display: flex; flex-direction: column; }
+
+  .cook-stage {
+    position: relative; width: 100%; height: 30vh; max-height: 300px; min-height: 190px;
+    border-radius: var(--radius-xl); margin: 4px 0 22px;
+    background: radial-gradient(120% 120% at 50% 12%, var(--sage-50), var(--surface) 72%);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+  }
+  .cook-actor { font-size: 82px; line-height: 1; z-index: 2; filter: drop-shadow(0 6px 12px rgba(0,0,0,.14)); }
+  .m-chop { animation: mChop .85s ease-in-out infinite; transform-origin: 68% 88%; }
+  @keyframes mChop { 0%,100% { transform: rotate(-16deg) translateY(-7px); } 50% { transform: rotate(6deg) translateY(4px); } }
+  .m-toss { animation: mToss 1.1s ease-in-out infinite; }
+  @keyframes mToss { 0%,100% { transform: translateY(0) rotate(0); } 45% { transform: translateY(-18px) rotate(-8deg); } 62% { transform: translateY(-9px) rotate(5deg); } }
+  .m-spin { animation: mSpin 2.4s linear infinite; }
+  @keyframes mSpin { to { transform: rotate(360deg); } }
+  .m-bob { animation: mBob 2.3s ease-in-out infinite; }
+  @keyframes mBob { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-9px) scale(1.05); } }
+  .m-shake { animation: mShake .5s ease-in-out infinite; }
+  @keyframes mShake { 0%,100% { transform: translateX(0) rotate(0); } 25% { transform: translateX(-5px) rotate(-3deg); } 75% { transform: translateX(5px) rotate(3deg); } }
+  .m-pulse { animation: mPulse 1.7s ease-in-out infinite; }
+  @keyframes mPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.07); } }
+
+  .cook-particles { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+  .p-steam { position: absolute; bottom: 42%; width: 12px; height: 12px; border-radius: 50%; background: rgba(180,190,185,.5); filter: blur(3px); animation: pSteam 2.8s ease-in infinite; }
+  @keyframes pSteam { 0% { transform: translateY(0) scale(.5); opacity: 0; } 25% { opacity: .8; } 100% { transform: translateY(-130px) scale(1.6); opacity: 0; } }
+  .p-bubble { position: absolute; bottom: 26%; border-radius: 50%; background: rgba(255,255,255,.35); border: 1.5px solid rgba(255,255,255,.65); animation: pBubble 1.9s ease-in infinite; }
+  @keyframes pBubble { 0% { transform: translateY(0) scale(.3); opacity: 0; } 30% { opacity: 1; } 100% { transform: translateY(-95px) scale(1); opacity: 0; } }
+  .p-spark { position: absolute; bottom: 44%; width: 6px; height: 6px; border-radius: 50%; background: var(--amber); box-shadow: 0 0 7px var(--amber-dark); animation: pSpark 1s ease-out infinite; }
+  @keyframes pSpark { 0% { transform: translate(0,0) scale(1); opacity: 1; } 100% { transform: translate(var(--dx,0), -70px) scale(0); opacity: 0; } }
+  .p-heat { position: absolute; bottom: 22%; left: 18%; width: 64%; height: 34px; background: radial-gradient(circle, rgba(240,150,40,.3), transparent 70%); border-radius: 50%; animation: pHeat 2.1s ease-in-out infinite; }
+  @keyframes pHeat { 0%,100% { opacity: .3; transform: scaleX(.9); } 50% { opacity: .75; transform: scaleX(1.12); } }
+  .p-fall { position: absolute; top: 16%; width: 5px; height: 5px; border-radius: 50%; background: var(--text3); animation: pFall 1.4s linear infinite; }
+  @keyframes pFall { 0% { transform: translateY(0); opacity: 0; } 20% { opacity: 1; } 100% { transform: translateY(100px); opacity: 0; } }
+
+  .cook-step-text { font-size: 20px; line-height: 1.5; font-weight: 600; color: var(--text); margin-bottom: 20px; }
+  .cook-step-text b { color: var(--sage-dark); font-weight: 800; }
+
+  .cook-timer { display: none; flex-direction: column; align-items: center; gap: 16px; margin: 2px 0 8px; }
+  .cook-timer.visible { display: flex; }
+  .cook-timer-ring { position: relative; width: 190px; height: 190px; }
+  .cook-timer-ring svg { transform: rotate(-90deg); width: 100%; height: 100%; }
+  .ring-bg { fill: none; stroke: var(--surface2); stroke-width: 13; }
+  .ring-fg { fill: none; stroke: var(--sage); stroke-width: 13; stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
+  .cook-timer-time { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .t-val { font-size: 42px; font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; }
+  .t-label { font-size: 11px; color: var(--text3); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-top: 2px; }
+  .cook-timer.done .ring-fg { stroke: var(--amber); }
+  .cook-timer.done .t-val { color: var(--amber-dark); }
+  .cook-timer-controls { display: flex; gap: 10px; }
+  .cook-tbtn { padding: 11px 22px; border-radius: 999px; border: 1px solid var(--border-med); background: var(--surface); color: var(--text); font-family: var(--font-body); font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+  .cook-tbtn.primary { background: var(--sage); color: #fff; border-color: var(--sage); }
+
+  .cook-nav { display: flex; gap: 12px; padding: 12px 22px calc(14px + env(safe-area-inset-bottom)); border-top: 1px solid var(--border); background: var(--bg); }
+  .cook-nav button { flex: 1; padding: 15px; border-radius: var(--radius); font-family: var(--font-body); font-size: 15px; font-weight: 700; cursor: pointer; border: none; }
+  .cook-prev { background: var(--surface2); color: var(--text); }
+  .cook-prev:disabled { opacity: .4; }
+  .cook-next { background: var(--sage); color: #fff; }
+  .cook-alert { position: fixed; left: 50%; top: 16%; transform: translateX(-50%) translateY(-8px); background: var(--amber); color: #3a2400; padding: 14px 22px; border-radius: 14px; font-weight: 800; z-index: 4200; box-shadow: var(--shadow-lg); display: none; align-items: center; gap: 8px; max-width: 88%; text-align: center; }
+  .cook-alert.show { display: flex; }
 </style>
 </head>
 <body>
@@ -3375,6 +3521,13 @@
         <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
       </svg>
       Continue with Google
+    </button>
+
+    <button class="apple-btn" onclick="handleAppleSignIn()">
+      <svg class="apple-icon" viewBox="0 0 17 17" xmlns="http://www.w3.org/2000/svg">
+        <path fill="#fff" d="M13.9 12.9c-.24.55-.52 1.06-.85 1.53-.45.64-.82 1.08-1.1 1.32-.44.4-.9.6-1.4.62-.36 0-.79-.1-1.29-.31-.5-.2-.96-.31-1.38-.31-.44 0-.91.1-1.42.31-.51.21-.92.32-1.24.33-.48.02-.96-.19-1.43-.63-.31-.26-.7-.72-1.16-1.38-.5-.7-.9-1.51-1.22-2.44-.34-1-.51-1.97-.51-2.91 0-1.08.23-2.01.7-2.79.37-.63.86-1.12 1.47-1.48.61-.36 1.28-.55 2-.56.38 0 .87.12 1.49.35.62.23 1.01.35 1.18.35.13 0 .57-.14 1.31-.41.7-.25 1.29-.36 1.78-.32 1.32.11 2.31.63 2.97 1.57-1.18.72-1.77 1.72-1.76 3 .01 1 .37 1.83 1.09 2.49.32.31.69.55 1.09.72-.09.25-.18.5-.29.74zM11.44 1.4c0 .81-.3 1.56-.88 2.26-.71.83-1.57 1.31-2.5 1.23-.01-.1-.02-.2-.02-.31 0-.78.34-1.6.94-2.29.3-.35.68-.63 1.15-.86.46-.22.9-.35 1.31-.37.01.11.01.22.01.34z"/>
+      </svg>
+      Continue with Apple
     </button>
 
     <div class="auth-footer">
@@ -3472,9 +3625,6 @@
     <button class="mode-btn active" id="modeCookBtn" onclick="switchMode('cook')">
       <i class="ti ti-chef-hat"></i> Cook a Dish
     </button>
-    <button class="mode-btn" id="modeTakeoutBtn" onclick="switchMode('takeout')">
-      <i class="ti ti-paper-bag"></i> Scan Takeout
-    </button>
     <button class="mode-btn" id="modeCommunityBtn" onclick="switchMode('community')">
       <i class="ti ti-users-group"></i> Community
     </button>
@@ -3491,6 +3641,17 @@
       <button class="recipe-search-go" id="cookSearchGo" onclick="searchCookRecipe()">Search</button>
     </div>
     <div class="recipe-search-hint">Type any dish to cook at home — no photo needed.</div>
+  </div>
+
+  <div class="search-divider"><span>or paste a link</span></div>
+  <div class="recipe-search">
+    <div class="recipe-search-bar">
+      <i class="ti ti-link"></i>
+      <input type="text" id="linkImportInput" placeholder="Instagram, YouTube or TikTok link"
+        autocomplete="off" autocapitalize="off" inputmode="url" onkeydown="if(event.key==='Enter'){importFromLinkInput();}" />
+      <button class="recipe-search-go" id="linkImportGo" onclick="importFromLinkInput()">Import</button>
+    </div>
+    <div class="recipe-search-hint">Paste a recipe reel or video link — we'll turn it into a full recipe.</div>
   </div>
 
   <div class="filter-bar" id="cookFilterBar"></div>
@@ -3652,13 +3813,21 @@
         <button class="lower-btn" onclick="toggleSwap()"><i class="ti ti-leaf" style="font-size:14px;"></i> Lower calories</button>
       </div>
 
-      <div class="recipe-nutrition" id="recipeNutrition" style="display:none;">
-        <div class="macro-grid" id="recipeMacroGrid"></div>
-        <div class="nutri-facts" id="recipeNutriFacts">
-          <div class="nutri-facts-title">Full Nutrition <span class="nutri-perserving">per serving</span></div>
-          <div id="recipeNutriFactsRows"></div>
+      <div id="nutritionSection" style="display:none;">
+        <button class="section-toggle" id="nutritionToggle" onclick="toggleSection('nutrition')" aria-expanded="true">
+          <span class="section-label">Nutritional Facts</span>
+          <i class="ti ti-chevron-down section-chevron"></i>
+        </button>
+        <div class="section-body" id="nutritionBody">
+          <div class="recipe-nutrition" id="recipeNutrition">
+            <div class="macro-grid" id="recipeMacroGrid"></div>
+            <div class="nutri-facts" id="recipeNutriFacts">
+              <div class="nutri-facts-title">Full Nutrition <span class="nutri-perserving">per serving</span></div>
+              <div id="recipeNutriFactsRows"></div>
+            </div>
+            <div class="nutri-disclaimer">Nutrition values are AI estimates based on the recipe's ingredients and may vary with brands, portions, and preparation.</div>
+          </div>
         </div>
-        <div class="nutri-disclaimer">Nutrition values are AI estimates based on the recipe's ingredients and may vary with brands, portions, and preparation.</div>
       </div>
       <div class="swap-panel" id="swapPanel">
         <div class="swap-title"><i class="ti ti-exchange"></i> Healthier substitutions</div>
@@ -3668,18 +3837,26 @@
           <span class="swap-total-val" id="newCalVal">—</span>
         </div>
       </div>
-      <div class="cost-banner" id="costBanner" style="display:none;">
-        <div style="display:flex;align-items:center;gap:14px;">
-          <div class="cost-icon-wrap"><i class="ti ti-shopping-cart"></i></div>
-          <div>
-            <div class="cost-label">Estimated Grocery Cost</div>
-            <div style="display:flex;align-items:baseline;gap:6px;">
-              <span class="cost-value" id="costValue">—</span>
-              <span class="cost-sub">total</span>
+      <div id="costSection" style="display:none;">
+        <button class="section-toggle" id="costToggle" onclick="toggleSection('cost')" aria-expanded="true">
+          <span class="section-label">Estimated Cost</span>
+          <i class="ti ti-chevron-down section-chevron"></i>
+        </button>
+        <div class="section-body" id="costBody">
+          <div class="cost-banner" id="costBanner" style="display:flex;">
+            <div style="display:flex;align-items:center;gap:14px;">
+              <div class="cost-icon-wrap"><i class="ti ti-shopping-cart"></i></div>
+              <div>
+                <div class="cost-label">Estimated Grocery Cost</div>
+                <div style="display:flex;align-items:baseline;gap:6px;">
+                  <span class="cost-value" id="costValue">—</span>
+                  <span class="cost-sub">total</span>
+                </div>
+              </div>
             </div>
+            <div class="cost-disclaimer" id="costDisclaimer">Based on US national average prices</div>
           </div>
         </div>
-        <div class="cost-disclaimer" id="costDisclaimer">Based on US national average prices</div>
       </div>
       <button class="section-toggle" id="equipmentToggle" onclick="toggleSection('equipment')" aria-expanded="true">
         <span class="section-label">Equipment</span>
@@ -3705,6 +3882,10 @@
         <div class="steps-list" id="stepsList"></div>
       </div>
 
+      <button class="cookit-btn" id="cookItBtn" onclick="startCookMode()">
+        <span class="cookit-btn-glow"></span>
+        <i class="ti ti-tools-kitchen-2"></i> Cook It!
+      </button>
       <button class="cooked-btn" id="cookedBtn" onclick="markAsCooked()">
         <i class="ti ti-checks"></i> I cooked this dish
       </button>
@@ -4648,6 +4829,83 @@
     console.error('Supabase init failed:', e);
   }
 
+  // ── Native (Capacitor) auth bridge ──────────────────────────────────────────
+  // In the native app the page origin is localhost/capacitor:, so web-style auth
+  // redirects can't return here. Instead we redirect OAuth + email links to a
+  // custom app URL (com.captureandcook.app://auth/...), catch that deep link, and
+  // finish the session inside the app's webview.
+  const CC_NATIVE = location.protocol === 'capacitor:' ||
+                    location.hostname === 'localhost' ||
+                    location.hostname === '';
+  const CC_SCHEME = 'com.captureandcook.app://auth';
+  const CC_CAP = (window.Capacitor && window.Capacitor.Plugins) || {};
+  const CC_App = CC_CAP.App;
+  const CC_Browser = CC_CAP.Browser;
+
+  // Where auth flows should return. Web behavior is unchanged.
+  function ccRedirect(kind) {
+    if (CC_NATIVE) return kind === 'reset' ? CC_SCHEME + '/reset' : CC_SCHEME + '/callback';
+    if (kind === 'reset') return window.location.origin + '/?type=recovery';
+    return window.location.origin;
+  }
+
+  // Finish an auth flow that returned via the app deep link.
+  async function ccHandleDeepLink(url) {
+    if (!url) return;
+    // Recipe import from a shared link (Share Extension → app):
+    // com.captureandcook.app://import?url=<encoded reel/video link>
+    if (url.indexOf('://import') !== -1) {
+      try {
+        const iu = new URL(url);
+        const link = iu.searchParams.get('url') || iu.searchParams.get('link');
+        if (link) { importFromLink(decodeURIComponent(link)); return; }
+      } catch (e) { /* fall through */ }
+    }
+    if (!supaClient) return;
+    try { if (CC_Browser) await CC_Browser.close(); } catch (e) { /* ignore */ }
+    let u;
+    try { u = new URL(url); } catch (e) { return; }
+    const search = u.search || '';
+    const hash = u.hash || '';
+    // A recovery link must show the "set new password" screen afterward.
+    if (/reset/i.test(u.pathname) || /type=recovery/i.test(search) || /type=recovery/i.test(hash)) {
+      window.__ccRecovery = true;
+      try { sessionStorage.setItem('cc_recovery', '1'); } catch (e) { /* ignore */ }
+    }
+    if (u.searchParams.get('error') || u.searchParams.get('error_code')) {
+      showAuthError('Sign-in was cancelled or failed. Please try again.');
+      return;
+    }
+    try {
+      const code = u.searchParams.get('code');
+      if (code) {
+        await supaClient.auth.exchangeCodeForSession(code);
+      } else if (hash.includes('access_token')) {
+        const hp = new URLSearchParams(hash.replace(/^#/, ''));
+        const access_token = hp.get('access_token');
+        const refresh_token = hp.get('refresh_token');
+        if (access_token && refresh_token) {
+          await supaClient.auth.setSession({ access_token, refresh_token });
+        }
+      }
+      // onAuthStateChange (below) then shows the app or the reset screen.
+    } catch (e) {
+      console.error('Deep-link auth exchange failed:', e);
+      showAuthError('Could not complete sign-in. Please try again.');
+    }
+  }
+
+  if (CC_NATIVE && CC_App && CC_App.addListener) {
+    CC_App.addListener('appUrlOpen', (data) => {
+      if (data && data.url) ccHandleDeepLink(data.url);
+    });
+    // Also handle a cold start opened via the deep link (e.g. tapping the email
+    // confirmation / reset link while the app was closed).
+    if (CC_App.getLaunchUrl) {
+      CC_App.getLaunchUrl().then((res) => { if (res && res.url) ccHandleDeepLink(res.url); }).catch(() => {});
+    }
+  }
+
   let currentUser = null;
 
   // ── Auth State Check ──
@@ -4795,7 +5053,7 @@
     try {
       if (forgotMode === 'password') {
         const { error } = await supaClient.auth.resetPasswordForEmail(email, {
-          redirectTo: window.location.origin + '/?type=recovery'
+          redirectTo: ccRedirect('reset')
         });
         if (error) throw error;
         okEl.innerHTML = '✓ Check your inbox! If an account exists for <strong>' + email + '</strong>, we\'ve sent a password reset link. It may take a minute to arrive — don\'t forget to check your spam folder.';
@@ -4879,7 +5137,7 @@
       const { data, error } = await supaClient.auth.signUp({
         email,
         password,
-        options: { data: { full_name: name, username } }
+        options: { data: { full_name: name, username }, emailRedirectTo: ccRedirect('callback') }
       });
       if (error) throw error;
 
@@ -4892,8 +5150,9 @@
       }
 
       if (data.user && !data.session) {
-        showAuthSuccess('Account created! Please check your email to verify your account, then sign in.');
         switchAuthTab('signin');
+        showEmailSentModal('Verify your email',
+          'We sent a verification link to <b>' + escapeText(email) + '</b>. Tap it to confirm your account — it opens right back in the app. Then sign in.');
       } else if (data.session) {
         currentUser = data.user;
         myUsername = username;
@@ -4910,13 +5169,55 @@
   // ── Google Sign In ──
   async function handleGoogleSignIn() {
     try {
-      const { error } = await supaClient.auth.signInWithOAuth({
-        provider: 'google',
-        options: { redirectTo: window.location.origin }
-      });
-      if (error) throw error;
+      if (CC_NATIVE) {
+        // Native: get the provider URL, open it in an in-app browser, and let the
+        // com.captureandcook.app:// deep link bring the session back into the app.
+        const { data, error } = await supaClient.auth.signInWithOAuth({
+          provider: 'google',
+          options: { redirectTo: ccRedirect('callback'), skipBrowserRedirect: true }
+        });
+        if (error) throw error;
+        if (data && data.url && CC_Browser) {
+          await CC_Browser.open({ url: data.url, presentationStyle: 'popover' });
+        } else {
+          throw new Error('Could not open Google sign-in.');
+        }
+      } else {
+        const { error } = await supaClient.auth.signInWithOAuth({
+          provider: 'google',
+          options: { redirectTo: window.location.origin }
+        });
+        if (error) throw error;
+      }
     } catch (err) {
       showAuthError(err.message || 'Google sign-in failed. Please try again.');
+    }
+  }
+
+  async function handleAppleSignIn() {
+    try {
+      if (CC_NATIVE) {
+        // Native: same pattern as Google — open the provider URL in an in-app
+        // browser and let the com.captureandcook.app:// deep link return the session.
+        const { data, error } = await supaClient.auth.signInWithOAuth({
+          provider: 'apple',
+          options: { redirectTo: ccRedirect('callback'), skipBrowserRedirect: true }
+        });
+        if (error) throw error;
+        if (data && data.url && CC_Browser) {
+          await CC_Browser.open({ url: data.url, presentationStyle: 'popover' });
+        } else {
+          throw new Error('Could not open Apple sign-in.');
+        }
+      } else {
+        const { error } = await supaClient.auth.signInWithOAuth({
+          provider: 'apple',
+          options: { redirectTo: window.location.origin }
+        });
+        if (error) throw error;
+      }
+    } catch (err) {
+      showAuthError(err.message || 'Apple sign-in failed. Please try again.');
     }
   }
 
@@ -5522,6 +5823,63 @@
     }
   }
 
+  // ── Import a recipe from a shared/pasted link (Instagram / YouTube / TikTok) ──
+  function importFromLinkInput() {
+    const el = document.getElementById('linkImportInput');
+    const url = (el && el.value || '').trim();
+    if (!url) { if (el) el.focus(); return; }
+    importFromLink(url);
+  }
+
+  async function importFromLink(url) {
+    if (!url || !/^https?:\/\//i.test(url.trim())) { showToast('Please paste a valid link.'); return; }
+    url = url.trim();
+    hideError();
+    try { if (typeof switchMode === 'function') switchMode('cook'); } catch (e) { /* ignore */ }
+    const upm = document.getElementById('userProfileModal'); if (upm) upm.classList.remove('open');
+    const goBtn = document.getElementById('linkImportGo');
+    if (goBtn) { goBtn.disabled = true; goBtn.textContent = 'Importing…'; }
+    const opts = document.getElementById('cookOptions'); if (opts) opts.classList.remove('visible');
+    document.getElementById('resultsSection').classList.remove('visible');
+    document.getElementById('newAnalysisBtn').classList.remove('visible');
+    document.getElementById('loadingSection').classList.add('visible');
+    document.getElementById('dishDetectedLabel').textContent = 'Reading the link…';
+    resetStages('ls'); activateStage('ls', 1); activateStage('ls', 2);
+    try {
+      const response = await fetch('/api/import-recipe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error || 'Could not import that link (' + response.status + ').');
+      }
+      const recipe = await response.json();
+      if (recipe && recipe.error) throw new Error(recipe.error);
+      if (!recipe || !recipe.dish) throw new Error('Could not read a recipe from that link.');
+      activateStage('ls', 3);
+      detectedDish = recipe.searchKeyword || recipe.dish;
+      currentRecipeId = await addToHistory(recipe, null);
+      const btn = document.getElementById('cookedBtn');
+      if (btn) { btn.classList.remove('cooked'); btn.innerHTML = '<i class="ti ti-checks"></i> I cooked this dish'; }
+      renderRecipe(recipe);
+      document.getElementById('dishDetectedLabel').textContent = (recipe.dish || 'Recipe') + ' imported';
+      const linkEl = document.getElementById('linkImportInput'); if (linkEl) linkEl.value = '';
+      setTimeout(() => {
+        document.getElementById('loadingSection').classList.remove('visible');
+        document.getElementById('resultsSection').classList.add('visible');
+        document.getElementById('newAnalysisBtn').classList.add('visible');
+        document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 500);
+    } catch (err) {
+      document.getElementById('loadingSection').classList.remove('visible');
+      showError(err.message || 'Could not import that link.');
+    } finally {
+      if (goBtn) { goBtn.disabled = false; goBtn.textContent = 'Import'; }
+    }
+  }
+
   // ── Text search: Cook tab (home recipes only) ──
   // ── Cook text search: step 1 — fetch recipe variations ──
   async function searchCookRecipe() {
@@ -5959,7 +6317,7 @@
   // Takeout tab's macro grid + full-nutrition list. Hides gracefully if a
   // recipe has no nutrition data (e.g. saved before this feature existed).
   function renderRecipeNutrition(r) {
-    const wrap = document.getElementById('recipeNutrition');
+    const wrap = document.getElementById('nutritionSection');
     const n = r && r.nutrition ? r.nutrition : null;
     if (!n || typeof n !== 'object') { wrap.style.display = 'none'; return; }
 
@@ -6054,9 +6412,9 @@
     if (r.totalCost !== undefined && r.totalCost !== null) {
       document.getElementById('costValue').textContent = '$' + (Number(r.totalCost) * factor).toFixed(2);
       if (r.costNote) document.getElementById('costDisclaimer').textContent = r.costNote;
-      document.getElementById('costBanner').style.display = 'flex';
+      document.getElementById('costSection').style.display = '';
     } else {
-      document.getElementById('costBanner').style.display = 'none';
+      document.getElementById('costSection').style.display = 'none';
     }
 
     // Steps (unchanged)
@@ -6256,7 +6614,7 @@
   }
 
   function expandAllSections() {
-    ['equipment', 'ingredients', 'method'].forEach(which => {
+    ['equipment', 'ingredients', 'method', 'nutrition', 'cost'].forEach(which => {
       const toggle = document.getElementById(which + 'Toggle');
       const body = document.getElementById(which + 'Body');
       if (toggle && body) {
@@ -6265,6 +6623,280 @@
         toggle.setAttribute('aria-expanded', 'true');
       }
     });
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // Cook It! — guided step-by-step cooking with per-step timers, alerts & anims
+  // ══════════════════════════════════════════════════════════════════════════
+  let cookSteps = [];
+  let cookIndex = 0;
+  let cookTimer = { id: null, remaining: 0, total: 0, running: false, notifId: null };
+  let cookAudioCtx = null;
+  const COOK_RING_LEN = 2 * Math.PI * 86;
+
+  // Pick a modern animated actor for an instruction.
+  function cookAnimFor(text) {
+    const t = (text || '').toLowerCase();
+    const has = (...w) => w.some(x => t.includes(x));
+    if (has('chop','dice','slice','mince','cut','julienne','grate')) return { emoji: '🔪', motion: 'm-chop', particles: '' };
+    if (has('deep-fry','deep fry')) return { emoji: '🍟', motion: 'm-bob', particles: 'spark' };
+    if (has('saute','sauté','stir-fry','stir fry','fry','sear','brown','pan')) return { emoji: '🍳', motion: 'm-toss', particles: 'spark' };
+    if (has('boil','blanch')) return { emoji: '🍲', motion: 'm-bob', particles: 'bubble' };
+    if (has('simmer','stew','poach','reduce','braise')) return { emoji: '🥘', motion: 'm-bob', particles: 'bubble' };
+    if (has('bake','roast','oven','broil')) return { emoji: '🔥', motion: 'm-pulse', particles: 'heat' };
+    if (has('grill','barbecue','bbq','char')) return { emoji: '🔥', motion: 'm-pulse', particles: 'spark' };
+    if (has('whisk','beat','mix','stir','combine','fold','cream','blend','purée','puree')) return { emoji: '🥣', motion: 'm-spin', particles: '' };
+    if (has('season','sprinkle','salt','pepper','garnish','dust','drizzle','top with')) return { emoji: '🧂', motion: 'm-shake', particles: 'fall' };
+    if (has('knead','dough','roll','shape','wrap')) return { emoji: '🥟', motion: 'm-bob', particles: '' };
+    if (has('marinate','chill','refrigerate','rest','cool','set','soak')) return { emoji: '⏳', motion: 'm-bob', particles: '' };
+    if (has('serve','plate','enjoy')) return { emoji: '🍽️', motion: 'm-bob', particles: 'steam' };
+    return { emoji: '👨‍🍳', motion: 'm-bob', particles: 'steam' };
+  }
+
+  function cookParticles(kind) {
+    if (!kind) return '';
+    let html = '';
+    if (kind === 'steam') for (let i=0;i<4;i++) html += '<div class="p-steam" style="left:'+(38+i*8)+'%;animation-delay:'+(i*0.6)+'s;"></div>';
+    if (kind === 'bubble') for (let i=0;i<6;i++) html += '<div class="p-bubble" style="left:'+(30+i*8)+'%;width:'+(9+Math.round(Math.random()*7))+'px;height:'+(9+Math.round(Math.random()*7))+'px;animation-delay:'+(i*0.3)+'s;"></div>';
+    if (kind === 'spark') for (let i=0;i<7;i++) html += '<div class="p-spark" style="left:'+(35+Math.round(Math.random()*30))+'%;--dx:'+(Math.round(Math.random()*40-20))+'px;animation-delay:'+(i*0.15)+'s;"></div>';
+    if (kind === 'heat') html = '<div class="p-heat"></div>';
+    if (kind === 'fall') for (let i=0;i<8;i++) html += '<div class="p-fall" style="left:'+(30+i*6)+'%;animation-delay:'+(i*0.18)+'s;"></div>';
+    return '<div class="cook-particles">'+html+'</div>';
+  }
+
+  // Parse a cooking duration → seconds (uses the LAST duration in the step, e.g. "…for 30 minutes").
+  function cookParseDuration(text) {
+    const t = (text || '').toLowerCase();
+    const re = /(\d+(?:\.\d+)?)(?:\s*(?:-|to|–|—)\s*(\d+(?:\.\d+)?))?\s*(hours?|hrs?|minutes?|mins?|seconds?|secs?)\b/g;
+    let m, last = null;
+    while ((m = re.exec(t)) !== null) last = m;
+    if (!last) return null;
+    const lo = parseFloat(last[1]);
+    const hi = last[2] ? parseFloat(last[2]) : lo;
+    const val = (lo + hi) / 2;
+    const unit = last[3];
+    if (unit[0] === 'h') return Math.round(val * 3600);
+    if (unit[0] === 'm') return Math.round(val * 60);
+    return Math.round(val);
+  }
+
+  function cookFmt(s) {
+    s = Math.max(0, Math.round(s));
+    const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
+    if (h) return h+':'+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');
+    return m+':'+String(sec).padStart(2,'0');
+  }
+
+  function cookHighlight(text) {
+    return escapeText(text).replace(/(\d+(?:\.\d+)?(?:\s*(?:-|to|–|—)\s*\d+(?:\.\d+)?)?\s*(?:hours?|hrs?|minutes?|mins?|seconds?|secs?)|\d+\s*°?\s?[CF]\b)/gi, '<b>$1</b>');
+  }
+
+  function cookStepSummary(step) {
+    const s = (step || '').replace(/\s+/g, ' ').trim();
+    return s.length > 64 ? s.slice(0, 61) + '…' : s;
+  }
+
+  async function startCookMode() {
+    const r = baseRecipe;
+    if (!r || !Array.isArray(r.steps) || !r.steps.length) { showToast('No steps to cook yet.'); return; }
+    cookSteps = r.steps.slice();
+    cookIndex = 0;
+    buildCookOverlay();
+    document.getElementById('cookOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    renderCookStep();
+    try {
+      const LN = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications;
+      if (LN) { const p = await LN.checkPermissions(); if (p.display !== 'granted') await LN.requestPermissions(); }
+    } catch (e) { /* ignore */ }
+  }
+
+  function buildCookOverlay() {
+    if (document.getElementById('cookOverlay')) return;
+    const el = document.createElement('div');
+    el.className = 'cook-overlay'; el.id = 'cookOverlay';
+    el.innerHTML =
+      '<div class="cook-top">' +
+        '<button class="cook-close" onclick="closeCookMode()" aria-label="Close">&times;</button>' +
+        '<div class="cook-progress-wrap">' +
+          '<div class="cook-step-count" id="cookStepCount"></div>' +
+          '<div class="cook-progress"><div class="cook-progress-fill" id="cookProgressFill"></div></div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="cook-body">' +
+        '<div class="cook-stage" id="cookStage"></div>' +
+        '<div class="cook-step-text" id="cookStepText"></div>' +
+        '<div class="cook-timer" id="cookTimer">' +
+          '<div class="cook-timer-ring">' +
+            '<svg viewBox="0 0 200 200"><circle class="ring-bg" cx="100" cy="100" r="86"></circle>' +
+            '<circle class="ring-fg" id="cookRingFg" cx="100" cy="100" r="86"></circle></svg>' +
+            '<div class="cook-timer-time"><div class="t-val" id="cookTimeVal">0:00</div><div class="t-label" id="cookTimeLabel">Timer</div></div>' +
+          '</div>' +
+          '<div class="cook-timer-controls">' +
+            '<button class="cook-tbtn primary" id="cookTimerBtn" onclick="cookTimerToggle()"><i class="ti ti-player-play"></i> Start</button>' +
+            '<button class="cook-tbtn" onclick="cookTimerReset()"><i class="ti ti-refresh"></i> Reset</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="cook-nav">' +
+        '<button class="cook-prev" id="cookPrevBtn" onclick="cookNav(-1)">Back</button>' +
+        '<button class="cook-next" id="cookNextBtn" onclick="cookNav(1)">Next step</button>' +
+      '</div>';
+    document.body.appendChild(el);
+    const al = document.createElement('div');
+    al.className = 'cook-alert'; al.id = 'cookAlert';
+    document.body.appendChild(al);
+  }
+
+  function renderCookStep() {
+    cookTimerClear();
+    const total = cookSteps.length;
+    const step = cookSteps[cookIndex];
+    document.getElementById('cookStepCount').textContent = 'Step ' + (cookIndex+1) + ' of ' + total;
+    document.getElementById('cookProgressFill').style.width = ((cookIndex+1)/total*100) + '%';
+    document.getElementById('cookStepText').innerHTML = cookHighlight(step);
+
+    const anim = cookAnimFor(step);
+    document.getElementById('cookStage').innerHTML =
+      cookParticles(anim.particles) + '<div class="cook-actor ' + anim.motion + '">' + anim.emoji + '</div>';
+
+    const secs = cookParseDuration(step);
+    const timerEl = document.getElementById('cookTimer');
+    if (secs && secs >= 5) {
+      cookTimer.total = secs; cookTimer.remaining = secs; cookTimer.running = false;
+      timerEl.classList.add('visible'); timerEl.classList.remove('done');
+      document.getElementById('cookTimeLabel').textContent = 'Timer';
+      document.getElementById('cookTimerBtn').innerHTML = '<i class="ti ti-player-play"></i> Start';
+      cookTimerRender();
+    } else {
+      timerEl.classList.remove('visible');
+    }
+
+    document.getElementById('cookPrevBtn').disabled = (cookIndex === 0);
+    document.getElementById('cookNextBtn').textContent = (cookIndex === total-1) ? 'Finish ✓' : 'Next step';
+  }
+
+  function cookTimerRender() {
+    document.getElementById('cookTimeVal').textContent = cookFmt(cookTimer.remaining);
+    const fg = document.getElementById('cookRingFg');
+    const frac = cookTimer.total ? cookTimer.remaining / cookTimer.total : 0;
+    fg.style.strokeDasharray = COOK_RING_LEN;
+    fg.style.strokeDashoffset = COOK_RING_LEN * (1 - frac);
+  }
+
+  function cookTimerToggle() {
+    if (cookTimer.running) { cookTimerPause(); return; }
+    if (cookTimer.remaining <= 0) return;
+    cookTimer.running = true;
+    // Unlock/resume audio inside this user gesture so the chime can fire later (iOS).
+    try {
+      if (!cookAudioCtx) { const C = window.AudioContext || window.webkitAudioContext; if (C) cookAudioCtx = new C(); }
+      if (cookAudioCtx && cookAudioCtx.state === 'suspended') cookAudioCtx.resume();
+    } catch (e) { /* ignore */ }
+    document.getElementById('cookTimerBtn').innerHTML = '<i class="ti ti-player-pause"></i> Pause';
+    document.getElementById('cookTimeLabel').textContent = 'Remaining';
+    cookScheduleNotif(cookTimer.remaining);
+    const endAt = Date.now() + cookTimer.remaining * 1000;
+    cookTimer.id = setInterval(() => {
+      cookTimer.remaining = Math.max(0, Math.round((endAt - Date.now()) / 1000));
+      cookTimerRender();
+      if (cookTimer.remaining <= 0) cookTimerDone();
+    }, 250);
+  }
+
+  function cookTimerPause() {
+    cookTimer.running = false;
+    clearInterval(cookTimer.id); cookTimer.id = null; cookCancelNotif();
+    document.getElementById('cookTimerBtn').innerHTML = '<i class="ti ti-player-play"></i> Resume';
+  }
+
+  function cookTimerReset() {
+    clearInterval(cookTimer.id); cookTimer.id = null; cookCancelNotif();
+    cookTimer.running = false; cookTimer.remaining = cookTimer.total;
+    document.getElementById('cookTimer').classList.remove('done');
+    document.getElementById('cookTimeLabel').textContent = 'Timer';
+    document.getElementById('cookTimerBtn').innerHTML = '<i class="ti ti-player-play"></i> Start';
+    cookTimerRender();
+  }
+
+  function cookTimerClear() {
+    clearInterval(cookTimer.id); cookTimer.id = null; cookTimer.running = false; cookCancelNotif();
+  }
+
+  function cookTimerDone() {
+    clearInterval(cookTimer.id); cookTimer.id = null; cookTimer.running = false;
+    cookTimer.remaining = 0; cookTimerRender();
+    const timerEl = document.getElementById('cookTimer');
+    timerEl.classList.add('done');
+    document.getElementById('cookTimeVal').textContent = 'Done';
+    document.getElementById('cookTimeLabel').textContent = "Time's up";
+    document.getElementById('cookTimerBtn').innerHTML = '<i class="ti ti-check"></i> Done';
+    cookBeep();
+    cookCancelNotif();
+    cookShowAlert("Time's up — " + cookStepSummary(cookSteps[cookIndex]));
+  }
+
+  function cookShowAlert(text) {
+    const a = document.getElementById('cookAlert');
+    if (!a) return;
+    a.innerHTML = '<i class="ti ti-bell-ringing"></i> ' + escapeText(text);
+    a.classList.add('show');
+    clearTimeout(a._t);
+    a._t = setTimeout(() => a.classList.remove('show'), 6500);
+  }
+
+  function cookBeep() {
+    try {
+      if (!cookAudioCtx) { const C = window.AudioContext || window.webkitAudioContext; if (!C) return; cookAudioCtx = new C(); }
+      if (cookAudioCtx.state === 'suspended') cookAudioCtx.resume();
+      const ctx = cookAudioCtx;
+      [0, 0.28, 0.56].forEach(t => {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = 'sine'; o.frequency.value = 880;
+        o.connect(g); g.connect(ctx.destination);
+        g.gain.setValueAtTime(0.0001, ctx.currentTime + t);
+        g.gain.exponentialRampToValueAtTime(0.4, ctx.currentTime + t + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + t + 0.22);
+        o.start(ctx.currentTime + t); o.stop(ctx.currentTime + t + 0.24);
+      });
+    } catch (e) { /* ignore */ }
+  }
+
+  async function cookScheduleNotif(seconds) {
+    try {
+      const LN = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications;
+      if (!LN) return;
+      cookTimer.notifId = Math.floor(Math.random() * 90000) + 1000;
+      await LN.schedule({ notifications: [{
+        id: cookTimer.notifId,
+        title: 'Capture & Cook — Timer done',
+        body: cookStepSummary(cookSteps[cookIndex]),
+        schedule: { at: new Date(Date.now() + seconds * 1000) }
+      }] });
+    } catch (e) { /* ignore */ }
+  }
+
+  async function cookCancelNotif() {
+    try {
+      const LN = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications;
+      if (LN && cookTimer.notifId) await LN.cancel({ notifications: [{ id: cookTimer.notifId }] });
+    } catch (e) { /* ignore */ }
+    cookTimer.notifId = null;
+  }
+
+  function cookNav(dir) {
+    const total = cookSteps.length;
+    if (dir > 0 && cookIndex === total - 1) { closeCookMode(); showToast('Nice work — enjoy your dish! 🍽️'); return; }
+    cookIndex = Math.min(total - 1, Math.max(0, cookIndex + dir));
+    renderCookStep();
+    const b = document.querySelector('.cook-body'); if (b) b.scrollTop = 0;
+  }
+
+  function closeCookMode() {
+    cookTimerClear();
+    const el = document.getElementById('cookOverlay');
+    if (el) el.classList.remove('open');
+    document.body.style.overflow = '';
   }
 
   // Copycat (takeout) collapsible sections — separate IDs from the Cook tab
@@ -6391,7 +7023,7 @@
     }
     try {
       const { error } = await supaClient.auth.resetPasswordForEmail(currentUser.email, {
-        redirectTo: window.location.origin
+        redirectTo: ccRedirect('reset')
       });
       if (error) throw error;
       showEmailSentModal('Password reset link sent', 'We emailed a secure link to <b>' + escapeText(currentUser.email) + '</b>. Open it to set a new password. Check your spam folder if you don\'t see it within a minute.');
@@ -6421,7 +7053,7 @@
     try {
       const { error } = await supaClient.auth.updateUser(
         { email: newEmail },
-        { emailRedirectTo: window.location.origin }
+        { emailRedirectTo: ccRedirect('email') }
       );
       if (error) throw error;
       showEmailSentModal('Verification email sent',
@@ -6449,6 +7081,10 @@
   }
 
   function openNewPasswordModal() {
+    // Dismiss any leftover modals (e.g. the "reset link sent" confirmation that
+    // was showing when the reset was requested) so the reset screen isn't buried.
+    document.getElementById('emailSentModal').classList.remove('open');
+    document.getElementById('forgotModal').classList.remove('open');
     document.getElementById('newPasswordError').classList.remove('visible');
     document.getElementById('newPasswordInput').value = '';
     document.getElementById('newPasswordConfirm').value = '';
@@ -6912,7 +7548,6 @@
   // ── Mode Switch (Cook vs Takeout) ──
   function switchMode(mode) {
     document.getElementById('modeCookBtn').classList.toggle('active', mode === 'cook');
-    document.getElementById('modeTakeoutBtn').classList.toggle('active', mode === 'takeout');
     document.getElementById('modeCommunityBtn').classList.toggle('active', mode === 'community');
     document.getElementById('cookView').classList.toggle('active', mode === 'cook');
     document.getElementById('takeoutView').classList.toggle('active', mode === 'takeout');
@@ -8010,7 +8645,12 @@
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(Object.assign({ access_token: token, action }, payload || {}))
     });
-    if (!res.ok) { return null; }
+    if (!res.ok) {
+      let d = {}; try { d = await res.json(); } catch (e) { /* ignore */ }
+      window.__lastFollowError = (d && (d.detail || d.error)) || ('HTTP ' + res.status);
+      console.warn('follow-action ' + action + ' failed:', res.status, window.__lastFollowError);
+      return null;
+    }
     return await res.json();
   }
 
@@ -8048,7 +8688,7 @@
     const wrap = document.getElementById('upFollowWrap');
     if (wrap) wrap.innerHTML = '<button class="follow-btn pending" disabled><i class="ti ti-loader-2"></i> …</button>';
     const out = await followAction('follow', { target_id: userId });
-    if (!out) { showToast('Could not follow. Try again.'); renderFollowButton(userId); return; }
+    if (!out) { showToast(window.__lastFollowError ? ('Follow failed: ' + window.__lastFollowError) : 'Could not follow. Try again.'); renderFollowButton(userId); return; }
     if (out.status === 'pending') { showToast('Follow request sent'); }
     else { showToast('Following'); }
     renderFollowButton(userId);
@@ -8127,10 +8767,12 @@
     body.innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="ti ti-loader-2"></i></div>Loading…</div>';
     modal.classList.add('open');
     try {
+      const { data: sess } = await supaClient.auth.getSession();
+      const token = sess && sess.session && sess.session.access_token;
       const res = await fetch('/api/user-profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: userId })
+        body: JSON.stringify({ user_id: userId, access_token: token || null })
       });
       if (!res.ok) throw new Error('not ok');
       const { profile, favorites, followerCount, followingCount, posts } = await res.json();
@@ -8207,6 +8849,13 @@
       } else {
         window.__viewedFavorites = {};
         favorites.forEach(f => { window.__viewedFavorites[f.id] = f; });
+        // Build a set of MY favorite dish names so we can flag ones we share.
+        const myFavNames = new Set(
+          (typeof getHistory === 'function' ? getHistory() : [])
+            .filter(h => h && h.favorite)
+            .map(h => (((h.recipe_data && (h.recipe_data.dish || h.recipe_data.title || h.recipe_data.name)) || h.dish_name || '') + '').trim().toLowerCase())
+            .filter(Boolean)
+        );
         html += '<div style="font-weight:600;margin:16px 0 10px;font-size:14px;">' +
           '<i class="ti ti-heart-filled" style="color:#e74c3c;vertical-align:-2px;"></i> ' +
           (isMe ? 'Your' : escapeText(profile.username) + '\'s') + ' favorites' +
@@ -8216,12 +8865,16 @@
             let name = 'Saved dish';
             const r = f.recipe_data || {};
             name = (r && (r.dish || r.title || r.name)) || f.dish_name || name;
+            const isMutual = !isMe && myFavNames.has((name + '').trim().toLowerCase());
             const img = f.image_url;
             const thumb = img ? '<div class="history-thumb" style="background:center/cover no-repeat url(\'' + img + '\');"></div>'
               : '<div class="history-thumb"><i class="ti ti-tools-kitchen-2"></i></div>';
+            const sub = isMutual
+              ? '<div class="history-sub" style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--sage-dark);background:var(--sage-50);padding:2px 9px;border-radius:999px;margin-top:3px;"><i class="ti ti-heart-filled"></i> You both love this</div>'
+              : '<div class="history-sub" style="font-size:12px;color:var(--text3);">Tap to view recipe</div>';
             return '<div class="history-row" style="cursor:pointer;" onclick="openViewedFavorite(\'' + f.id + '\')">' + thumb +
               '<div class="history-info"><div class="history-name">' + escapeText(name) + '</div>' +
-              '<div class="history-sub" style="font-size:12px;color:var(--text3);">Tap to view recipe</div></div>' +
+              sub + '</div>' +
               '<i class="ti ti-chevron-right" style="color:var(--text3);align-self:center;"></i></div>';
           }).join('');
       }
@@ -8538,7 +9191,7 @@
       const body = notifText(n).replace(/<[^>]+>/g, '');
       const note = new Notification('Capture & Cook', {
         body: body,
-        icon: '/icon-192.png',
+        icon: '/icon-192.png?v=2',
         tag: 'cc-notif-' + n.id
       });
       note.onclick = () => { window.focus(); if (n.post_id && typeof openNotif === 'function') openNotif(n.id, n.post_id); };

@@ -1,0 +1,28 @@
+# Secrets — never commit these
+*.p8
+*.p12
+*.mobileprovision
+.env
+.env.*
+
+# Dependencies
+node_modules/
+
+# Build output
+build/
+www/
+dist/
+
+# iOS / Xcode
+ios/App/Pods/
+ios/App/build/
+DerivedData/
+*.xcuserstate
+
+# Android
+android/app/build/
+android/build/
+android/.gradle/
+
+# macOS
+.DS_Store
