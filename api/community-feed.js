@@ -31,6 +31,21 @@ export default async function handler(req, res) {
     const { access_token, mode } = req.body || {};
     if (access_token) callerId = await verifyToken(access_token); // invalid/forged → treated as anonymous
 
+    // Blocks (both directions): users the caller blocked, and users who blocked
+    // the caller, are mutually invisible in the feed.
+    let blockedIds = [];
+    if (callerId) {
+      try {
+        const br = await fetch(
+          `${SUPABASE_URL}/rest/v1/blocks?select=blocker_id,blocked_id&or=(blocker_id.eq.${callerId},blocked_id.eq.${callerId})`,
+          { headers }
+        );
+        const brows = br.ok ? await br.json() : [];
+        blockedIds = [...new Set(brows.map(b => b.blocker_id === callerId ? b.blocked_id : b.blocker_id))];
+      } catch (e) { /* no blocks table yet or error → treat as none */ }
+    }
+    const blockedSet = new Set(blockedIds);
+
     // If "following" mode, get the ids the caller follows (accepted only).
     // Returns an empty feed if they follow no one.
     let followingIds = null;
@@ -41,9 +56,9 @@ export default async function handler(req, res) {
         { headers }
       );
       const frows = fr.ok ? await fr.json() : [];
-      followingIds = frows.map(x => x.following_id);
+      followingIds = frows.map(x => x.following_id).filter(id => !blockedSet.has(id));
       if (!followingIds.length) {
-        return res.status(200).json({ posts: [], reactions: [], profiles: [], callerId, mode });
+        return res.status(200).json({ posts: [], reactions: [], profiles: [], callerId, mode, blockedIds });
       }
     }
 
@@ -58,10 +73,13 @@ export default async function handler(req, res) {
       const t = await postsRes.text().catch(() => '');
       return res.status(502).json({ error: 'Could not read posts.', detail: t.slice(0, 200) });
     }
-    const posts = await postsRes.json();
+    let posts = await postsRes.json();
+    if (Array.isArray(posts) && blockedSet.size) {
+      posts = posts.filter(p => !blockedSet.has(p.user_id));
+    }
 
     if (!Array.isArray(posts) || posts.length === 0) {
-      return res.status(200).json({ posts: [], reactions: [], profiles: [], callerId, mode });
+      return res.status(200).json({ posts: [], reactions: [], profiles: [], callerId, mode, blockedIds });
     }
 
     // 2) Reactions for those posts
@@ -86,7 +104,7 @@ export default async function handler(req, res) {
       profiles = profRes.ok ? await profRes.json() : [];
     }
 
-    return res.status(200).json({ posts, reactions, profiles, callerId });
+    return res.status(200).json({ posts, reactions, profiles, callerId, blockedIds });
   } catch (e) {
     return res.status(500).json({ error: 'Server error reading feed.', detail: String(e && e.message || e).slice(0, 200) });
   }

@@ -2723,7 +2723,19 @@
     text-align: center;
     line-height: 1.5;
     font-style: italic;
+    margin-bottom: 6px;
+  }
+  .nutri-sources {
+    font-size: 11px;
+    color: var(--text3);
+    text-align: center;
+    line-height: 1.6;
     margin-bottom: 1.5rem;
+  }
+  .nutri-sources a {
+    color: var(--sage);
+    text-decoration: underline;
+    cursor: pointer;
   }
 
   /* ── Healthier Copycat ── */
@@ -3048,6 +3060,8 @@
   .follow-btn:hover { filter: brightness(1.05); }
   .follow-btn.following { background: var(--surface2); color: var(--text2); border: 0.5px solid var(--border); }
   .follow-btn.pending { background: var(--surface2); color: var(--text3); border: 0.5px solid var(--border); cursor: default; }
+  .follow-btn.blockbtn { background: #b3261e; color: #fff; border: 0.5px solid #b3261e; margin-left: 8px; }
+  .follow-btn.blockbtn.subtle { background: var(--surface2); color: #b3261e; border: 0.5px solid var(--border); }
   .req-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 0.5px solid var(--border); }
   .req-actions { margin-left: auto; display: flex; gap: 6px; }
   .req-approve, .req-decline {
@@ -3825,7 +3839,8 @@
               <div class="nutri-facts-title">Full Nutrition <span class="nutri-perserving">per serving</span></div>
               <div id="recipeNutriFactsRows"></div>
             </div>
-            <div class="nutri-disclaimer">Nutrition values are AI estimates based on the recipe's ingredients and may vary with brands, portions, and preparation.</div>
+            <div class="nutri-disclaimer">Nutrition values are AI estimates based on the recipe's ingredients and may vary with brands, portions, and preparation. This is not medical or dietary advice.</div>
+            <div class="nutri-sources">Sources: nutrient and calorie estimates are based on standard reference values from the <a onclick="openExternal('https://fdc.nal.usda.gov/'); return false;">USDA FoodData Central database</a> and the <a onclick="openExternal('https://www.fda.gov/food/nutrition-facts-label/daily-value-nutrition-and-supplement-facts-labels'); return false;">FDA Daily Value guidelines</a>.</div>
           </div>
         </div>
       </div>
@@ -4019,7 +4034,8 @@
         <span id="nutriNote"></span>
       </div>
 
-      <div class="nutri-disclaimer">Nutrition values are based on the restaurant's published figures as identified from your photo. Actual values may vary with size, add-ons, and preparation.</div>
+      <div class="nutri-disclaimer">Nutrition values are based on the restaurant's published figures as identified from your photo. Actual values may vary with size, add-ons, and preparation. This is not medical or dietary advice.</div>
+      <div class="nutri-sources">Sources: nutrient and calorie estimates are based on standard reference values from the <a onclick="openExternal('https://fdc.nal.usda.gov/'); return false;">USDA FoodData Central database</a> and the <a onclick="openExternal('https://www.fda.gov/food/nutrition-facts-label/daily-value-nutrition-and-supplement-facts-labels'); return false;">FDA Daily Value guidelines</a>.</div>
 
       <button class="copycat-cta" id="copycatBtn" onclick="runCopycatRecipe()">
         <i class="ti ti-salad"></i> Make it healthier at home
@@ -4841,6 +4857,15 @@
   const CC_CAP = (window.Capacitor && window.Capacitor.Plugins) || {};
   const CC_App = CC_CAP.App;
   const CC_Browser = CC_CAP.Browser;
+
+  // Open an external website (e.g. a citation source). Native uses the in-app
+  // browser sheet; web opens a new tab.
+  function openExternal(url) {
+    try {
+      if (CC_NATIVE && CC_Browser) { CC_Browser.open({ url }); return; }
+    } catch (e) { /* fall through to window.open */ }
+    window.open(url, '_blank', 'noopener');
+  }
 
   // Where auth flows should return. Web behavior is unchanged.
   function ccRedirect(kind) {
@@ -6595,7 +6620,8 @@
   }
 
   function allergyDisclaimerHTML() {
-    return '<div class="allergy-disclaimer">⚠️ This is an automated check based on ingredient names and may not catch everything (including hidden ingredients or cross-contamination). If you have a serious allergy, always verify labels and ingredients yourself.</div>';
+    return '<div class="allergy-disclaimer">⚠️ This is an automated check based on ingredient names and may not catch everything (including hidden ingredients or cross-contamination). If you have a serious allergy, always verify labels and ingredients yourself. This is not medical advice.</div>' +
+      '<div class="nutri-sources">Allergen categories are based on the <a onclick="openExternal(\'https://www.fda.gov/food/food-labeling-nutrition/food-allergies\'); return false;">FDA\'s major food allergens list</a>.</div>';
   }
 
   function escapeHtml(str) {
@@ -8195,6 +8221,7 @@
           posts = out.posts;
           reactions = out.reactions;
           window.__feedProfiles = out.profiles || [];
+          window.__blockedIds = new Set(out.blockedIds || []);
         }
       } catch (e) { /* fall back to direct read below */ }
 
@@ -8449,7 +8476,10 @@
         .order('created_at', { ascending: true })
         .limit(300);
       if (error) throw error;
-      const all = data || [];
+      let all = data || [];
+      // Hide comments from users the viewer has blocked (or who blocked them).
+      const blocked = window.__blockedIds;
+      if (blocked && blocked.size) all = all.filter(c => !blocked.has(c.user_id));
       // Split into top-level comments and replies keyed by parent
       const tops = all.filter(c => !c.parent_id);
       const repliesByParent = {};
@@ -8667,21 +8697,49 @@
     wrap.innerHTML = '<button class="follow-btn" onclick="doFollow(\'' + userId + '\')"><i class="ti ti-user-plus"></i> Follow</button>';
 
     // Determine relationship via the API (works in Chrome; no direct Supabase).
-    let state = 'none';
+    let state = 'none', iBlocked = false;
     try {
       const out = await followAction('follow_status', { target_id: userId });
       if (out && out.state) state = out.state;
+      const bs = await followAction('block_status', { target_id: userId });
+      iBlocked = !!(bs && bs.blocked);
     } catch (e) { /* keep default Follow button */ }
 
-    if (state === 'following') {
+    const blockBtn = iBlocked
+      ? '<button class="follow-btn blockbtn" onclick="doUnblock(\'' + userId + '\')"><i class="ti ti-ban"></i> Unblock</button>'
+      : '<button class="follow-btn blockbtn subtle" onclick="doBlock(\'' + userId + '\')"><i class="ti ti-ban"></i> Block</button>';
+
+    if (iBlocked) {
+      // Blocked users can't be followed; only offer Unblock.
+      wrap.innerHTML = blockBtn;
+    } else if (state === 'following') {
       // "Following" shows as a label next to the username; button says Unfollow.
       if (badge) badge.style.display = 'block';
-      wrap.innerHTML = '<button class="follow-btn following" onclick="doUnfollow(\'' + userId + '\')"><i class="ti ti-user-minus"></i> Unfollow</button>';
+      wrap.innerHTML = '<button class="follow-btn following" onclick="doUnfollow(\'' + userId + '\')"><i class="ti ti-user-minus"></i> Unfollow</button>' + blockBtn;
     } else if (state === 'pending') {
-      wrap.innerHTML = '<button class="follow-btn pending" disabled><i class="ti ti-clock"></i> Requested</button>';
+      wrap.innerHTML = '<button class="follow-btn pending" disabled><i class="ti ti-clock"></i> Requested</button>' + blockBtn;
     } else {
-      wrap.innerHTML = '<button class="follow-btn" onclick="doFollow(\'' + userId + '\')"><i class="ti ti-user-plus"></i> Follow</button>';
+      wrap.innerHTML = '<button class="follow-btn" onclick="doFollow(\'' + userId + '\')"><i class="ti ti-user-plus"></i> Follow</button>' + blockBtn;
     }
+  }
+
+  async function doBlock(userId) {
+    if (!confirm('Block this user? You won\'t see each other\'s posts or comments, and any follows between you are removed.')) return;
+    const out = await followAction('block', { target_id: userId });
+    if (!out) { showToast('Could not block. Try again.'); return; }
+    if (!window.__blockedIds) window.__blockedIds = new Set();
+    window.__blockedIds.add(userId);
+    showToast('User blocked');
+    renderFollowButton(userId);
+    try { loadFeed(); } catch (e) { /* feed refreshes next open */ }
+  }
+  async function doUnblock(userId) {
+    const out = await followAction('unblock', { target_id: userId });
+    if (!out) { showToast('Could not unblock. Try again.'); return; }
+    if (window.__blockedIds) window.__blockedIds.delete(userId);
+    showToast('User unblocked');
+    renderFollowButton(userId);
+    try { loadFeed(); } catch (e) { /* feed refreshes next open */ }
   }
 
   async function doFollow(userId) {

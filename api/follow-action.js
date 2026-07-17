@@ -7,6 +7,9 @@
 //   decline  { follower_id} -> (target = me) decline/remove a pending request
 //   list_requests           -> pending requests aimed at me
 //   list_following          -> ids I follow (accepted)
+//   block    { target_id }  -> block a user (also severs any follow both ways)
+//   unblock  { target_id }  -> remove my block
+//   block_status { target_id } -> { blocked } did I block this user
 
 import { verifyToken } from '../lib/auth.js';
 
@@ -115,6 +118,35 @@ export default async function handler(req, res) {
         profiles = pr.ok ? await pr.json() : [];
       }
       return res.status(200).json({ users: profiles });
+    }
+
+    if (action === 'block') {
+      const { target_id } = req.body;
+      if (!target_id || target_id === me) return res.status(400).json({ error: 'Bad target.' });
+      const up = await fetch(`${SUPABASE_URL}/rest/v1/blocks?on_conflict=blocker_id,blocked_id`, {
+        method: 'POST',
+        headers: { ...H, 'Prefer': 'resolution=ignore-duplicates,return=minimal' },
+        body: JSON.stringify({ blocker_id: me, blocked_id: target_id })
+      });
+      if (!up.ok) { const t = await up.text().catch(()=> ''); return res.status(502).json({ error: 'Block failed.', detail: t.slice(0,200) }); }
+      // Sever the follow relationship in both directions.
+      await fetch(`${SUPABASE_URL}/rest/v1/follows?follower_id=eq.${me}&following_id=eq.${target_id}`, { method: 'DELETE', headers: H });
+      await fetch(`${SUPABASE_URL}/rest/v1/follows?follower_id=eq.${target_id}&following_id=eq.${me}`, { method: 'DELETE', headers: H });
+      return res.status(200).json({ ok: true });
+    }
+
+    if (action === 'unblock') {
+      const { target_id } = req.body;
+      await fetch(`${SUPABASE_URL}/rest/v1/blocks?blocker_id=eq.${me}&blocked_id=eq.${target_id}`, { method: 'DELETE', headers: H });
+      return res.status(200).json({ ok: true });
+    }
+
+    if (action === 'block_status') {
+      const { target_id } = req.body;
+      if (!target_id) return res.status(400).json({ error: 'Missing target_id.' });
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/blocks?select=id&blocker_id=eq.${me}&blocked_id=eq.${target_id}&limit=1`, { headers: H });
+      const rows = r.ok ? await r.json() : [];
+      return res.status(200).json({ blocked: rows.length > 0 });
     }
 
     return res.status(400).json({ error: 'Unknown action.' });

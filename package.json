@@ -2,5 +2,20 @@
   "type": "module",
   "engines": {
     "node": "24.x"
+  },
+  "scripts": {
+    "copy:web": "rm -rf www && mkdir -p www && cp index.html icon-192.png icon-512.png www/"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.4.1",
+    "@capacitor/app": "^8.1.0",
+    "@capacitor/browser": "^8.0.3",
+    "@capacitor/core": "^8.4.1",
+    "@capacitor/ios": "^8.4.1",
+    "@capacitor/local-notifications": "^8.2.0"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^8.4.1"
   }
 }
