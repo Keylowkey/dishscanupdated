@@ -149,6 +149,20 @@ export default async function handler(req, res) {
       return res.status(200).json({ blocked: rows.length > 0 });
     }
 
+    if (action === 'list_blocks') {
+      // Users I have blocked, newest first, with their profile info.
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/blocks?select=blocked_id,created_at&blocker_id=eq.${me}&order=created_at.desc`, { headers: H });
+      const rows = r.ok ? await r.json() : [];
+      let profiles = [];
+      if (rows.length) {
+        const ids = rows.map(x => x.blocked_id);
+        const pin = encodeURIComponent('(' + ids.join(',') + ')');
+        const pr = await fetch(`${SUPABASE_URL}/rest/v1/user_profiles?select=id,username,avatar_color,avatar_icon,avatar_photo&id=in.${pin}`, { headers: H });
+        profiles = pr.ok ? await pr.json() : [];
+      }
+      return res.status(200).json({ blocks: rows, profiles });
+    }
+
     return res.status(400).json({ error: 'Unknown action.' });
   } catch (e) {
     return res.status(500).json({ error: 'Server error.', detail: String(e && e.message || e).slice(0, 200) });
