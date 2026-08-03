@@ -7,6 +7,8 @@
 //
 // Guard rails: rejects branded/restaurant-only items (e.g. "Big Mac") and non-food.
 // Inline search cache (best-effort; falls back to AI on any miss/error).
+import { languageInstruction } from '../lib/i18n-data.js';
+
 async function cacheGet(kind, query) {
   const U = process.env.SUPABASE_URL, K = process.env.SUPABASE_SERVICE_KEY;
   if (!U || !K) return null;
@@ -42,7 +44,7 @@ export default async function handler(req, res) {
   const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
   if (!ANTHROPIC_KEY) return res.status(500).json({ error: 'Server not configured' });
 
-  const { query } = req.body || {};
+  const { query, lang } = req.body || {};
   if (!query || !query.trim()) return res.status(400).json({ error: 'Missing search query' });
 
   // Cache check — instant return for popular searches
@@ -85,7 +87,7 @@ Respond ONLY with raw JSON, no markdown, no backticks, in exactly this shape:
         model: 'claude-sonnet-4-5',
         max_tokens: 1600,
         temperature: 0.3,
-        messages: [{ role: 'user', content: [{ type: 'text', text: prompt }] }]
+        messages: [{ role: 'user', content: [{ type: 'text', text: prompt + languageInstruction(lang) }] }]
       })
     });
 

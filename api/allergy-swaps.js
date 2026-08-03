@@ -2,6 +2,8 @@
 // Given a dish, its ingredients, and the flagged allergens, asks Claude to
 // return JSON with: per-ingredient swaps, an optional alternative dish, and a
 // noReplacements flag when nothing close exists.
+import { languageInstruction } from '../lib/i18n-data.js';
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -12,7 +14,7 @@ export default async function handler(req, res) {
   const API_KEY = process.env.ANTHROPIC_API_KEY;
   if (!API_KEY) return res.status(500).json({ error: 'Server not configured' });
 
-  const { dish, ingredients, allergens } = req.body || {};
+  const { dish, ingredients, allergens, lang } = req.body || {};
   if (!Array.isArray(ingredients) || !Array.isArray(allergens) || !allergens.length) {
     return res.status(400).json({ error: 'Missing dish, ingredients, or allergens' });
   }
@@ -52,7 +54,7 @@ Respond with ONLY valid JSON, no markdown, in exactly this shape:
       body: JSON.stringify({
         model: 'claude-sonnet-4-5',
         max_tokens: 1024,
-        messages: [{ role: 'user', content: prompt }],
+        messages: [{ role: 'user', content: prompt + languageInstruction(lang) }],
       }),
     });
 

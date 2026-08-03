@@ -2,6 +2,8 @@
 // Takes a dish name and returns a full recipe in the same shape as analyze.js.
 // Refuses branded/restaurant-specific items (e.g. "Big Mac") so the Cook tab
 // stays for general home cooking — those belong on the Takeout tab.
+import { languageInstruction } from '../lib/i18n-data.js';
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -12,7 +14,7 @@ export default async function handler(req, res) {
   const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
   if (!ANTHROPIC_KEY) return res.status(500).json({ error: 'Server not configured' });
 
-  const { query, variation } = req.body || {};
+  const { query, variation, lang } = req.body || {};
   if (!query || !query.trim()) return res.status(400).json({ error: 'Missing search query' });
 
   const variationLine = variation && variation.trim()
@@ -55,7 +57,7 @@ Rules:
         model: 'claude-sonnet-4-5',
         max_tokens: 2500,
         temperature: 0.1,
-        messages: [{ role: 'user', content: [{ type: 'text', text: prompt }] }]
+        messages: [{ role: 'user', content: [{ type: 'text', text: prompt + languageInstruction(lang) }] }]
       })
     });
 

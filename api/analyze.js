@@ -1,3 +1,4 @@
+import { languageInstruction } from '../lib/i18n-data.js';
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -12,7 +13,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { image_data, media_type } = req.body;
+    const { image_data, media_type, lang } = req.body;
     if (!image_data || !media_type) {
       return res.status(400).json({ error: 'Missing image_data or media_type' });
     }
@@ -63,7 +64,7 @@ Rules:
           role: 'user',
           content: [
             { type: 'image', source: { type: 'base64', media_type, data: image_data } },
-            { type: 'text', text: prompt }
+            { type: 'text', text: prompt + languageInstruction(lang) }
           ]
         }]
       })

@@ -2,6 +2,8 @@
 // Takes a detected restaurant meal and returns a homemade recipe that tastes
 // as close as possible to the original, but lighter in calories.
 
+import { languageInstruction } from '../lib/i18n-data.js';
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -17,7 +19,7 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Anthropic API key not configured.' });
   }
 
-  const { restaurant, item, originalCalories } = req.body || {};
+  const { restaurant, item, originalCalories, lang } = req.body || {};
 
   if (!item) {
     return res.status(400).json({ error: 'Missing meal information.' });
@@ -84,7 +86,7 @@ Rules:
         messages: [
           {
             role: 'user',
-            content: `Create a healthier homemade copycat recipe for: ${restaurant ? restaurant + ' ' : ''}${item}. Make it taste as close to the original as possible, just lighter. Return JSON only.`,
+            content: `Create a healthier homemade copycat recipe for: ${restaurant ? restaurant + ' ' : ''}${item}. Make it taste as close to the original as possible, just lighter. Return JSON only.` + languageInstruction(lang),
           },
         ],
       }),

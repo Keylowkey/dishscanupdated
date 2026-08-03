@@ -5,6 +5,8 @@
 //    is run through vision -> recipe.
 // Returns the identical recipe object the app already renders.
 
+import { languageInstruction } from '../lib/i18n-data.js';
+
 const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15';
 
 const RECIPE_JSON = `{"dish":"Specific Full Dish Name","servings":2,"time":"30 min","difficulty":"Easy","dietary":"Vegetarian or Contains meat etc","calories":420,"nutrition":{"protein_g":28,"carbs_g":45,"fat_g":14,"saturated_fat_g":4,"fiber_g":6,"sugar_g":8,"sodium_mg":620,"cholesterol_mg":75},"equipment":[{"emoji":"🍳","name":"Large skillet"},{"emoji":"🔪","name":"Chef's knife"}],"ingredients":[{"emoji":"appropriate food emoji","name":"Ingredient name","qty":"1 cup","cost":2.50}],"steps":["Detailed step one.","Detailed step two."],"swaps":[{"from":"Original ingredient","to":"Healthier alternative","saving":60}],"searchKeyword":"short keyword","totalCost":15.50,"costNote":"Based on US national average grocery prices"}`;
@@ -31,7 +33,7 @@ export default async function handler(req, res) {
   if (!ANTHROPIC_KEY) return res.status(500).json({ error: 'AI is not configured on the server.' });
 
   try {
-    let { url } = req.body || {};
+    let { url, lang } = req.body || {};
     if (!url || typeof url !== 'string' || !/^https?:\/\//i.test(url.trim())) {
       return res.status(400).json({ error: 'Please share a valid link.' });
     }
@@ -64,6 +66,9 @@ export default async function handler(req, res) {
       ];
     }
 
+    // Ask for the recipe in the user's language.
+    const li = languageInstruction(lang);
+    if (li) content.push({ type: 'text', text: li });
     const recipe = await callAnthropic(ANTHROPIC_KEY, content);
     if (recipe && recipe.error) return res.status(502).json(recipe);
     // Guard: if the AI ended up describing a logo / brand image / screenshot chrome
