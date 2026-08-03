@@ -75,6 +75,10 @@ export default async function handler(req, res) {
       if (typeof merged.username === 'string') publicFields.username = merged.username;
       if (typeof metadata.favorites_public === 'boolean') publicFields.favorites_public = metadata.favorites_public;
       if (typeof metadata.is_private === 'boolean') publicFields.is_private = metadata.is_private;
+      if (typeof metadata.nutrition_share === 'boolean') publicFields.nutrition_share = metadata.nutrition_share;
+      if (metadata.nutrition_visibility === 'public' || metadata.nutrition_visibility === 'followers') {
+        publicFields.nutrition_visibility = metadata.nutrition_visibility;
+      }
       await fetch(`${SUPABASE_URL}/rest/v1/user_profiles?on_conflict=id`, {
         method: 'POST',
         headers: {
