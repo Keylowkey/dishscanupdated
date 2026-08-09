@@ -119,7 +119,7 @@ export default async function handler(req, res) {
 
       // Ride the existing notification system so the bell lights up.
       try {
-        await fetch(`${SUPABASE_URL}/rest/v1/notifications`, {
+        const nr = await fetch(`${SUPABASE_URL}/rest/v1/notifications`, {
           method: 'POST',
           headers: { ...H, Prefer: 'return=minimal' },
           body: JSON.stringify(valid.map(rid => ({
@@ -130,7 +130,8 @@ export default async function handler(req, res) {
             preview: name
           })))
         });
-      } catch (e) { /* the share still landed */ }
+        if (!nr.ok) console.error('share notify failed:', nr.status, await nr.text().catch(() => ''));
+      } catch (e) { console.error('share notify error:', e); }
 
       return res.status(200).json({ ok: true, sent: valid.length, skipped: recipient_ids.length - valid.length });
     }

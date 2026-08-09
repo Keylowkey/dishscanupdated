@@ -28,6 +28,25 @@ export default async function handler(req, res) {
   if (!SUPABASE_URL || !SERVICE_KEY) return res.status(500).json({ error: 'Server missing config.' });
   const H = { 'apikey': SERVICE_KEY, 'Authorization': `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json' };
 
+  // Insert a bell notification; failures are logged, never fatal.
+  async function notify(row) {
+    try {
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/notifications`, {
+        method: 'POST',
+        headers: { ...H, Prefer: 'return=minimal' },
+        body: JSON.stringify(row)
+      });
+      if (!r.ok) console.error('notify failed:', r.status, await r.text().catch(() => ''));
+    } catch (e) { console.error('notify error:', e); }
+  }
+  async function usernameOf(id) {
+    try {
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/user_profiles?select=username&id=eq.${encodeURIComponent(id)}`, { headers: H });
+      const arr = r.ok ? await r.json() : [];
+      return (arr[0] && arr[0].username) || null;
+    } catch (e) { return null; }
+  }
+
   try {
     const { access_token, action } = req.body || {};
     if (!access_token) return res.status(401).json({ error: 'Missing token.' });
@@ -49,6 +68,13 @@ export default async function handler(req, res) {
         body: JSON.stringify({ follower_id: me, following_id: target_id, status })
       });
       if (!up.ok) { const t = await up.text().catch(()=> ''); return res.status(502).json({ error: 'Follow failed.', detail: t.slice(0,200) }); }
+      // Tell the target — request vs. new follower.
+      await notify({
+        recipient_id: target_id,
+        actor_id: me,
+        actor_username: await usernameOf(me),
+        type: status === 'pending' ? 'follow_request' : 'follow'
+      });
       return res.status(200).json({ ok: true, status });
     }
 
@@ -64,6 +90,12 @@ export default async function handler(req, res) {
       if (action === 'approve') {
         await fetch(`${SUPABASE_URL}/rest/v1/follows?follower_id=eq.${follower_id}&following_id=eq.${me}`, {
           method: 'PATCH', headers: H, body: JSON.stringify({ status: 'accepted' })
+        });
+        await notify({
+          recipient_id: follower_id,
+          actor_id: me,
+          actor_username: await usernameOf(me),
+          type: 'follow_accepted'
         });
       } else {
         await fetch(`${SUPABASE_URL}/rest/v1/follows?follower_id=eq.${follower_id}&following_id=eq.${me}`, { method: 'DELETE', headers: H });
