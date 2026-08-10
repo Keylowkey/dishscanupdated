@@ -21,7 +21,7 @@ export default async function handler(req, res) {
     ? `\n\nThe user specifically wants this variation: "${variation}". Make THIS version of the dish, and use it as the dish name.`
     : '';
 
-  const prompt = `You are an expert chef, nutritionist, and grocery cost estimator. A user searched for a recipe by name: "${query}".${variationLine}
+  const prompt = `The dish name may be written in any language; interpret it in that language.\n\nYou are an expert chef, nutritionist, and grocery cost estimator. A user searched for a recipe by name: "${query}".${variationLine}
 
 FIRST, decide whether this is a GENERAL dish that a home cook makes (e.g. "Orange Cake", "Kabsa", "Alfredo Pasta", "Cajun Chicken", "Butter Chicken", "Tacos", "Lasagna") OR a BRANDED/RESTAURANT-SPECIFIC menu item tied to a particular chain (e.g. "Big Mac", "Baconator", "Crunchwrap Supreme", "Loaded Potato Beef Griller", "Whopper", "McNuggets").
 

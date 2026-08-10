@@ -78,6 +78,31 @@ export default async function handler(req, res) {
       posts = posts.filter(p => !blockedSet.has(p.user_id));
     }
 
+    // Private accounts must not surface in the public feed to non-followers.
+    // (user-profile.js already gated the profile view; the feed did not, so
+    // their posts were still readable by anyone.)
+    if (Array.isArray(posts) && posts.length) {
+      const authorIds0 = [...new Set(posts.map(p => p.user_id).filter(Boolean))];
+      const pin0 = encodeURIComponent('(' + authorIds0.join(',') + ')');
+      const privRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/user_profiles?select=id,is_private&id=in.${pin0}`, { headers }
+      );
+      const privRows = privRes.ok ? await privRes.json() : [];
+      const privateIds = new Set(privRows.filter(p => p.is_private === true).map(p => p.id));
+      if (privateIds.size) {
+        let allowed = new Set();
+        if (callerId) {
+          allowed.add(callerId);   // always see your own
+          const fr2 = await fetch(
+            `${SUPABASE_URL}/rest/v1/follows?select=following_id&follower_id=eq.${callerId}&status=eq.accepted`,
+            { headers }
+          );
+          if (fr2.ok) (await fr2.json()).forEach(r => allowed.add(r.following_id));
+        }
+        posts = posts.filter(p => !privateIds.has(p.user_id) || allowed.has(p.user_id));
+      }
+    }
+
     if (!Array.isArray(posts) || posts.length === 0) {
       return res.status(200).json({ posts: [], reactions: [], profiles: [], callerId, mode, blockedIds });
     }

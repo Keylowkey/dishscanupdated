@@ -55,6 +55,11 @@ export default async function handler(req, res) {
 
 Most dishes have several DIFFERENT ways to make them that taste meaningfully different (different methods, ingredients, or flavor twists). For example "orange cake" could be: a classic orange cake, a chocolate-orange cake, an orange cream cake, a flourless almond-orange cake, an orange bundt with candied zest. Your job is to list these distinct variations so the user can pick one.
 
+The search may be written in ANY language (Spanish, French, German, Hindi, Arabic…).
+Interpret it in whatever language it is written and treat a dish named in another
+language exactly as you would its English equivalent. Only fall back to notFood when
+the text genuinely does not name a dish in ANY language.
+
 FIRST classify:
 - If "${query}" is a real dish a home cook can make (including dishes also sold at restaurants, e.g. "orange chicken", "alfredo pasta") -> list the variations.
 - If it is a BRANDED item tied to ONE specific chain (e.g. "Big Mac", "Baconator", "Crunchwrap Supreme") -> respond ONLY with: {"notHomemade": true}
