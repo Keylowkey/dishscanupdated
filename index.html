@@ -27,66 +27,76 @@
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
 <title>Capture &amp; Cook — Capture it. Cook it. Serve it.</title>
-<meta name="theme-color" content="#121212" media="(prefers-color-scheme: dark)" />
-<meta name="theme-color" content="#f7f7f5" media="(prefers-color-scheme: light)" />
-<link rel="apple-touch-icon" href="/icon-192.png?v=2" />
+<meta name="theme-color" content="#141a12" media="(prefers-color-scheme: dark)" />
+<meta name="theme-color" content="#fdfbf7" media="(prefers-color-scheme: light)" />
+<link rel="apple-touch-icon" href="/icon-192.png?v=3" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Bricolage+Grotesque:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --sage: #2ecc71;
-    --sage-light: #173d2a;
-    --sage-dark: #27b765;
-    --sage-50: #122a1e;
-    --amber: #f0a23b;
-    --amber-light: #2a1e0a;
-    --amber-dark: #f0a23b;
-    --bg: #121212;
-    --surface: #1e1e1e;
-    --surface2: #272727;
-    --surface3: #333333;
-    --border: rgba(255,255,255,0.08);
-    --border-med: rgba(255,255,255,0.16);
-    --text: #f5f5f5;
-    --text2: #b0b0b0;
-    --text3: #777777;
-    --radius-sm: 12px;
-    --radius: 16px;
-    --radius-lg: 22px;
+    --sage: #2fd66f;
+    --sage-light: #17331f;
+    --sage-dark: #27c162;
+    --sage-50: #14261a;
+    --amber: #fbbf24;
+    --amber-light: #33270c;
+    --amber-dark: #fbbf24;
+    --bg: #141a12;
+    --surface: #1c231a;
+    --surface2: #252d22;
+    --surface3: #303a2c;
+    --border: #35402f;
+    --border-med: #4a5745;
+    --text: #f2f5ef;
+    --text2: #a8b5a4;
+    --text3: #77836f;
+    --ink: #55644e;
+    --ink-shadow: rgba(0,0,0,0.55);
+    /* Aliases kept for older markup that still references these names. They
+       track the theme automatically because --sage/--text2 are re-declared in
+       the light-mode block below. Without them, `var(--brand)` was invalid and
+       collapsed to transparent — which made the Follow button invisible. */
+    --brand: var(--sage);
+    --text-soft: var(--text2);
+    --radius-sm: 14px;
+    --radius: 18px;
+    --radius-lg: 24px;
     --radius-xl: 30px;
-    --font-display: 'DM Sans', system-ui, sans-serif;
-    --font-body: 'DM Sans', system-ui, sans-serif;
-    --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
-    --shadow: 0 4px 14px rgba(0,0,0,0.35);
-    --shadow-lg: 0 10px 30px rgba(0,0,0,0.45);
+    --font-display: 'Bricolage Grotesque', 'DM Sans', system-ui, sans-serif;
+    --font-body: 'Bricolage Grotesque', 'DM Sans', system-ui, sans-serif;
+    --shadow-sm: 3px 3px 0 var(--ink-shadow);
+    --shadow: 5px 5px 0 var(--ink-shadow);
+    --shadow-lg: 7px 7px 0 var(--ink-shadow);
   }
 
   /* Light mode — activates when the device is set to a light theme.
      Dark stays exactly as the :root values above. Green brand accent is shared. */
   @media (prefers-color-scheme: light) {
     :root {
-      --sage: #1d9e57;
-      --sage-light: #e3f6ec;
-      --sage-dark: #178045;
-      --sage-50: #f1faf4;
-      --amber: #d4791a;
-      --amber-light: #fdf0e0;
-      --amber-dark: #b5610c;
-      --bg: #f7f7f5;
+      --sage: #22c55e;
+      --sage-light: #dcfce7;
+      --sage-dark: #16a34a;
+      --sage-50: #f0fdf4;
+      --amber: #fbbf24;
+      --amber-light: #fef3c7;
+      --amber-dark: #b45309;
+      --bg: #fdfbf7;
       --surface: #ffffff;
-      --surface2: #f0f0ee;
-      --surface3: #e6e6e3;
-      --border: rgba(0,0,0,0.09);
-      --border-med: rgba(0,0,0,0.16);
-      --text: #1a1a1a;
-      --text2: #5c5c5c;
-      --text3: #939393;
-      --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
-      --shadow: 0 4px 14px rgba(0,0,0,0.08);
-      --shadow-lg: 0 10px 30px rgba(0,0,0,0.12);
+      --surface2: #f4f1e8;
+      --surface3: #eae6da;
+      --border: rgba(30,43,34,0.35);
+      --border-med: #1e2b22;
+      --text: #1e2b22;
+      --text2: #5f6e64;
+      --text3: #93a198;
+      --ink: #1e2b22;
+      --ink-shadow: rgba(30,43,34,0.14);
+      --shadow-sm: 3px 3px 0 var(--ink-shadow);
+      --shadow: 5px 5px 0 var(--ink-shadow);
+      --shadow-lg: 7px 7px 0 var(--ink-shadow);
     }
   }
   body {
@@ -411,7 +421,8 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 16px 18px;
+    /* Clear the notch — this overlay is full-screen, so it needs the inset. */
+    padding: calc(16px + env(safe-area-inset-top)) 18px 16px;
     border-bottom: 0.5px solid var(--border);
     background: var(--surface);
     flex-shrink: 0;
@@ -3021,6 +3032,9 @@
   .feed-image { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; display: block; background: var(--surface2); }
   .feed-views { padding: 8px 14px 0; font-size: 12px; color: var(--text3); font-weight: 600; }
   .feed-caption { padding: 12px 14px 4px; font-size: 14px; color: var(--text); line-height: 1.5; }
+  /* Text-only post: the caption follows the header directly, so it carries the
+     card on its own and needs more room than a photo caption. */
+  .feed-head + .feed-caption { padding: 4px 16px 10px; font-size: 15.5px; line-height: 1.55; }
   .feed-caption .feed-username { margin-right: 6px; }
 
   .reaction-bar { display: flex; align-items: center; gap: 12px; padding: 10px 14px; }
@@ -3454,6 +3468,434 @@
   .cook-next { background: var(--sage); color: #fff; }
   .cook-alert { position: fixed; left: 50%; top: 16%; transform: translateX(-50%) translateY(-8px); background: var(--amber); color: #3a2400; padding: 14px 22px; border-radius: 14px; font-weight: 800; z-index: 4200; box-shadow: var(--shadow-lg); display: none; align-items: center; gap: 8px; max-width: 88%; text-align: center; }
   .cook-alert.show { display: flex; }
+
+  /* ══ SNACK CLUB THEME OVERRIDES ══ */
+  body { font-family: var(--font-body); }
+  h1, h2, h3, .logo-name, .composer-title, .recipe-name, .upload-title, .tips-title,
+  .page-view-title, .auth-title, .nutri-dish, .undetectable-title { font-weight: 800; letter-spacing: -0.02em; }
+
+  /* Chunky sticker cards */
+  .auth-card, .composer, .feed-card, .support-card, .calorie-banner, .cost-banner,
+  .undetectable-card, .nutri-result, .tip-card, .swap-panel {
+    border: 2px solid var(--ink);
+    box-shadow: var(--shadow);
+  }
+  .upload-zone { border: 2px dashed var(--sage); border-radius: var(--radius-lg); }
+  .upload-zone.has-image { border: 2px solid var(--ink); box-shadow: var(--shadow); }
+
+  /* Logo: tilted sticker badge */
+  .logo-icon { border-radius: 50%; transform: rotate(-6deg); box-shadow: 3px 3px 0 var(--ink-shadow); border: 2px solid var(--ink); }
+  .logo:hover .logo-icon { transform: rotate(0deg); transition: transform .2s ease; }
+
+  /* Mode switch: chunky pills */
+  .mode-switch { border: 2px solid var(--ink); border-radius: 99px; padding: 5px; background: var(--surface); box-shadow: var(--shadow-sm); }
+  .mode-btn { border-radius: 99px; font-weight: 700; }
+  .mode-btn.active { background: var(--sage); color: #fff; box-shadow: none; }
+
+  /* Primary buttons: bold, outlined, offset shadow, springy hover */
+  .recipe-search-go, .analyze-btn, .composer-share-btn, .start-camera-btn,
+  .cookit-btn, .cooked-btn, .upload-action-btn, .search-btn, .auth-submit {
+    border: 2px solid var(--ink);
+    font-weight: 800;
+    box-shadow: 3px 3px 0 var(--ink-shadow);
+    transition: transform .12s ease, box-shadow .12s ease, background .15s ease;
+  }
+  .recipe-search-go:hover, .analyze-btn:hover:not(:disabled), .composer-share-btn:hover:not(:disabled),
+  .cookit-btn:hover, .cooked-btn:hover, .upload-action-btn:hover, .search-btn:hover, .auth-submit:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 5px 5px 0 var(--ink-shadow);
+  }
+  .analyze-btn:active, .cookit-btn:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--ink-shadow); }
+
+  /* Inputs */
+  .recipe-search-bar, .composer-caption, .location-input, .auth-input {
+    border: 2px solid var(--ink);
+    border-radius: var(--radius);
+  }
+  .recipe-search-bar:focus-within, .composer-caption:focus, .auth-input:focus {
+    border-color: var(--sage);
+    box-shadow: 3px 3px 0 var(--sage-light);
+  }
+
+  /* Pills & chips */
+  .fmt-pill, .filter-chip, .serving-opt { border: 1.5px solid var(--ink); border-radius: 99px; font-weight: 700; }
+  .serving-opt.active { background: var(--sage); color: #fff; }
+
+  /* Tabs: pill style instead of underline */
+  .tabs { border-bottom: none; gap: 8px; }
+  .tab { border: 2px solid transparent; border-radius: 99px; font-weight: 700; }
+  .tab.active { border-color: var(--ink); background: var(--sage-light); color: var(--sage-dark); border-bottom-color: var(--ink); }
+
+  /* Feed: sticker avatars */
+  .feed-avatar, .user-avatar { border: 2px solid var(--ink); transform: rotate(-4deg); font-weight: 800; }
+  .feed-card { border-radius: var(--radius-lg); }
+  .notif-bell { border: 2px solid var(--ink); border-radius: var(--radius-sm); box-shadow: 2px 2px 0 var(--ink-shadow); }
+
+  /* Section toggles: bolder */
+  .section-label { font-weight: 800; letter-spacing: -0.01em; }
+
+  /* Dropdowns & modals get the outline treatment */
+  .user-dropdown, .notif-panel { border: 2px solid var(--ink); box-shadow: var(--shadow); border-radius: var(--radius-lg); }
+
+  /* ── Snack Club scan stages: tilted sticker tiles ── */
+  .scan-stages { gap: 26px; padding: 1.4rem 0 0.8rem; }
+  .scan-stage { opacity: 0.3; }
+  .scan-ico {
+    width: 66px; height: 66px; border-radius: 20px;
+    border: 2px solid var(--ink);
+    background: var(--surface);
+    box-shadow: 3px 3px 0 var(--ink-shadow);
+    /* Transition only paint properties. Animating `all` (incl. transform) with
+       an overshooting curve promotes the tile to its own GPU layer on iOS,
+       which gets sized from the UNrotated box — the tilted corners then fall
+       outside the layer and render clipped. */
+    transition: background 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
+    will-change: transform;
+  }
+  .scan-stage:nth-child(1) .scan-ico { transform: rotate(-5deg); }
+  .scan-stage:nth-child(2) .scan-ico { transform: rotate(4deg); }
+  .scan-stage:nth-child(3) .scan-ico { transform: rotate(-3deg); }
+  .scan-ico i { font-size: 30px; }
+  .scan-stage.active .scan-ico {
+    background: var(--amber-light);
+    border-color: var(--ink);
+    transform: rotate(0deg) scale(1.06) translateY(-1px);
+    box-shadow: 5px 6px 0 var(--ink-shadow);
+    animation: stageWiggle 1.6s ease-in-out infinite;
+  }
+  @keyframes stageWiggle {
+    0%, 100% { transform: rotate(-3deg) scale(1.06) translateY(-1px); }
+    50% { transform: rotate(3deg) scale(1.06) translateY(-3px); }
+  }
+  .scan-stage.active .scan-ico i { color: var(--amber-dark); }
+  .scan-stage.done .scan-ico {
+    background: var(--sage);
+    border-color: var(--ink);
+    transform: rotate(-4deg) scale(1);
+    box-shadow: 2px 2px 0 var(--ink-shadow);
+  }
+  /* "Done" stamp badge */
+  .scan-stage.done .scan-ico::after {
+    content: '✓';
+    position: absolute; top: -9px; right: -9px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--amber); color: #1e2b22;
+    border: 2px solid var(--ink);
+    font-size: 12px; font-weight: 800; line-height: 19px; text-align: center;
+    animation: stampIn 0.3s cubic-bezier(.34,1.56,.64,1) both;
+  }
+  @keyframes stampIn {
+    from { transform: scale(0) rotate(-40deg); }
+    to { transform: scale(1) rotate(8deg); }
+  }
+  /* Headroom + explicit visible overflow so the popped tiles and ✓ badge
+     never clip at the top (iOS WebView is stricter than desktop here). */
+  .loading-section { overflow: visible; }
+  .scan-stages { overflow: visible; padding-top: 2rem; }
+  .scan-stage, .scan-ico { overflow: visible; }
+
+  /* "Don't Have?" chip next to the Ingredients header */
+  .section-head-row { display: flex; align-items: center; gap: 10px; }
+  .section-head-row .section-toggle { flex: 1; min-width: 0; }
+  .dh-chip {
+    flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 12px; border-radius: 999px;
+    background: var(--surface); color: var(--text);
+    border: 2px solid var(--ink); box-shadow: 2px 2px 0 var(--ink-shadow);
+    font-family: var(--font-body); font-size: 12.5px; font-weight: 700; cursor: pointer;
+  }
+  .dh-chip:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--ink-shadow); }
+  .dh-chip i { font-size: 15px; }
+
+  /* ── Nutrition Tracker ── */
+  .nt-day-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .nt-day-btn {
+    width: 34px; height: 34px; border-radius: 10px; border: 2px solid var(--ink);
+    background: var(--surface); cursor: pointer; font-size: 16px; color: var(--text);
+    display: flex; align-items: center; justify-content: center; box-shadow: 2px 2px 0 var(--ink-shadow);
+  }
+  .nt-day-btn:disabled { opacity: 0.35; cursor: default; }
+  .nt-day-label { font-weight: 800; font-size: 14.5px; }
+  .nt-macros { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+  .nt-macro {
+    background: var(--surface2); border: 2px solid var(--ink); border-radius: 14px;
+    padding: 10px 6px; text-align: center; box-shadow: 2px 2px 0 var(--ink-shadow);
+  }
+  .nt-macro-val { font-size: 16px; font-weight: 800; color: var(--sage-dark); }
+  .nt-macro-lbl { font-size: 10.5px; font-weight: 700; color: var(--text2); letter-spacing: 0.03em; text-transform: uppercase; margin-top: 2px; }
+  .nt-minis { display: flex; flex-wrap: wrap; gap: 6px 14px; justify-content: center; font-size: 12px; color: var(--text2); margin-bottom: 16px; }
+  .nt-minis b { color: var(--text); }
+  .nt-meal {
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+    border: 2px solid var(--ink); border-radius: 14px; margin-bottom: 8px; background: var(--surface);
+  }
+  .nt-meal-name { flex: 1; font-weight: 700; font-size: 13.5px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .nt-meal-cals { font-size: 12.5px; color: var(--text2); font-weight: 700; flex-shrink: 0; }
+  .nt-meal-del { width: 26px; height: 26px; border-radius: 8px; border: 1.5px solid var(--border); background: none; color: #c0392b; cursor: pointer; flex-shrink: 0; }
+  .nt-empty { text-align: center; color: var(--text3); font-size: 13px; padding: 18px 0; line-height: 1.6; }
+  .nt-log-btn {
+    width: 100%; margin-top: 10px; padding: 12px; border-radius: var(--radius);
+    border: 2px solid var(--ink); background: var(--amber-light); color: var(--text);
+    font-family: var(--font-body); font-weight: 800; font-size: 14px; cursor: pointer;
+    box-shadow: 3px 3px 0 var(--ink-shadow); display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .nt-log-btn:active { transform: translate(1px, 1px); box-shadow: 2px 2px 0 var(--ink-shadow); }
+
+  /* ── Share a recipe with followers ── */
+  .sr-row {
+    display: flex; align-items: center; gap: 11px; padding: 9px 10px;
+    border: 2px solid transparent; border-radius: 14px; cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .sr-row:hover { background: var(--surface2); }
+  .sr-row.on { background: var(--sage-light); border-color: var(--sage); }
+  .sr-avatar {
+    width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; color: #fff; font-size: 15px;
+    background-size: cover; background-position: center;
+    border: 2px solid var(--ink);
+  }
+  .sr-name { flex: 1; min-width: 0; font-weight: 700; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sr-mutual { font-size: 10.5px; font-weight: 800; color: var(--sage-dark); letter-spacing: 0.03em; }
+  .sr-check {
+    width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+    border: 2px solid var(--border-med); display: flex; align-items: center; justify-content: center;
+    color: transparent; font-size: 13px;
+  }
+  .sr-row.on .sr-check { background: var(--sage); border-color: var(--sage); color: #fff; }
+  .sr-scroll { max-height: 320px; overflow-y: auto; margin-bottom: 12px; }
+
+  /* ── Recipes shared with me ── */
+  .sw-item {
+    display: flex; align-items: center; gap: 11px; padding: 10px 12px;
+    border: 2px solid var(--ink); border-radius: 14px; margin-bottom: 8px;
+    background: var(--surface); cursor: pointer;
+  }
+  .sw-item.unread { border-color: var(--sage); background: var(--sage-light); }
+  .sw-thumb {
+    width: 44px; height: 44px; border-radius: 10px; flex-shrink: 0;
+    background: var(--surface2) center/cover no-repeat;
+    display: flex; align-items: center; justify-content: center; color: var(--text3);
+  }
+  .sw-body { flex: 1; min-width: 0; }
+  .sw-dish { font-weight: 700; font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sw-from { font-size: 11.5px; color: var(--text2); margin-top: 1px; }
+  .sw-del { width: 26px; height: 26px; border-radius: 8px; border: 1.5px solid var(--border); background: none; color: #c0392b; cursor: pointer; flex-shrink: 0; }
+
+  /* ── Recipe section tiles (grid → sub-page) ── */
+  .rp-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;
+    margin: 4px 0 1.25rem;
+  }
+  .rp-tile {
+    border: 2px solid var(--ink); border-radius: var(--radius);
+    background: var(--surface); box-shadow: 3px 3px 0 var(--ink-shadow);
+    padding: 16px 14px; cursor: pointer; text-align: left;
+    font-family: var(--font-body); color: var(--text);
+    display: flex; flex-direction: column; gap: 8px; align-items: flex-start;
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .rp-tile:hover { transform: translate(-1px, -1px); box-shadow: 5px 5px 0 var(--ink-shadow); }
+  .rp-tile:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--ink-shadow); }
+  /* Method spans the full width — it's the one you reach for most. */
+  .rp-tile.wide { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 14px; }
+  .rp-tile-ico {
+    width: 42px; height: 42px; border-radius: 13px; flex-shrink: 0;
+    background: var(--sage-light); border: 2px solid var(--ink);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--sage-dark); font-size: 21px;
+  }
+  .rp-tile-txt { flex: 1; min-width: 0; }
+  .rp-tile-name { font-size: 14.5px; font-weight: 800; letter-spacing: -0.01em; }
+  .rp-tile-sub { font-size: 11.5px; color: var(--text2); margin-top: 2px; font-weight: 600; }
+  .rp-tile-arrow { color: var(--text3); font-size: 18px; flex-shrink: 0; }
+
+  /* Sub-page header */
+  .rp-detail-bar { display: flex; align-items: center; gap: 12px; margin: 2px 0 1rem; }
+  .rp-back {
+    width: 40px; height: 40px; flex-shrink: 0; border-radius: 13px;
+    border: 2px solid var(--ink); background: var(--surface); color: var(--text);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 19px; box-shadow: 2px 2px 0 var(--ink-shadow);
+  }
+  .rp-back:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--ink-shadow); }
+  .rp-detail-title { font-family: var(--font-display); font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
+  /* Inside a sub-page the collapsible header is redundant — the page IS the section. */
+  .rp-detail-open .section-toggle { display: none; }
+  .rp-detail-open .section-head-row { justify-content: flex-end; margin-bottom: 10px; }
+
+  /* Briefly mark the post a notification pointed at, so it's obvious which one. */
+  @keyframes notifFlash {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(47,214,111,0); }
+    25%, 75% { box-shadow: 0 0 0 3px var(--sage); }
+  }
+  .notif-flash { animation: notifFlash 2.2s ease-in-out; }
+
+  /* ── "Make Yourself" ── */
+  .mk-btn {
+    flex-shrink: 0; margin-left: auto; padding: 5px 11px; border-radius: 999px;
+    border: 1.5px solid var(--border-med); background: var(--surface);
+    color: var(--text2); font-family: var(--font-body); font-size: 11.5px;
+    font-weight: 700; cursor: pointer;
+  }
+  .mk-btn:hover { border-color: var(--sage); color: var(--sage-dark); }
+  .mk-step { display: flex; gap: 10px; margin-bottom: 10px; font-size: 14px; line-height: 1.5; }
+  .mk-num {
+    flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%;
+    background: var(--sage-light); color: var(--sage-dark);
+    font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center;
+  }
+  .mk-ing {
+    display: flex; align-items: center; gap: 8px; padding: 7px 10px;
+    background: var(--surface2); border-radius: 10px; margin-bottom: 6px; font-size: 13.5px;
+  }
+  .mk-ing b { margin-left: auto; color: var(--text2); font-weight: 600; }
+  .mk-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  .mk-chip {
+    font-size: 11.5px; font-weight: 700; padding: 4px 10px; border-radius: 999px;
+    background: var(--surface2); color: var(--text2);
+  }
+
+  /* ── Nutrition visibility choice ── */
+  .nv-opt {
+    flex: 1; padding: 9px 10px; border-radius: 12px; cursor: pointer;
+    border: 2px solid var(--border); background: var(--surface);
+    font-family: var(--font-body); font-size: 12.5px; font-weight: 700; color: var(--text2);
+  }
+  .nv-opt.on { border-color: var(--sage); background: var(--sage-light); color: var(--sage-dark); }
+
+  /* Nutrition card on a profile */
+  .np-card {
+    border: 2px solid var(--ink); border-radius: 16px; padding: 12px;
+    background: var(--surface); margin-bottom: 14px;
+  }
+  .np-title { font-size: 12px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text2); margin-bottom: 10px; }
+  .np-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 8px; }
+  .np-cell { background: var(--surface2); border-radius: 10px; padding: 8px 4px; text-align: center; }
+  .np-val { font-size: 14.5px; font-weight: 800; color: var(--sage-dark); }
+  .np-lbl { font-size: 9.5px; font-weight: 700; color: var(--text3); letter-spacing: 0.03em; text-transform: uppercase; margin-top: 1px; }
+  .np-sub { font-size: 11px; color: var(--text3); text-align: center; }
+
+  /* ── Language picker ── */
+  .lang-row {
+    display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+    border: 2px solid var(--ink); border-radius: 14px; margin-bottom: 8px;
+    background: var(--surface); cursor: pointer;
+  }
+  .lang-row.on { border-color: var(--sage); background: var(--sage-light); }
+  .lang-native { font-size: 15.5px; font-weight: 800; flex-shrink: 0; }
+  .lang-label { flex: 1; font-size: 12px; color: var(--text2); font-weight: 600; }
+  .lang-check { width: 22px; height: 22px; flex-shrink: 0; color: transparent; }
+  .lang-row.on .lang-check { color: var(--sage-dark); }
+
+  /* ── Right-to-left (Arabic) ── */
+  .cc-rtl .sr-row, .cc-rtl .sw-item, .cc-rtl .lang-row,
+  .cc-rtl .nt-meal, .cc-rtl .rp-tile.wide, .cc-rtl .dropdown-item,
+  .cc-rtl .feed-head, .cc-rtl .section-head-row { flex-direction: row-reverse; }
+  .cc-rtl .dropdown-item, .cc-rtl .rp-tile, .cc-rtl .sr-name,
+  .cc-rtl .sw-body, .cc-rtl .lang-label, .cc-rtl .nt-meal-name { text-align: right; }
+  /* Directional icons need mirroring, symmetric ones must not be touched. */
+  .cc-rtl .rp-back i, .cc-rtl .rp-tile-arrow,
+  .cc-rtl .swap-arrow i, .cc-rtl .legal-back i { transform: scaleX(-1); }
+  .cc-rtl .dh-chip { margin-left: 0; margin-right: 8px; }
+  .cc-rtl .follow-btn.blockbtn { margin-left: 0; margin-right: 8px; }
+  .cc-rtl .nutri-sources, .cc-rtl .nutri-disclaimer { direction: rtl; }
+  /* Anchored panels are pinned to the right edge, which throws them off-screen
+     once the layout mirrors — flip them and stop the page scrolling sideways. */
+  .cc-rtl .user-dropdown, .cc-rtl .notif-panel { right: auto; left: 0; }
+  .cc-rtl .user-dropdown { max-width: calc(100vw - 32px); }
+  .cc-rtl .notif-panel { max-width: calc(100vw - 32px); }
+  .cc-rtl .dropdown-item { white-space: normal; }
+  html.cc-rtl, .cc-rtl body { overflow-x: hidden; max-width: 100%; }
+  /* The brand is a proper noun — keep it left-to-right so "Capture & Cook"
+     doesn't get reordered into "Cook & Capture". Same for Latin usernames. */
+  .cc-rtl .brand-name, .cc-rtl .logo-name, .cc-rtl .logo,
+  .cc-rtl .feed-username, .cc-rtl .sr-name, .cc-rtl .lang-native,
+  .cc-rtl #upUsername { direction: ltr; }
+  .cc-rtl .brand-name, .cc-rtl .logo-name { text-align: right; }
+  .cc-rtl .feed-username, .cc-rtl .sr-name { text-align: right; unicode-bidi: plaintext; }
+
+  .scan-word { font-size: 12.5px; font-weight: 800; letter-spacing: -0.01em; }
+  .scan-stage.active .scan-word { animation: wordHop 1.6s ease-in-out infinite; }
+  @keyframes wordHop {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-2px); }
+  }
+  /* Dotted path between stages */
+  .scan-stage + .scan-stage { position: relative; }
+  .scan-stage + .scan-stage::before {
+    content: '· · ·';
+    position: absolute; left: -30px; top: 24px;
+    color: var(--text3); font-weight: 800; font-size: 14px; letter-spacing: 2px;
+  }
+  .cam-flash { border-radius: 18px; }
+
+  /* Camera: real double-strobe flash with outward glow */
+  .scan-stage.active .scan-cam .cam-flash { animation: camFlash2 1.8s ease-in-out infinite; background: #fff; }
+  @keyframes camFlash2 {
+    0%, 52%, 100% { opacity: 0; box-shadow: none; }
+    56% { opacity: 1; box-shadow: 0 0 34px rgba(255,255,255,0.9); }
+    60% { opacity: 0.12; box-shadow: 0 0 8px rgba(255,255,255,0.3); }
+    64% { opacity: 0.95; box-shadow: 0 0 30px rgba(255,255,255,0.85); }
+    74% { opacity: 0; box-shadow: none; }
+  }
+  .scan-stage.active .scan-cam i { animation: camPulse2 1.8s ease-in-out infinite; }
+  @keyframes camPulse2 {
+    0%, 52%, 74%, 100% { transform: scale(1); }
+    56%, 64% { transform: scale(1.15); }
+  }
+
+  /* Magnifier: methodical search sweep, then "found it!" zoom */
+  .scan-stage.active .scan-mag i { animation: magSearch 2.6s ease-in-out infinite; transform-origin: 58% 58%; }
+  @keyframes magSearch {
+    0%   { transform: translate(-9px, -6px) rotate(-10deg); }
+    16%  { transform: translate(6px, -8px) rotate(7deg); }
+    32%  { transform: translate(9px, 4px) rotate(10deg); }
+    46%  { transform: translate(-3px, 7px) rotate(-2deg); }
+    58%  { transform: translate(-9px, 1px) rotate(-9deg); }
+    68%  { transform: translate(-1px, -1px) rotate(0deg) scale(1); }
+    76%, 88% { transform: translate(-1px, -1px) rotate(0deg) scale(1.38); }
+    100% { transform: translate(-9px, -6px) rotate(-10deg) scale(1); }
+  }
+  .scan-stage.active .scan-mag .scan-ico::after { animation: magFound 2.6s ease-in-out infinite; border-radius: 20px; }
+  @keyframes magFound {
+    0%, 68% { opacity: 0; transform: scale(0.85); }
+    78% { opacity: 0.7; transform: scale(1.12); }
+    92%, 100% { opacity: 0; transform: scale(1.2); }
+  }
+
+  /* Served: plate with rising steam (replaces fork & knife) */
+  .dish-plate {
+    position: absolute; bottom: 13px; left: 50%; transform: translateX(-50%);
+    width: 38px; height: 12px; border-radius: 50%;
+    border: 2.5px solid var(--text2);
+  }
+  .dish-food {
+    position: absolute; bottom: 21px; left: 50%; transform: translateX(-50%);
+    width: 20px; height: 10px; border-radius: 10px 10px 0 0;
+    background: var(--text2);
+  }
+  .scan-stage.active .scan-pan .dish-plate { border-color: var(--amber-dark); }
+  .scan-stage.active .scan-pan .dish-food { background: var(--amber-dark); }
+  .scan-stage.done .scan-pan .dish-plate { border-color: #fff; }
+  .scan-stage.done .scan-pan .dish-food { background: #fff; }
+  .steam {
+    position: absolute; bottom: 34px;
+    width: 3.5px; height: 11px; border-radius: 99px;
+    background: var(--text2); opacity: 0.35;
+  }
+  .st1 { left: 23px; } .st2 { left: 31px; } .st3 { left: 39px; }
+  .scan-stage.active .scan-pan .steam { background: var(--amber-dark); }
+  .scan-stage.done .scan-pan .steam { background: #fff; }
+  .scan-stage.active .steam, .scan-stage.done .steam { animation: steamRise 1.5s ease-out infinite; }
+  .st2 { animation-delay: 0.45s; height: 13px; }
+  .st3 { animation-delay: 0.9s; }
+  @keyframes steamRise {
+    0% { opacity: 0; transform: translateY(5px) scaleY(0.55); }
+    35% { opacity: 0.85; }
+    100% { opacity: 0; transform: translateY(-13px) scaleY(1.15); }
+  }
 </style>
 </head>
 <body>
@@ -3618,6 +4060,24 @@
         <button class="dropdown-item" onclick="openAddressModal()">
           <i class="ti ti-map-pin"></i> Saved address
         </button>
+        <button class="dropdown-item" onclick="document.getElementById('userDropdown').classList.remove('open'); openFollowRequests()">
+          <i class="ti ti-user-plus"></i> Follow requests <span id="ddReqBadge" style="display:none;margin-left:auto;background:var(--sage);color:#fff;font-size:11px;font-weight:800;border-radius:999px;padding:1px 7px;"></span>
+        </button>
+        <button class="dropdown-item" onclick="openSharedWithMe()">
+          <i class="ti ti-inbox"></i> Shared with me <span id="swBadge" style="display:none;margin-left:auto;background:var(--sage);color:#fff;font-size:11px;font-weight:800;border-radius:999px;padding:1px 7px;"></span>
+        </button>
+        <button class="dropdown-item" onclick="openNutriTrack()">
+          <i class="ti ti-chart-donut"></i> Nutrition tracker
+        </button>
+        <button class="dropdown-item" onclick="openLangModal()">
+          <i class="ti ti-language"></i> Language
+        </button>
+        <button class="dropdown-item" onclick="showPushDiagnostics()">
+          <i class="ti ti-bell-cog"></i> Notifications
+        </button>
+        <button class="dropdown-item" onclick="openBlockedUsers()">
+          <i class="ti ti-ban"></i> Blocked users
+        </button>
         <button class="dropdown-item" onclick="openSupportModal()">
           <i class="ti ti-lifebuoy"></i> Contact Support
         </button>
@@ -3663,6 +4123,7 @@
       <i class="ti ti-link"></i>
       <input type="text" id="linkImportInput" placeholder="Instagram, YouTube or TikTok link"
         autocomplete="off" autocapitalize="off" inputmode="url" onkeydown="if(event.key==='Enter'){importFromLinkInput();}" />
+      <button class="recipe-search-go" id="linkImportClear" onclick="var i=document.getElementById('linkImportInput'); i.value=''; i.focus();" style="background:var(--surface2);color:var(--text2);margin-right:6px;" aria-label="Clear link">✕</button>
       <button class="recipe-search-go" id="linkImportGo" onclick="importFromLinkInput()">Import</button>
     </div>
     <div class="recipe-search-hint">Paste a recipe reel or video link — we'll turn it into a full recipe.</div>
@@ -3777,7 +4238,7 @@
         <div class="scan-word">Analyzing</div>
       </div>
       <div class="scan-stage" id="ls3">
-        <div class="scan-ico scan-pan"><i class="ti ti-tools-kitchen-2"></i><span class="pan-sizzle"></span><span class="pan-sizzle pan-sizzle2"></span></div>
+        <div class="scan-ico scan-pan"><span class="dish-food"></span><span class="dish-plate"></span><span class="steam st1"></span><span class="steam st2"></span><span class="steam st3"></span></div>
         <div class="scan-word">Served</div>
       </div>
     </div>
@@ -3801,7 +4262,7 @@
         <i class="ti ti-shield-heart"></i> Make this allergy-friendly
       </button>
 
-      <div class="serving-selector">
+      <div class="serving-selector" id="servingSelector">
         <span class="serving-label">Serving size</span>
         <div class="serving-options" id="servingOptions">
           <button class="serving-opt" data-serving="2" onclick="setServings(2)">2</button>
@@ -3827,6 +4288,39 @@
         <button class="lower-btn" onclick="toggleSwap()"><i class="ti ti-leaf" style="font-size:14px;"></i> Lower calories</button>
       </div>
 
+      <!-- Tap a tile to open that section as its own page -->
+      <div class="rp-grid" id="rpGrid">
+        <button class="rp-tile" onclick="rpOpen('ingredients')">
+          <div class="rp-tile-ico"><i class="ti ti-basket"></i></div>
+          <div class="rp-tile-txt"><div class="rp-tile-name">Ingredients</div>
+            <div class="rp-tile-sub" id="rpSubIngredients">What you need</div></div>
+        </button>
+        <button class="rp-tile" onclick="rpOpen('equipment')">
+          <div class="rp-tile-ico"><i class="ti ti-tools-kitchen-2"></i></div>
+          <div class="rp-tile-txt"><div class="rp-tile-name">Equipment</div>
+            <div class="rp-tile-sub" id="rpSubEquipment">Tools to use</div></div>
+        </button>
+        <button class="rp-tile" onclick="rpOpen('nutrition')">
+          <div class="rp-tile-ico"><i class="ti ti-heartbeat"></i></div>
+          <div class="rp-tile-txt"><div class="rp-tile-name">Nutrition</div>
+            <div class="rp-tile-sub" id="rpSubNutrition">Per serving</div></div>
+        </button>
+        <button class="rp-tile wide" onclick="rpOpen('method')">
+          <div class="rp-tile-ico"><i class="ti ti-list-numbers"></i></div>
+          <div class="rp-tile-txt"><div class="rp-tile-name">Method</div>
+            <div class="rp-tile-sub" id="rpSubMethod">Step-by-step</div></div>
+          <i class="ti ti-chevron-right rp-tile-arrow"></i>
+        </button>
+      </div>
+
+      <!-- Sub-page header (only visible inside a section) -->
+      <div class="rp-detail-bar" id="rpDetailBar" style="display:none;">
+        <button class="rp-back" onclick="rpBack()" aria-label="Back"><i class="ti ti-arrow-left"></i></button>
+        <div class="rp-detail-title" id="rpDetailTitle"></div>
+      </div>
+      <!-- Serving selector is moved in here on pages whose numbers it changes -->
+      <div id="rpServingSlot"></div>
+
       <div id="nutritionSection" style="display:none;">
         <button class="section-toggle" id="nutritionToggle" onclick="toggleSection('nutrition')" aria-expanded="true">
           <span class="section-label">Nutritional Facts</span>
@@ -3839,6 +4333,9 @@
               <div class="nutri-facts-title">Full Nutrition <span class="nutri-perserving">per serving</span></div>
               <div id="recipeNutriFactsRows"></div>
             </div>
+            <button class="nt-log-btn" onclick="logMealFromRecipe()">
+              <i class="ti ti-circle-plus"></i> Log this meal to my day
+            </button>
             <div class="nutri-disclaimer">Nutrition values are AI estimates based on the recipe's ingredients and may vary with brands, portions, and preparation. This is not medical or dietary advice.</div>
             <div class="nutri-sources">Sources: nutrient and calorie estimates are based on standard reference values from the <a onclick="openExternal('https://fdc.nal.usda.gov/'); return false;">USDA FoodData Central database</a> and the <a onclick="openExternal('https://www.fda.gov/food/nutrition-facts-label/daily-value-nutrition-and-supplement-facts-labels'); return false;">FDA Daily Value guidelines</a>.</div>
           </div>
@@ -3873,28 +4370,37 @@
           </div>
         </div>
       </div>
-      <button class="section-toggle" id="equipmentToggle" onclick="toggleSection('equipment')" aria-expanded="true">
-        <span class="section-label">Equipment</span>
-        <i class="ti ti-chevron-down section-chevron"></i>
-      </button>
-      <div class="section-body" id="equipmentBody">
-        <div class="equipment-grid" id="equipmentGrid"></div>
+      <div id="equipmentSection">
+        <button class="section-toggle" id="equipmentToggle" onclick="toggleSection('equipment')" aria-expanded="true">
+          <span class="section-label">Equipment</span>
+          <i class="ti ti-chevron-down section-chevron"></i>
+        </button>
+        <div class="section-body" id="equipmentBody">
+          <div class="equipment-grid" id="equipmentGrid"></div>
+        </div>
       </div>
 
-      <button class="section-toggle" id="ingredientsToggle" onclick="toggleSection('ingredients')" aria-expanded="true">
-        <span class="section-label">Ingredients</span>
-        <i class="ti ti-chevron-down section-chevron"></i>
-      </button>
-      <div class="section-body" id="ingredientsBody">
-        <div class="ingredients-grid" id="ingredientsGrid"></div>
+      <div id="ingredientsSection">
+        <div class="section-head-row">
+          <button class="section-toggle" id="ingredientsToggle" onclick="toggleSection('ingredients')" aria-expanded="true">
+            <span class="section-label">Ingredients</span>
+            <i class="ti ti-chevron-down section-chevron"></i>
+          </button>
+          <button class="dh-chip" onclick="openDontHave()"><i class="ti ti-basket-off"></i> Don't Have?</button>
+        </div>
+        <div class="section-body" id="ingredientsBody">
+          <div class="ingredients-grid" id="ingredientsGrid"></div>
+        </div>
       </div>
 
-      <button class="section-toggle" id="methodToggle" onclick="toggleSection('method')" aria-expanded="true">
-        <span class="section-label">Method</span>
-        <i class="ti ti-chevron-down section-chevron"></i>
-      </button>
-      <div class="section-body" id="methodBody">
-        <div class="steps-list" id="stepsList"></div>
+      <div id="methodSection">
+        <button class="section-toggle" id="methodToggle" onclick="toggleSection('method')" aria-expanded="true">
+          <span class="section-label">Method</span>
+          <i class="ti ti-chevron-down section-chevron"></i>
+        </button>
+        <div class="section-body" id="methodBody">
+          <div class="steps-list" id="stepsList"></div>
+        </div>
       </div>
 
       <button class="cookit-btn" id="cookItBtn" onclick="startCookMode()">
@@ -3903,6 +4409,12 @@
       </button>
       <button class="cooked-btn" id="cookedBtn" onclick="markAsCooked()">
         <i class="ti ti-checks"></i> I cooked this dish
+      </button>
+      <button class="cooked-btn" id="recipeFavBtn" onclick="favoriteCurrentRecipe()">
+        <i class="ti ti-heart"></i> Save to favorites
+      </button>
+      <button class="cooked-btn" id="shareRecipeBtn" onclick="openShareRecipe()">
+        <i class="ti ti-send"></i> Share with followers
       </button>
     </div>
 
@@ -3985,7 +4497,7 @@
           <div class="scan-word">Analyzing</div>
         </div>
         <div class="scan-stage" id="tls3">
-          <div class="scan-ico scan-pan"><i class="ti ti-tools-kitchen-2"></i><span class="pan-sizzle"></span><span class="pan-sizzle pan-sizzle2"></span></div>
+          <div class="scan-ico scan-pan"><span class="dish-food"></span><span class="dish-plate"></span><span class="steam st1"></span><span class="steam st2"></span><span class="steam st3"></span></div>
           <div class="scan-word">Served</div>
         </div>
       </div>
@@ -4054,7 +4566,7 @@
             <div class="scan-word">Lightening</div>
           </div>
           <div class="scan-stage" id="lc3">
-            <div class="scan-ico scan-pan"><i class="ti ti-tools-kitchen-2"></i><span class="pan-sizzle"></span><span class="pan-sizzle pan-sizzle2"></span></div>
+            <div class="scan-ico scan-pan"><span class="dish-food"></span><span class="dish-plate"></span><span class="steam st1"></span><span class="steam st2"></span><span class="steam st3"></span></div>
             <div class="scan-word">Served</div>
           </div>
         </div>
@@ -4131,10 +4643,13 @@
           <div class="equipment-grid" id="copycatEquipment"></div>
         </div>
 
-        <button class="section-toggle" id="copycatIngredientsToggle" onclick="toggleCopycatSection('Ingredients')" aria-expanded="true">
-          <span class="section-label">Ingredients</span>
-          <i class="ti ti-chevron-down section-chevron"></i>
-        </button>
+        <div class="section-head-row">
+          <button class="section-toggle" id="copycatIngredientsToggle" onclick="toggleCopycatSection('Ingredients')" aria-expanded="true">
+            <span class="section-label">Ingredients</span>
+            <i class="ti ti-chevron-down section-chevron"></i>
+          </button>
+          <button class="dh-chip" onclick="openDontHave('copycat')"><i class="ti ti-basket-off"></i> Don't Have?</button>
+        </div>
         <div class="section-body" id="copycatIngredientsBody">
           <div class="ingredients-grid" id="copycatIngredients"></div>
         </div>
@@ -4166,7 +4681,7 @@
         <img id="composerPreview" class="composer-preview" alt="Your dish" />
         <button class="change-btn composer-remove" onclick="clearComposerImage()">Remove</button>
       </div>
-      <textarea class="composer-caption" id="composerCaption" placeholder="Say something about this dish… (optional)" maxlength="300"></textarea>
+      <textarea class="composer-caption" id="composerCaption" placeholder="Share a dish, ask for a recipe, or get recommendations…" maxlength="300" oninput="updateShareBtnState()"></textarea>
       <div class="composer-actions">
         <button class="upload-action-btn" onclick="document.getElementById('postFileInput').click()">
           <i class="ti ti-photo"></i> Add food photo
@@ -4267,6 +4782,12 @@
       <div id="avatarPreview" style="width:84px; height:84px; border-radius:50%; display:flex; align-items:center; justify-content:center; overflow:hidden; background-size:cover; background-position:center;"></div>
     </div>
 
+    <div class="support-field">
+      <label>Username</label>
+      <input type="text" id="editUsernameInput" placeholder="your_username" autocomplete="off" autocapitalize="off" maxlength="20" />
+      <div style="font-size:12px;color:var(--text3);margin-top:4px;">3–20 characters: letters, numbers, underscores.</div>
+    </div>
+
     <div style="display:flex; justify-content:center; gap:8px; margin-bottom:1.25rem;">
       <input type="file" id="avatarPhotoInput" accept="image/*" style="display:none;" onchange="handleAvatarPhoto(event)" />
       <button class="avatar-photo-btn" onclick="document.getElementById('avatarPhotoInput').click()">
@@ -4351,6 +4872,36 @@
       </div>
     </div>
 
+    <div class="support-field">
+      <label>Cook timer vibration</label>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;">
+        <div style="font-size:13px;color:var(--text-soft);line-height:1.4;">
+          <span id="vibLabel">On</span> — your phone buzzes when a cooking timer finishes.
+        </div>
+        <button type="button" id="vibToggle" onclick="setVibrate(!vibrateOn())"
+          style="flex-shrink:0;width:52px;height:30px;border-radius:15px;border:none;cursor:pointer;position:relative;transition:background .2s;background:var(--brand);">
+          <span id="vibKnob" style="position:absolute;top:3px;left:25px;width:24px;height:24px;border-radius:50%;background:#fff;transition:left .2s;"></span>
+        </button>
+      </div>
+    </div>
+
+    <div class="support-field">
+      <label>Nutrition on my profile</label>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;">
+        <div style="font-size:13px;color:var(--text-soft);line-height:1.4;">
+          <span id="nutriShareLabel">Hidden</span> — <span id="nutriShareHint">your nutrition tracker isn't shown on your profile.</span>
+        </div>
+        <button type="button" id="nutriShareToggle" onclick="toggleNutriShare()"
+          style="flex-shrink:0;width:52px;height:30px;border-radius:15px;border:none;cursor:pointer;position:relative;transition:background .2s;background:var(--surface3);">
+          <span id="nutriShareKnob" style="position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:left .2s;"></span>
+        </button>
+      </div>
+      <div id="nutriVisRow" style="display:none;gap:8px;padding-top:4px;">
+        <button type="button" class="nv-opt" id="nvPublic" onclick="setNutriVis('public')">Everyone</button>
+        <button type="button" class="nv-opt" id="nvFollowers" onclick="setNutriVis('followers')">Followers only</button>
+      </div>
+    </div>
+
     <button class="support-submit" id="saveProfileBtn" onclick="saveProfile()">
       <i class="ti ti-check"></i> Save profile
     </button>
@@ -4432,6 +4983,7 @@
       </div>
       <div id="upFollowWrap" style="margin-top:14px;"></div>
     </div>
+    <div id="upNutrition" style="margin-top:16px;"></div>
     <div id="upBody" style="margin-top:16px;">
       <div class="empty-state"><div class="empty-icon"><i class="ti ti-loader-2"></i></div>Loading…</div>
     </div>
@@ -4450,6 +5002,23 @@
       </div>
     </div>
     <div id="followRequestsBody" style="margin-top:8px;">
+      <div class="empty-state"><div class="empty-icon"><i class="ti ti-loader-2"></i></div>Loading…</div>
+    </div>
+  </div>
+</div>
+
+<!-- Blocked users -->
+<div class="support-modal" id="blockedUsersModal">
+  <div class="support-card">
+    <button class="support-close" onclick="closeBlockedUsers()" aria-label="Close"><i class="ti ti-x"></i></button>
+    <div class="support-card-header">
+      <div class="support-card-icon"><i class="ti ti-ban"></i></div>
+      <div>
+        <div class="support-card-title">Blocked users</div>
+        <div class="support-card-sub">People you've blocked can't see your posts or comments, or you theirs</div>
+      </div>
+    </div>
+    <div id="blockedUsersBody" style="margin-top:8px;">
       <div class="empty-state"><div class="empty-icon"><i class="ti ti-loader-2"></i></div>Loading…</div>
     </div>
   </div>
@@ -4589,6 +5158,145 @@
   </div>
 </div>
 
+<!-- "Don't Have?" — pick missing ingredients, get substitutes -->
+<div class="support-modal" id="dontHaveModal">
+  <div class="support-card allergy-card">
+    <button class="support-close" onclick="closeDontHave()" aria-label="Close"><i class="ti ti-x"></i></button>
+    <div class="support-card-header">
+      <div class="support-card-icon"><i class="ti ti-basket-off"></i></div>
+      <div>
+        <div class="support-card-title">Don't have an ingredient?</div>
+        <div class="support-card-sub" id="dhSub">Tap everything you're missing, then hit Next</div>
+      </div>
+    </div>
+
+    <div id="dhPickStep">
+      <div class="allergy-chips" id="dhChips" style="margin-bottom:14px;"></div>
+      <button class="support-submit" id="dhNextBtn" onclick="dhNext()">
+        <i class="ti ti-arrow-right"></i> Next
+      </button>
+    </div>
+
+    <div class="allergy-loading" id="dhLoading">
+      <div class="allergy-spinner"></div>
+      <div class="allergy-loading-text">Finding substitutes…</div>
+    </div>
+
+    <div class="allergy-results" id="dhResults"></div>
+  </div>
+</div>
+
+<!-- Nutrition Tracker -->
+<div class="support-modal" id="nutriTrackModal">
+  <div class="support-card allergy-card">
+    <button class="support-close" onclick="closeNutriTrack()" aria-label="Close"><i class="ti ti-x"></i></button>
+    <div class="support-card-header">
+      <div class="support-card-icon"><i class="ti ti-chart-donut"></i></div>
+      <div>
+        <div class="support-card-title">Nutrition Tracker</div>
+        <div class="support-card-sub">Meals you've logged, day by day</div>
+      </div>
+    </div>
+    <div class="nt-day-nav">
+      <button class="nt-day-btn" onclick="ntShift(-1)" aria-label="Previous day"><i class="ti ti-chevron-left"></i></button>
+      <div class="nt-day-label" id="ntDayLabel">Today</div>
+      <button class="nt-day-btn" id="ntNextBtn" onclick="ntShift(1)" aria-label="Next day"><i class="ti ti-chevron-right"></i></button>
+    </div>
+    <div class="nt-macros" id="ntMacros"></div>
+    <div class="nt-minis" id="ntMinis"></div>
+    <div id="ntMeals"></div>
+  </div>
+</div>
+
+<!-- Share a recipe with people who follow you -->
+<div class="support-modal" id="shareRecipeModal">
+  <div class="support-card allergy-card">
+    <button class="support-close" onclick="closeShareRecipe()" aria-label="Close"><i class="ti ti-x"></i></button>
+    <div class="support-card-header">
+      <div class="support-card-icon"><i class="ti ti-send"></i></div>
+      <div>
+        <div class="support-card-title">Share this recipe</div>
+        <div class="support-card-sub" id="srSub">Pick who gets it</div>
+      </div>
+    </div>
+    <div class="sr-scroll" id="srList"></div>
+    <button class="support-submit" id="srSendBtn" onclick="sendSharedRecipe()">
+      <i class="ti ti-send"></i> <span id="srSendLabel">Send</span>
+    </button>
+  </div>
+</div>
+
+<!-- Recipes other people shared with me -->
+<div class="support-modal" id="sharedWithMeModal">
+  <div class="support-card allergy-card">
+    <button class="support-close" onclick="closeSharedWithMe()" aria-label="Close"><i class="ti ti-x"></i></button>
+    <div class="support-card-header">
+      <div class="support-card-icon"><i class="ti ti-inbox"></i></div>
+      <div>
+        <div class="support-card-title">Shared with me</div>
+        <div class="support-card-sub">Recipes people sent you</div>
+      </div>
+    </div>
+    <div id="swList"></div>
+  </div>
+</div>
+
+<!-- Theme picker -->
+<!-- Make an ingredient yourself -->
+<div class="support-modal" id="makeModal">
+  <div class="support-card allergy-card">
+    <button class="support-close" onclick="closeMakeIngredient()" aria-label="Close"><i class="ti ti-x"></i></button>
+    <div class="support-card-header">
+      <div class="support-card-icon"><i class="ti ti-chef-hat"></i></div>
+      <div>
+        <div class="support-card-title" id="mkTitle">Make it yourself</div>
+        <div class="support-card-sub" id="mkSub">Working out how…</div>
+      </div>
+    </div>
+    <div class="allergy-loading" id="mkLoading">
+      <div class="allergy-spinner"></div>
+      <div class="allergy-loading-text">Working out how to make it…</div>
+    </div>
+    <div class="allergy-results" id="mkResults"></div>
+  </div>
+</div>
+
+<!-- Push notification diagnostics -->
+<div class="support-modal" id="pushDiagModal">
+  <div class="support-card allergy-card">
+    <button class="support-close" onclick="closePushDiagnostics()" aria-label="Close"><i class="ti ti-x"></i></button>
+    <div class="support-card-header">
+      <div class="support-card-icon"><i class="ti ti-bell-cog"></i></div>
+      <div>
+        <div class="support-card-title">Notifications</div>
+        <div class="support-card-sub">Why alerts may not be arriving</div>
+      </div>
+    </div>
+    <div id="pdBody"></div>
+    <button class="support-submit" style="margin-top:14px;" onclick="sendTestPush()">
+      <i class="ti ti-send"></i> Send me a test notification
+    </button>
+    <button class="support-submit" style="margin-top:8px;background:var(--surface2);color:var(--text);" onclick="showPushDiagnostics()">
+      <i class="ti ti-refresh"></i> Re-check
+    </button>
+  </div>
+</div>
+
+<!-- Language picker -->
+<div class="support-modal" id="langModal">
+  <div class="support-card allergy-card">
+    <button class="support-close" onclick="closeLangModal()" aria-label="Close"><i class="ti ti-x"></i></button>
+    <div class="support-card-header">
+      <div class="support-card-icon"><i class="ti ti-language"></i></div>
+      <div>
+        <div class="support-card-title">Language</div>
+        <div class="support-card-sub">Recipes are generated in your language</div>
+      </div>
+    </div>
+    <div id="langList"></div>
+  </div>
+</div>
+
 <!-- ── Legal pages overlay (Terms / Privacy) ── -->
 <div class="legal-overlay" id="legalOverlay">
   <div class="legal-header">
@@ -4615,7 +5323,7 @@
       <p>You must be at least 13 years old to use the Service. If you are under 18, you may use the Service only with the consent of a parent or guardian. By using the Service you represent that you meet these requirements.</p>
 
       <h2>3. Your Account</h2>
-      <p>You are responsible for your account and for keeping your password secure. You must provide accurate information. We may suspend or terminate accounts that violate these Terms. You may delete your account at any time by contacting support@captureandcook.com.</p>
+      <p>You are responsible for your account and for keeping your password secure. You must provide accurate information. We may suspend or terminate accounts that violate these Terms. You may delete your account at any time by contacting <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="86f5f3f6f6e9f4f2c6e5e7f6f2f3f4e3e7e8e2e5e9e9eda8e5e9eb">[email&#160;protected]</a>.</p>
 
       <h2>4. Important: AI-Generated Content, Allergy &amp; Health Disclaimer</h2>
       <p>The Service's recipes, calorie counts, nutrition facts, ingredient lists, equipment lists, cost estimates, restaurant-meal identifications, and allergy/dietary substitution suggestions are <strong>generated by artificial intelligence and are estimates only.</strong> They may be inaccurate or incomplete.</p>
@@ -4668,7 +5376,7 @@
       <p>We may update these Terms. We will post the updated version with a new effective date; material changes may be announced in the app. Continued use after changes means you accept them.</p>
 
       <h2>15. Contact</h2>
-      <p>Questions about these Terms: <a href="mailto:support@captureandcook.com">support@captureandcook.com</a></p>
+      <p>Questions about these Terms: <a href="/cdn-cgi/l/email-protection#94e7e1e4e4fbe6e0d4f7f5e4e0e1e6f1f5faf0f7fbfbffbaf7fbf9"><span class="__cf_email__" data-cfemail="b5c6c0c5c5dac7c1f5d6d4c5c1c0c7d0d4dbd1d6dadade9bd6dad8">[email&#160;protected]</span></a></p>
     </div>
 
     <!-- PRIVACY -->
@@ -4722,7 +5430,7 @@
       <p>These providers process data on our behalf under their own security and privacy commitments. We do not sell your personal information.</p>
 
       <h2>6. Data Retention &amp; Deletion</h2>
-      <p>We keep your data while your account is active. You can delete individual posts, comments, and history items in the app, or request full account deletion by emailing <a href="mailto:support@captureandcook.com">support@captureandcook.com</a> — we will delete your account data within 30 days, except where retention is required for legal or security reasons.</p>
+      <p>We keep your data while your account is active. You can delete individual posts, comments, and history items in the app, or request full account deletion by emailing <a href="/cdn-cgi/l/email-protection#5e2d2b2e2e312c2a1e3d3f2e2a2b2c3b3f303a3d313135703d3133"><span class="__cf_email__" data-cfemail="81f2f4f1f1eef3f5c1e2e0f1f5f4f3e4e0efe5e2eeeeeaafe2eeec">[email&#160;protected]</span></a> — we will delete your account data within 30 days, except where retention is required for legal or security reasons.</p>
 
       <h2>7. Security</h2>
       <p>We use industry-standard measures including encrypted connections (HTTPS), hashed passwords, and database row-level security. No system is perfectly secure; please use a strong, unique password.</p>
@@ -4731,7 +5439,7 @@
       <p>The Service is not directed to children under 13, and we do not knowingly collect personal information from children under 13. If you believe a child under 13 has created an account, contact us and we will delete it.</p>
 
       <h2>9. Your Rights</h2>
-      <p>Depending on where you live, you may have rights to access, correct, or delete your personal information. To exercise these rights, email <a href="mailto:support@captureandcook.com">support@captureandcook.com</a>. We will respond within a reasonable time.</p>
+      <p>Depending on where you live, you may have rights to access, correct, or delete your personal information. To exercise these rights, email <a href="/cdn-cgi/l/email-protection#e3909693938c9197a380829397969186828d87808c8c88cd808c8e"><span class="__cf_email__" data-cfemail="8dfef8fdfde2fff9cdeeecfdf9f8ffe8ece3e9eee2e2e6a3eee2e0">[email&#160;protected]</span></a>. We will respond within a reasonable time.</p>
 
       <h2>10. Cookies &amp; Local Storage</h2>
       <p>We use minimal browser storage to keep you signed in and to remember device-level preferences (such as a saved address fallback). We do not use third-party advertising cookies.</p>
@@ -4740,7 +5448,7 @@
       <p>We may update this Policy and will post the new version here with an updated effective date. Material changes may be announced in the app.</p>
 
       <h2>12. Contact</h2>
-      <p>Privacy questions or requests: <a href="mailto:support@captureandcook.com">support@captureandcook.com</a><br>Capture &amp; Cook LLC, Michigan, USA</p>
+      <p>Privacy questions or requests: <a href="/cdn-cgi/l/email-protection#097a7c7979667b7d496a68797d7c7b6c68676d6a666662276a6664"><span class="__cf_email__" data-cfemail="e5969095958a9791a586849591909780848b81868a8a8ecb868a88">[email&#160;protected]</span></a><br>Capture &amp; Cook LLC, Michigan, USA</p>
     </div>
 
   </div>
@@ -4750,7 +5458,7 @@
 
 <div class="toast" id="toast"></div>
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
   // ── One-time service-worker eviction (runs before anything else) ──
   // Old PWA service workers cached on a device keep intercepting requests until
   // they're unregistered AND the page reloads. This evicts any stuck worker,
@@ -4897,13 +5605,35 @@
       window.__ccRecovery = true;
       try { sessionStorage.setItem('cc_recovery', '1'); } catch (e) { /* ignore */ }
     }
-    if (u.searchParams.get('error') || u.searchParams.get('error_code')) {
+    const hp0 = new URLSearchParams((hash || '').replace(/^#/, ''));
+    const errCode = u.searchParams.get('error_code') || hp0.get('error_code') || '';
+    const errDesc = u.searchParams.get('error_description') || hp0.get('error_description') || '';
+    if (u.searchParams.get('error') || errCode || hp0.get('error')) {
+      // Recovery links fail for their own reasons — say which, and offer a way out.
+      if (window.__ccRecovery || /otp_expired|access_denied/i.test(errCode)) {
+        window.__ccRecovery = false;
+        try { sessionStorage.removeItem('cc_recovery'); } catch (e) {}
+        showAuthError(/expired/i.test(errCode + errDesc)
+          ? 'That password reset link has expired. Request a new one below.'
+          : 'That reset link is no longer valid — it may have already been used. Request a new one below.');
+        return;
+      }
       showAuthError('Sign-in was cancelled or failed. Please try again.');
       return;
     }
     try {
       const code = u.searchParams.get('code');
-      if (code) {
+      // Newer Supabase recovery links carry token_hash and need verifyOtp
+      // rather than a PKCE code exchange.
+      const tokenHash = u.searchParams.get('token_hash') || hp0.get('token_hash');
+      const linkType = u.searchParams.get('type') || hp0.get('type');
+      if (tokenHash) {
+        const { error: vErr } = await supaClient.auth.verifyOtp({
+          token_hash: tokenHash,
+          type: linkType || 'recovery'
+        });
+        if (vErr) throw vErr;
+      } else if (code) {
         await supaClient.auth.exchangeCodeForSession(code);
       } else if (hash.includes('access_token')) {
         const hp = new URLSearchParams(hash.replace(/^#/, ''));
@@ -4969,6 +5699,7 @@
     // Load username (for mentions/notifications) and start the notification badge
     ensureUsernameSilent();
     startNotifPolling();
+    initPushNotifications();   // so alerts arrive with the app closed
   }
 
   // Load the user's username without popping the claim modal (for notifications)
@@ -5166,6 +5897,14 @@
       });
       if (error) throw error;
 
+      // Supabase anti-enumeration: signing up an EXISTING email "succeeds" but
+      // returns a user with no identities. Surface the truth instead of a
+      // misleading "verification email sent".
+      if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+        showAuthError('An account with this email already exists. Try signing in instead.');
+        return;
+      }
+
       // Save username into the profile row (keyed on the new user id)
       if (data.user) {
         try {
@@ -5199,7 +5938,13 @@
         // com.captureandcook.app:// deep link bring the session back into the app.
         const { data, error } = await supaClient.auth.signInWithOAuth({
           provider: 'google',
-          options: { redirectTo: ccRedirect('callback'), skipBrowserRedirect: true }
+          options: {
+            redirectTo: ccRedirect('callback'),
+            skipBrowserRedirect: true,
+            // Always show Google's account chooser instead of silently reusing
+            // the last account.
+            queryParams: { prompt: 'select_account' }
+          }
         });
         if (error) throw error;
         if (data && data.url && CC_Browser) {
@@ -5210,7 +5955,7 @@
       } else {
         const { error } = await supaClient.auth.signInWithOAuth({
           provider: 'google',
-          options: { redirectTo: window.location.origin }
+          options: { redirectTo: window.location.origin, queryParams: { prompt: 'select_account' } }
         });
         if (error) throw error;
       }
@@ -5802,6 +6547,10 @@
     document.getElementById('resultsSection').classList.remove('visible');
     document.getElementById('newAnalysisBtn').classList.remove('visible');
     resetStages('ls');
+    // Bring the progress animation into view so the user sees it working.
+    setTimeout(() => {
+      document.getElementById('loadingSection').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 60);
 
     try {
       activateStage('ls', 1);
@@ -5870,6 +6619,9 @@
     document.getElementById('loadingSection').classList.add('visible');
     document.getElementById('dishDetectedLabel').textContent = 'Reading the link…';
     resetStages('ls'); activateStage('ls', 1); activateStage('ls', 2);
+    setTimeout(() => {
+      document.getElementById('loadingSection').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 60);
     try {
       const response = await fetch('/api/import-recipe', {
         method: 'POST',
@@ -6308,7 +7060,6 @@
 
     // Start with sections expanded for every newly loaded recipe
     expandAllSections();
-
     // Default the selector to the option closest to the recipe's native servings
     currentServings = nearestServingOption(baseServings);
     renderAtServings(currentServings);
@@ -6332,10 +7083,12 @@
         allergyBtn.innerHTML = '<i class="ti ti-shield-heart"></i> Make this allergy-friendly';
       }
     }
-    // Auto-trigger the popup when a flagged allergen is detected for this user
-    if (userHits.length) {
-      setTimeout(() => openAllergyCheck(userHits), 600);
-    }
+    // The popup never opens on its own — the button above flags detected
+    // allergens and the user taps it if they want the safe-swap details.
+
+    // LAST: the section renderers above un-hide their own wrappers, so collapse
+    // everything back to the tile grid only after they've all run.
+    rpReset(r);
   }
 
   // Render the per-serving nutrition block for a home recipe. Mirrors the
@@ -6379,6 +7132,30 @@
   }
 
   // Scale a numeric quantity string like "1 cup", "1.5 lb", "2", "1/2 tsp"
+  // Turn a number into a cook-friendly quantity: kitchen fractions (¼, ⅓, ½ …)
+  // instead of decimals like 0.33 or 0.0032.
+  function prettyQty(value) {
+    if (!isFinite(value) || value <= 0) return '0';
+    // Large amounts (grams, ml…): whole numbers read best.
+    if (value >= 10) return String(Math.round(value));
+    const FRACTIONS = [
+      [0, ''], [0.125, '⅛'], [0.25, '¼'], [1 / 3, '⅓'], [0.375, '⅜'],
+      [0.5, '½'], [0.625, '⅝'], [2 / 3, '⅔'], [0.75, '¾'], [0.875, '⅞'], [1, '']
+    ];
+    let whole = Math.floor(value);
+    let frac = value - whole;
+    // Snap the fractional part to the nearest kitchen fraction.
+    let best = FRACTIONS[0];
+    for (const f of FRACTIONS) {
+      if (Math.abs(frac - f[0]) < Math.abs(frac - best[0])) best = f;
+    }
+    if (best[0] === 1) { whole += 1; best = FRACTIONS[0]; }
+    // Tiny-but-real amounts shouldn't vanish to 0 — floor them at ⅛.
+    if (whole === 0 && best[1] === '') return '⅛';
+    if (whole === 0) return best[1];
+    return best[1] ? whole + ' ' + best[1] : String(whole);
+  }
+
   function scaleQty(qty, factor) {    if (qty === undefined || qty === null) return qty;
     const str = String(qty);
     // Handle simple fractions like 1/2
@@ -6397,10 +7174,7 @@
       } else {
         value = parseFloat(numStr);
       }
-      const scaled = value * factor;
-      // Round nicely: whole numbers stay whole, else 1-2 decimals
-      const rounded = Math.round(scaled * 100) / 100;
-      return (rounded % 1 === 0) ? String(rounded) : String(rounded);
+      return prettyQty(value * factor);
     });
   }
 
@@ -6414,7 +7188,7 @@
     document.getElementById('recipeMeta').innerHTML = [
       r.time ? '<span class="meta-chip"><i class="ti ti-clock"></i> ' + r.time + '</span>' : '',
       '<span class="meta-chip"><i class="ti ti-users"></i> Serves ' + servings + '</span>',
-      r.difficulty ? '<span class="meta-chip"><i class="ti ti-flame"></i> ' + r.difficulty + '</span>' : '',
+      r.difficulty ? '<span class="meta-chip">Difficulty: ' + r.difficulty + '</span>' : '',
       r.dietary ? '<span class="meta-chip"><i class="ti ti-leaf"></i> ' + r.dietary + '</span>' : '',
     ].filter(Boolean).join('');
 
@@ -6430,16 +7204,21 @@
         ? '<span class="ing-cost">$' + scaledCost.toFixed(2) + '</span>'
         : '';
       const scaledQty = scaleQty(i.qty, factor);
-      return '<div class="ingredient-item"><span class="ing-emoji">' + i.emoji + '</span><div><div class="ing-name">' + i.name + '</div><div class="ing-qty">' + scaledQty + '</div></div>' + costBadge + '</div>';
+      const mk = '<button class="mk-btn" onclick="openMakeIngredient(' + JSON.stringify(String(i.name || '')).replace(/"/g, '&quot;') +
+        ',' + JSON.stringify(String(scaledQty || '')).replace(/"/g, '&quot;') + ')">Make</button>';
+      return '<div class="ingredient-item"><span class="ing-emoji">' + i.emoji + '</span><div><div class="ing-name">' + i.name + '</div><div class="ing-qty">' + scaledQty + '</div></div>' + mk + costBadge + '</div>';
     }).join('');
 
-    // Cost banner scaled
+    // Cost banner scaled. Visibility is owned by rpOpen/rpBack now (cost shows
+    // inside the Ingredients page), so only record whether there IS a cost.
+    const costEl = document.getElementById('costSection');
     if (r.totalCost !== undefined && r.totalCost !== null) {
       document.getElementById('costValue').textContent = '$' + (Number(r.totalCost) * factor).toFixed(2);
       if (r.costNote) document.getElementById('costDisclaimer').textContent = r.costNote;
-      document.getElementById('costSection').style.display = '';
+      costEl.dataset.hasCost = '1';
     } else {
-      document.getElementById('costSection').style.display = 'none';
+      costEl.dataset.hasCost = '0';
+      costEl.style.display = 'none';
     }
 
     // Steps (unchanged)
@@ -6473,7 +7252,12 @@
     });
   }
 
-  function toggleSwap() { document.getElementById('swapPanel').classList.toggle('visible'); }
+  function toggleSwap() {
+    const p = document.getElementById('swapPanel');
+    const opened = p.classList.toggle('visible');
+    // Bring the substitutions into view — otherwise the tap looks like it did nothing.
+    if (opened) setTimeout(() => p.scrollIntoView({ behavior: 'smooth', block: 'center' }), 80);
+  }
 
   // ── Allergy check modal ──
   // The set of allergens the popup will check against. If the user has profile
@@ -6624,6 +7408,731 @@
       '<div class="nutri-sources">Allergen categories are based on the <a onclick="openExternal(\'https://www.fda.gov/food/food-labeling-nutrition/food-allergies\'); return false;">FDA\'s major food allergens list</a>.</div>';
   }
 
+  // ── "Don't Have?" — pick missing ingredients, get substitutes ──
+  let dhRecipe = null;     // recipe being checked
+  let dhSelected = [];     // indexes of ingredients the user doesn't have
+
+  function openDontHave(source) {
+    dhRecipe = (source === 'copycat') ? baseCopycat : baseRecipe;
+    if (!dhRecipe || !Array.isArray(dhRecipe.ingredients) || !dhRecipe.ingredients.length) {
+      showToast('Open a recipe first.');
+      return;
+    }
+    dhSelected = [];
+    document.getElementById('dhSub').textContent = 'Tap everything you\'re missing, then hit Next';
+    document.getElementById('dhPickStep').style.display = 'block';
+    document.getElementById('dhLoading').classList.remove('visible');
+    const results = document.getElementById('dhResults');
+    results.classList.remove('visible');
+    results.innerHTML = '';
+    renderDhChips();
+    document.getElementById('dontHaveModal').classList.add('open');
+  }
+
+  function closeDontHave() {
+    document.getElementById('dontHaveModal').classList.remove('open');
+  }
+
+  function renderDhChips() {
+    document.getElementById('dhChips').innerHTML = dhRecipe.ingredients.map((ing, i) =>
+      '<span class="allergy-chip ' + (dhSelected.includes(i) ? 'on' : '') +
+      '" onclick="toggleDhIng(' + i + ')">' + (ing.emoji ? ing.emoji + ' ' : '') + escapeHtml(ing.name) + '</span>'
+    ).join('');
+  }
+
+  function toggleDhIng(i) {
+    const at = dhSelected.indexOf(i);
+    if (at >= 0) dhSelected.splice(at, 1);
+    else dhSelected.push(i);
+    renderDhChips();
+  }
+
+  async function dhNext() {
+    if (!dhSelected.length) { showToast('Tap the ingredients you don\'t have first.'); return; }
+    const missing = dhSelected.map(i => dhRecipe.ingredients[i].name);
+    const allNames = dhRecipe.ingredients.map(i => i.name);
+    document.getElementById('dhPickStep').style.display = 'none';
+    document.getElementById('dhSub').textContent = 'Looking for substitutes…';
+    const loading = document.getElementById('dhLoading');
+    const results = document.getElementById('dhResults');
+    loading.classList.add('visible');
+    try {
+      const res = await fetch('/api/ingredient-swaps', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dish: dhRecipe.dish || '', ingredients: allNames, missing, lang: ccLang() })
+      });
+      if (!res.ok) throw new Error('bad response');
+      const data = await res.json();
+      loading.classList.remove('visible');
+      results.classList.add('visible');
+
+      const swaps = Array.isArray(data.swaps) ? data.swaps : [];
+      const usable = swaps.filter(s => s.replacement && String(s.replacement).toLowerCase() !== 'none');
+
+      if (data.noReplacements || !usable.length) {
+        document.getElementById('dhSub').textContent = 'Sorry!';
+        results.innerHTML = '<div class="allergy-status flagged"><i class="ti ti-mood-sad"></i>' +
+          '<div><strong>No substitutes.</strong> This dish really needs ' +
+          missing.map(m => escapeHtml(m.toLowerCase())).join(', ') + '.</div></div>';
+        return;
+      }
+
+      document.getElementById('dhSub').textContent = 'Here\'s what you can use instead';
+      let html = '';
+      swaps.forEach(s => {
+        const ok = s.replacement && String(s.replacement).toLowerCase() !== 'none';
+        html += '<div class="swap-card"><div class="swap-card-head">' +
+          '<span class="swap-ingredient">' + escapeHtml(s.ingredient || '') + '</span>';
+        if (ok) {
+          html += '<span class="swap-arrow"><i class="ti ti-arrow-right"></i></span>' +
+            '<span class="swap-replacement">' + escapeHtml(s.replacement) + '</span>';
+        }
+        html += '</div>';
+        if (ok) {
+          if (s.note) html += '<div class="swap-note">' + escapeHtml(s.note) + '</div>';
+        } else {
+          html += '<div class="swap-none">No substitute for this one — the dish needs it.</div>';
+        }
+        html += '</div>';
+      });
+      results.innerHTML = html;
+    } catch (e) {
+      loading.classList.remove('visible');
+      results.classList.add('visible');
+      document.getElementById('dhSub').textContent = 'Something went wrong';
+      results.innerHTML = '<div class="allergy-status flagged"><i class="ti ti-alert-triangle"></i>' +
+        '<div>We couldn\'t look up substitutes right now. Please try again in a moment.</div></div>';
+    }
+  }
+
+  // ── Nutrition Tracker (on-device log, per day) ──
+  const NT_KEY = 'cc-nutri-log';
+  let ntOffset = 0;   // 0 = today, -1 = yesterday, …
+
+  function ntRead() {
+    try { return JSON.parse(localStorage.getItem(NT_KEY) || '{}'); } catch (e) { return {}; }
+  }
+  function ntWrite(log) {
+    try { localStorage.setItem(NT_KEY, JSON.stringify(log)); } catch (e) { /* storage full */ }
+  }
+  function ntDate(offset) {
+    const d = new Date(); d.setDate(d.getDate() + offset); return d;
+  }
+  function ntDayKey(offset) {
+    const d = ntDate(offset);
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+
+  function logMealFromRecipe() {
+    const r = baseRecipe;
+    if (!r) { showToast('Analyze a dish first.'); return; }
+    const n = r.nutrition || {};
+    const log = ntRead();
+    const key = ntDayKey(0);
+    (log[key] = log[key] || []).push({
+      dish: r.dish || 'Meal',
+      calories: Number(r.calories) || 0,
+      protein_g: Number(n.protein_g) || 0,
+      carbs_g: Number(n.carbs_g) || 0,
+      fat_g: Number(n.fat_g) || 0,
+      saturated_fat_g: Number(n.saturated_fat_g) || 0,
+      fiber_g: Number(n.fiber_g) || 0,
+      sugar_g: Number(n.sugar_g) || 0,
+      sodium_mg: Number(n.sodium_mg) || 0,
+      ts: Date.now()
+    });
+    ntWrite(log);
+    ntSync();
+    showToast('Logged to today — see Nutrition tracker in your menu');
+  }
+
+  // Push the on-device log up so it survives reinstalls and can be shown on a
+  // profile. Fire-and-forget: the tracker keeps working offline regardless.
+  async function ntSync() {
+    if (!currentUser) return;
+    try {
+      const { data: sess } = await supaClient.auth.getSession();
+      const token = sess && sess.session && sess.session.access_token;
+      if (!token) return;
+      const log = ntRead();
+      const entries = [];
+      Object.keys(log).forEach(day => (log[day] || []).forEach(m => entries.push(Object.assign({ day }, m))));
+      await fetch('/api/nutrition', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ access_token: token, action: 'sync', entries })
+      });
+    } catch (e) { /* offline — try again next time */ }
+  }
+
+  function openNutriTrack() {
+    const dd = document.getElementById('userDropdown');
+    if (dd) dd.classList.remove('open');
+    ntOffset = 0;
+    renderNutriTrack();
+    document.getElementById('nutriTrackModal').classList.add('open');
+  }
+  function closeNutriTrack() {
+    document.getElementById('nutriTrackModal').classList.remove('open');
+  }
+  function ntShift(d) {
+    ntOffset = Math.min(0, ntOffset + d);
+    renderNutriTrack();
+  }
+  function ntDelete(key, ts) {
+    const log = ntRead();
+    log[key] = (log[key] || []).filter(m => m.ts !== ts);
+    if (!log[key].length) delete log[key];
+    ntWrite(log);
+    renderNutriTrack();
+  }
+
+  function renderNutriTrack() {
+    const key = ntDayKey(ntOffset);
+    const meals = ntRead()[key] || [];
+    const label = ntOffset === 0 ? 'Today'
+      : ntOffset === -1 ? 'Yesterday'
+      : ntDate(ntOffset).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+    document.getElementById('ntDayLabel').textContent = label;
+    document.getElementById('ntNextBtn').disabled = ntOffset >= 0;
+
+    const sum = f => Math.round(meals.reduce((t, m) => t + (Number(m[f]) || 0), 0));
+    document.getElementById('ntMacros').innerHTML = [
+      ['calories', 'Calories', ''], ['protein_g', 'Protein', 'g'],
+      ['carbs_g', 'Carbs', 'g'], ['fat_g', 'Fat', 'g']
+    ].map(([f, l, u]) =>
+      '<div class="nt-macro"><div class="nt-macro-val">' + sum(f) + u + '</div><div class="nt-macro-lbl">' + l + '</div></div>'
+    ).join('');
+    document.getElementById('ntMinis').innerHTML =
+      'Sat fat <b>' + sum('saturated_fat_g') + 'g</b> · Fiber <b>' + sum('fiber_g') + 'g</b> · ' +
+      'Sugar <b>' + sum('sugar_g') + 'g</b> · Sodium <b>' + sum('sodium_mg') + 'mg</b>';
+    document.getElementById('ntMeals').innerHTML = meals.length
+      ? meals.map(m =>
+          '<div class="nt-meal"><div class="nt-meal-name">' + escapeHtml(m.dish) + '</div>' +
+          '<div class="nt-meal-cals">' + Math.round(m.calories) + ' cal</div>' +
+          '<button class="nt-meal-del" onclick="ntDelete(\'' + key + '\',' + m.ts + ')" aria-label="Remove"><i class="ti ti-x"></i></button></div>'
+        ).join('')
+      : '<div class="nt-empty">Nothing logged this day.<br>Analyze a dish and tap "Log this meal to my day".</div>';
+  }
+
+  // ── Share a recipe with people who follow you ──
+  // The server enforces the rule (recipients must follow you); this is just UI.
+  let srSelected = [];
+  let srRecipients = [];
+
+  async function shareAction(action, payload) {
+    const { data: sess } = await supaClient.auth.getSession();
+    const token = sess && sess.session && sess.session.access_token;
+    if (!token) { showToast('Please sign in.'); return null; }
+    const res = await fetch('/api/share-recipe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(Object.assign({ access_token: token, action }, payload || {}))
+    });
+    if (!res.ok) {
+      let d = {}; try { d = await res.json(); } catch (e) { /* ignore */ }
+      window.__lastShareError = (d && (d.error || d.detail)) || ('HTTP ' + res.status);
+      return null;
+    }
+    return await res.json();
+  }
+
+  async function openShareRecipe() {
+    if (!baseRecipe) { showToast('Open a recipe first.'); return; }
+    if (!currentUser) { showToast('Please sign in to share.'); return; }
+    srSelected = [];
+    const list = document.getElementById('srList');
+    document.getElementById('srSub').textContent = 'Pick who gets it';
+    document.getElementById('srSendLabel').textContent = 'Send';
+    list.innerHTML = '<div class="nt-empty">Loading your followers…</div>';
+    document.getElementById('shareRecipeModal').classList.add('open');
+
+    const out = await shareAction('list_recipients');
+    if (!out) {
+      list.innerHTML = '<div class="nt-empty">Could not load your followers. Please try again.</div>';
+      return;
+    }
+    srRecipients = out.recipients || [];
+    if (!srRecipients.length) {
+      list.innerHTML = '<div class="nt-empty">No one follows you yet.<br>' +
+        'You can share recipes with people once they follow you.</div>';
+      return;
+    }
+    renderSrList();
+  }
+
+  function renderSrList() {
+    document.getElementById('srList').innerHTML = srRecipients.map(u => {
+      const on = srSelected.includes(u.id);
+      const av = u.avatar_photo
+        ? '<div class="sr-avatar" style="background-image:url(\'' + u.avatar_photo + '\');"></div>'
+        : '<div class="sr-avatar" style="background:' + (u.avatar_color || 'var(--sage)') + ';">' +
+          (u.avatar_icon ? '<i class="ti ' + u.avatar_icon + '"></i>' : escapeHtml((u.username || 'u').charAt(0).toUpperCase())) + '</div>';
+      return '<div class="sr-row' + (on ? ' on' : '') + '" onclick="toggleSrPick(\'' + u.id + '\')">' + av +
+        '<div class="sr-name">@' + escapeHtml(u.username || 'user') +
+        (u.mutual ? '<div class="sr-mutual">YOU FOLLOW EACH OTHER</div>' : '') + '</div>' +
+        '<div class="sr-check"><i class="ti ti-check"></i></div></div>';
+    }).join('');
+    const n = srSelected.length;
+    document.getElementById('srSendLabel').textContent = n ? 'Send to ' + n + (n === 1 ? ' person' : ' people') : 'Send';
+  }
+
+  function toggleSrPick(id) {
+    const at = srSelected.indexOf(id);
+    if (at >= 0) srSelected.splice(at, 1); else srSelected.push(id);
+    renderSrList();
+  }
+
+  function closeShareRecipe() {
+    document.getElementById('shareRecipeModal').classList.remove('open');
+  }
+
+  async function sendSharedRecipe() {
+    if (!srSelected.length) { showToast('Pick at least one person.'); return; }
+    const btn = document.getElementById('srSendBtn');
+    btn.disabled = true;
+    document.getElementById('srSendLabel').textContent = 'Sending…';
+    // Send the thumbnail only if it's small enough to be worth carrying.
+    let thumb = null;
+    try {
+      const p = document.getElementById('dishPreview');
+      if (p && p.src && p.src.length < 400000 && p.classList.contains('visible')) thumb = p.src;
+    } catch (e) { /* optional */ }
+    const out = await shareAction('share', {
+      recipient_ids: srSelected,
+      recipe: baseRecipe,
+      dish_name: baseRecipe.dish || 'A recipe',
+      image_url: thumb
+    });
+    btn.disabled = false;
+    if (!out) {
+      document.getElementById('srSendLabel').textContent = 'Send';
+      showToast(window.__lastShareError || 'Could not share. Please try again.');
+      return;
+    }
+    closeShareRecipe();
+    showToast('Recipe sent to ' + out.sent + (out.sent === 1 ? ' person' : ' people'));
+  }
+
+  // ── Recipes shared with me ──
+  let swItems = [];
+
+  async function openSharedWithMe() {
+    const dd = document.getElementById('userDropdown');
+    if (dd) dd.classList.remove('open');
+    const list = document.getElementById('swList');
+    list.innerHTML = '<div class="nt-empty">Loading…</div>';
+    document.getElementById('sharedWithMeModal').classList.add('open');
+    const out = await shareAction('list_received');
+    if (!out) { list.innerHTML = '<div class="nt-empty">Could not load. Please try again.</div>'; return; }
+    swItems = out.received || [];
+    renderSwList();
+    refreshSharedBadge();
+  }
+
+  function closeSharedWithMe() {
+    document.getElementById('sharedWithMeModal').classList.remove('open');
+  }
+
+  function renderSwList() {
+    const list = document.getElementById('swList');
+    if (!swItems.length) {
+      list.innerHTML = '<div class="nt-empty">Nothing yet.<br>Recipes people share with you land here.</div>';
+      return;
+    }
+    list.innerHTML = swItems.map(s => {
+      const thumb = s.image_url
+        ? '<div class="sw-thumb" style="background-image:url(\'' + s.image_url + '\');"></div>'
+        : '<div class="sw-thumb"><i class="ti ti-tools-kitchen-2"></i></div>';
+      return '<div class="sw-item' + (s.is_read ? '' : ' unread') + '" onclick="openSharedRecipe(\'' + s.id + '\')">' + thumb +
+        '<div class="sw-body"><div class="sw-dish">' + escapeHtml(s.dish_name || 'A recipe') + '</div>' +
+        '<div class="sw-from">from @' + escapeHtml(s.sender_username || 'someone') + ' · ' + timeAgo(s.created_at) + '</div></div>' +
+        '<button class="sw-del" onclick="event.stopPropagation(); deleteSharedRecipe(\'' + s.id + '\')" aria-label="Remove"><i class="ti ti-x"></i></button></div>';
+    }).join('');
+  }
+
+  function openSharedRecipe(id) {
+    const item = swItems.find(s => s.id === id);
+    if (!item || !item.recipe_data) { showToast('Could not load that recipe.'); return; }
+    shareAction('mark_read', { id });
+    item.is_read = true;
+    refreshSharedBadge();
+    closeSharedWithMe();
+
+    // Same path a saved recipe takes, so everything downstream behaves normally.
+    document.getElementById('historyView').classList.remove('active');
+    document.getElementById('favoritesView').classList.remove('active');
+    document.getElementById('modeSwitch').style.display = 'flex';
+    switchMode('cook');
+    currentRecipeId = null;
+
+    if (item.image_url) {
+      const preview = document.getElementById('dishPreview');
+      preview.src = item.image_url;
+      preview.classList.add('visible');
+      document.getElementById('previewOverlay').classList.add('visible');
+      document.getElementById('uploadPlaceholder').style.display = 'none';
+      document.getElementById('uploadActions').classList.add('hidden');
+      document.getElementById('uploadZone').classList.add('has-image');
+    }
+    document.getElementById('dishDetectedLabel').textContent =
+      (item.dish_name || 'Shared recipe') + ' · from @' + (item.sender_username || 'someone');
+
+    renderRecipe(item.recipe_data);
+    document.getElementById('resultsSection').classList.add('visible');
+    document.getElementById('newAnalysisBtn').classList.add('visible');
+    switchTab('recipe');
+    // Land the user ON the recipe, not at the top of the upload screen.
+    setTimeout(rpScrollToTop, 120);
+  }
+
+  // Nutrition card shown on a profile, when that user has opted in and the
+  // viewer is allowed to see it. The server decides — this only renders.
+  async function renderProfileNutrition(userId) {
+    const host = document.getElementById('upNutrition');
+    if (!host) return;
+    host.innerHTML = '';
+    try {
+      const { data: sess } = await supaClient.auth.getSession();
+      const token = sess && sess.session && sess.session.access_token;
+      if (!token) return;
+      const res = await fetch('/api/nutrition', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ access_token: token, action: 'summary', user_id: userId })
+      });
+      if (!res.ok) return;
+      const d = await res.json();
+      if (!d.allowed || !d.meals) return;
+      const cells = (o) => [
+        ['calories', 'kcal'], ['protein_g', 'Protein'], ['carbs_g', 'Carbs'], ['fat_g', 'Fat']
+      ].map(([k, l]) => '<div class="np-cell"><div class="np-val">' + (o[k] || 0) +
+        '</div><div class="np-lbl">' + l + '</div></div>').join('');
+      host.innerHTML =
+        '<div class="np-card">' +
+          '<div class="np-title"><i class="ti ti-chart-donut" style="vertical-align:-2px;"></i> Nutrition</div>' +
+          '<div class="np-title" style="text-transform:none;letter-spacing:0;font-size:11px;color:var(--text3);margin-bottom:4px;">Today</div>' +
+          '<div class="np-row">' + cells(d.today) + '</div>' +
+          '<div class="np-title" style="text-transform:none;letter-spacing:0;font-size:11px;color:var(--text3);margin:8px 0 4px;">Daily average · last 7 days</div>' +
+          '<div class="np-row">' + cells(d.avg7) + '</div>' +
+          '<div class="np-sub">' + d.meals + (d.meals === 1 ? ' meal' : ' meals') + ' logged over ' +
+            d.days + (d.days === 1 ? ' day' : ' days') + '</div>' +
+        '</div>';
+    } catch (e) { /* leave the card out */ }
+  }
+
+  async function deleteSharedRecipe(id) {
+    await shareAction('delete_received', { id });
+    swItems = swItems.filter(s => s.id !== id);
+    renderSwList();
+    refreshSharedBadge();
+  }
+
+  async function refreshSharedBadge() {
+    const badge = document.getElementById('swBadge');
+    if (!badge || !currentUser) return;
+    let n = swItems.filter(s => !s.is_read).length;
+    if (!swItems.length) {
+      const out = await shareAction('list_received');
+      if (out) { swItems = out.received || []; n = swItems.filter(s => !s.is_read).length; }
+    }
+    badge.textContent = n;
+    badge.style.display = n ? 'inline-block' : 'none';
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // Languages
+  // Retrofitting i18n into markup this size is done by walking the DOM and
+  // swapping text against an English->translation table, rather than rewriting
+  // 250+ elements with keys. Each node caches its original English in __en so
+  // switching languages always translates from the source, never from a
+  // previous translation.
+  // ══════════════════════════════════════════════════════════════════════════
+  const CC_LANGS = {
+    en: { native: 'English',  label: 'English',  dir: 'ltr' },
+    es: { native: 'Español',  label: 'Spanish',  dir: 'ltr' },
+    fr: { native: 'Français', label: 'French',   dir: 'ltr' },
+    de: { native: 'Deutsch',  label: 'German',   dir: 'ltr' },
+    hi: { native: 'हिन्दी',     label: 'Hindi',    dir: 'ltr' },
+    ar: { native: 'العربية',   label: 'Arabic',   dir: 'rtl' }
+  };
+  const CC_LANG_ORDER = ['es', 'fr', 'de', 'hi', 'ar'];
+  const CC_LANG_KEY = 'cc-lang';
+
+  // English -> [es, fr, de, hi, ar]
+  const CC_T = {
+    // — auth —
+    "Welcome to": ["Te damos la bienvenida a","Bienvenue sur","Willkommen bei","आपका स्वागत है","مرحبًا بك في"],
+    "Capture a dish. Get the recipe. Serve it up.": ["Captura un plato. Obtén la receta. Sírvelo.","Photographiez un plat. Obtenez la recette. Servez.","Gericht fotografieren. Rezept erhalten. Servieren.","व्यंजन कैप्चर करें। रेसिपी पाएं। परोसें।","التقط طبقًا. احصل على الوصفة. قدّمه."],
+    "Sign in": ["Iniciar sesión","Se connecter","Anmelden","साइन इन करें","تسجيل الدخول"],
+    "Create account": ["Crear cuenta","Créer un compte","Konto erstellen","खाता बनाएं","إنشاء حساب"],
+    "Email": ["Correo electrónico","E-mail","E-Mail","ईमेल","البريد الإلكتروني"],
+    "Password": ["Contraseña","Mot de passe","Passwort","पासवर्ड","كلمة المرور"],
+    "Forgot password?": ["¿Olvidaste tu contraseña?","Mot de passe oublié ?","Passwort vergessen?","पासवर्ड भूल गए?","نسيت كلمة المرور؟"],
+    "Forgot username?": ["¿Olvidaste tu usuario?","Nom d'utilisateur oublié ?","Benutzernamen vergessen?","उपयोगकर्ता नाम भूल गए?","نسيت اسم المستخدم؟"],
+    "Full Name": ["Nombre completo","Nom complet","Vollständiger Name","पूरा नाम","الاسم الكامل"],
+    "Username": ["Nombre de usuario","Nom d'utilisateur","Benutzername","उपयोगकर्ता नाम","اسم المستخدم"],
+    "OR": ["O","OU","ODER","या","أو"],
+    "Continue with Google": ["Continuar con Google","Continuer avec Google","Weiter mit Google","Google से जारी रखें","المتابعة عبر Google"],
+    "Continue with Apple": ["Continuar con Apple","Continuer avec Apple","Weiter mit Apple","Apple से जारी रखें","المتابعة عبر Apple"],
+    "By continuing, you agree to our": ["Al continuar, aceptas nuestros","En continuant, vous acceptez nos","Mit der Fortsetzung akzeptierst du unsere","जारी रखकर, आप हमारी","بالمتابعة، فإنك توافق على"],
+    "Terms of Service": ["Términos del servicio","Conditions d'utilisation","Nutzungsbedingungen","सेवा की शर्तें","شروط الخدمة"],
+    "and": ["y","et","und","और","و"],
+    "Privacy Policy": ["Política de privacidad","Politique de confidentialité","Datenschutzrichtlinie","गोपनीयता नीति","سياسة الخصوصية"],
+    // — menu / nav —
+    "Notifications": ["Notificaciones","Notifications","Benachrichtigungen","सूचनाएं","الإشعارات"],
+    "Mark all read": ["Marcar todo como leído","Tout marquer comme lu","Alle als gelesen markieren","सभी को पढ़ा हुआ चिह्नित करें","تعليم الكل كمقروء"],
+    "No notifications yet.": ["Aún no hay notificaciones.","Aucune notification pour l'instant.","Noch keine Benachrichtigungen.","अभी तक कोई सूचना नहीं।","لا توجد إشعارات بعد."],
+    "Loading…": ["Cargando…","Chargement…","Wird geladen…","लोड हो रहा है…","جارٍ التحميل…"],
+    "History": ["Historial","Historique","Verlauf","इतिहास","السجل"],
+    "Favorites": ["Favoritos","Favoris","Favoriten","पसंदीदा","المفضلة"],
+    "View profile": ["Ver perfil","Voir le profil","Profil ansehen","प्रोफ़ाइल देखें","عرض الملف الشخصي"],
+    "Edit profile": ["Editar perfil","Modifier le profil","Profil bearbeiten","प्रोफ़ाइल संपादित करें","تعديل الملف الشخصي"],
+    "Saved address": ["Dirección guardada","Adresse enregistrée","Gespeicherte Adresse","सहेजा गया पता","العنوان المحفوظ"],
+    "Shared with me": ["Compartido conmigo","Partagé avec moi","Mit mir geteilt","मेरे साथ साझा किया गया","تمت مشاركته معي"],
+    "Nutrition tracker": ["Registro nutricional","Suivi nutritionnel","Ernährungs-Tracker","पोषण ट्रैकर","متتبع التغذية"],
+    "Appearance": ["Apariencia","Apparence","Darstellung","रूप","المظهر"],
+    "Language": ["Idioma","Langue","Sprache","भाषा","اللغة"],
+    "Blocked users": ["Usuarios bloqueados","Utilisateurs bloqués","Blockierte Nutzer","अवरुद्ध उपयोगकर्ता","المستخدمون المحظورون"],
+    "Contact Support": ["Contactar soporte","Contacter le support","Support kontaktieren","सहायता से संपर्क करें","اتصل بالدعم"],
+    "Delete account": ["Eliminar cuenta","Supprimer le compte","Konto löschen","खाता हटाएं","حذف الحساب"],
+    "Sign out": ["Cerrar sesión","Se déconnecter","Abmelden","साइन आउट","تسجيل الخروج"],
+    // — cook tab —
+    "Cook a Dish": ["Cocinar un plato","Cuisiner un plat","Gericht kochen","व्यंजन पकाएं","اطبخ طبقًا"],
+    "Community": ["Comunidad","Communauté","Community","समुदाय","المجتمع"],
+    "Search": ["Buscar","Rechercher","Suchen","खोजें","بحث"],
+    "Type any dish to cook at home — no photo needed.": ["Escribe cualquier plato para cocinar en casa: sin foto.","Tapez un plat à cuisiner chez vous — sans photo.","Gericht eingeben, das du zu Hause kochen willst — kein Foto nötig.","घर पर पकाने के लिए कोई भी व्यंजन लिखें — फ़ोटो की ज़रूरत नहीं।","اكتب أي طبق لطهيه في المنزل — بدون صورة."],
+    "or paste a link": ["o pega un enlace","ou collez un lien","oder Link einfügen","या लिंक चिपकाएं","أو الصق رابطًا"],
+    "Import": ["Importar","Importer","Importieren","आयात करें","استيراد"],
+    "or upload a photo": ["o sube una foto","ou importez une photo","oder Foto hochladen","या फ़ोटो अपलोड करें","أو ارفع صورة"],
+    "Upload a dish photo": ["Sube una foto del plato","Importez une photo du plat","Foto des Gerichts hochladen","व्यंजन की फ़ोटो अपलोड करें","ارفع صورة الطبق"],
+    "Take Photo": ["Tomar foto","Prendre une photo","Foto aufnehmen","फ़ोटो लें","التقاط صورة"],
+    "Choose Photo": ["Elegir foto","Choisir une photo","Foto auswählen","फ़ोटो चुनें","اختيار صورة"],
+    "Change": ["Cambiar","Changer","Ändern","बदलें","تغيير"],
+    "Analyze Dish": ["Analizar plato","Analyser le plat","Gericht analysieren","व्यंजन विश्लेषण करें","تحليل الطبق"],
+    "Capturing": ["Capturando","Capture","Aufnahme","कैप्चर हो रहा है","التقاط"],
+    "Analyzing": ["Analizando","Analyse","Analyse","विश्लेषण","تحليل"],
+    "Served": ["Servido","Servi","Serviert","परोसा गया","تم التقديم"],
+    "Analyze another dish": ["Analizar otro plato","Analyser un autre plat","Weiteres Gericht analysieren","दूसरा व्यंजन विश्लेषण करें","تحليل طبق آخر"],
+    "Open Camera": ["Abrir cámara","Ouvrir l'appareil photo","Kamera öffnen","कैमरा खोलें","افتح الكاميرا"],
+    // — recipe —
+    "Recipe": ["Receta","Recette","Rezept","रेसिपी","الوصفة"],
+    "Stores": ["Tiendas","Magasins","Geschäfte","स्टोर","المتاجر"],
+    "Make this allergy-friendly": ["Hazla apta para alergias","Rendre compatible allergies","Allergikerfreundlich machen","इसे एलर्जी-अनुकूल बनाएं","اجعلها مناسبة للحساسية"],
+    "Serving size": ["Porciones","Nombre de portions","Portionen","सर्विंग आकार","حجم الحصة"],
+    "Estimated Calories": ["Calorías estimadas","Calories estimées","Geschätzte Kalorien","अनुमानित कैलोरी","السعرات التقديرية"],
+    "kcal / serving": ["kcal / porción","kcal / portion","kcal / Portion","किलो कैलोरी / सर्विंग","سعرة / حصة"],
+    "Lower calories": ["Menos calorías","Moins de calories","Weniger Kalorien","कम कैलोरी","سعرات أقل"],
+    "Ingredients": ["Ingredientes","Ingrédients","Zutaten","सामग्री","المكونات"],
+    "What you need": ["Lo que necesitas","Ce qu'il vous faut","Was du brauchst","आपको क्या चाहिए","ما تحتاجه"],
+    "Equipment": ["Utensilios","Ustensiles","Ausstattung","उपकरण","الأدوات"],
+    "Tools to use": ["Herramientas a usar","Ustensiles à utiliser","Zu verwendende Geräte","उपयोग के उपकरण","الأدوات المستخدمة"],
+    "Nutrition": ["Nutrición","Nutrition","Nährwerte","पोषण","التغذية"],
+    "Per serving": ["Por porción","Par portion","Pro Portion","प्रति सर्विंग","لكل حصة"],
+    "Cost": ["Costo","Coût","Kosten","लागत","التكلفة"],
+    "Grocery estimate": ["Estimación de compra","Estimation des courses","Einkaufsschätzung","किराना अनुमान","تقدير البقالة"],
+    "Method": ["Preparación","Préparation","Zubereitung","विधि","طريقة التحضير"],
+    "Step-by-step": ["Paso a paso","Étape par étape","Schritt für Schritt","चरण-दर-चरण","خطوة بخطوة"],
+    "Nutritional Facts": ["Información nutricional","Valeurs nutritionnelles","Nährwertangaben","पोषण संबंधी तथ्य","الحقائق الغذائية"],
+    "Full Nutrition": ["Nutrición completa","Nutrition complète","Vollständige Nährwerte","पूर्ण पोषण","التغذية الكاملة"],
+    "per serving": ["por porción","par portion","pro Portion","प्रति सर्विंग","لكل حصة"],
+    "Log this meal to my day": ["Registrar esta comida en mi día","Ajouter ce repas à ma journée","Mahlzeit zu meinem Tag hinzufügen","इस भोजन को मेरे दिन में दर्ज करें","سجّل هذه الوجبة في يومي"],
+    "Estimated Cost": ["Costo estimado","Coût estimé","Geschätzte Kosten","अनुमानित लागत","التكلفة التقديرية"],
+    "Estimated Grocery Cost": ["Costo estimado de compra","Coût estimé des courses","Geschätzte Einkaufskosten","अनुमानित किराना लागत","تكلفة البقالة التقديرية"],
+    "total": ["total","total","gesamt","कुल","الإجمالي"],
+    "Don't Have?": ["¿No lo tienes?","Pas sous la main ?","Nicht vorrätig?","आपके पास नहीं है?","لا تملكه؟"],
+    "Cook It!": ["¡A cocinar!","On cuisine !","Los kochen!","पकाएं!","لنطبخ!"],
+    "I cooked this dish": ["Cociné este plato","J'ai cuisiné ce plat","Ich habe das gekocht","मैंने यह व्यंजन पकाया","لقد طبخت هذا الطبق"],
+    "Share with followers": ["Compartir con seguidores","Partager avec mes abonnés","Mit Followern teilen","फ़ॉलोअर्स के साथ साझा करें","شارك مع المتابعين"],
+    "Healthier substitutions": ["Sustituciones más saludables","Substitutions plus saines","Gesündere Alternativen","स्वास्थ्यवर्धक विकल्प","بدائل صحية"],
+    "New estimated total": ["Nuevo total estimado","Nouveau total estimé","Neue geschätzte Summe","नया अनुमानित कुल","الإجمالي التقديري الجديد"],
+    "Find stores": ["Buscar tiendas","Trouver des magasins","Geschäfte finden","स्टोर खोजें","ابحث عن متاجر"],
+    // — community —
+    "Share what you made": ["Comparte lo que hiciste","Partagez ce que vous avez cuisiné","Teile, was du gekocht hast","आपने जो बनाया वह साझा करें","شارك ما صنعته"],
+    "Add food photo": ["Añadir foto de comida","Ajouter une photo","Food-Foto hinzufügen","भोजन की फ़ोटो जोड़ें","أضف صورة طعام"],
+    "Share": ["Compartir","Partager","Teilen","साझा करें","مشاركة"],
+    "Public": ["Público","Public","Öffentlich","सार्वजनिक","عام"],
+    "Following": ["Siguiendo","Abonnements","Folge ich","फ़ॉलो कर रहे हैं","المتابَعون"],
+    "Remove": ["Quitar","Retirer","Entfernen","हटाएं","إزالة"],
+    "Posts": ["Publicaciones","Publications","Beiträge","पोस्ट","المنشورات"],
+    "Followers": ["Seguidores","Abonnés","Follower","फ़ॉलोअर्स","المتابعون"],
+    "Follow": ["Seguir","Suivre","Folgen","फ़ॉलो करें","متابعة"],
+    "Unfollow": ["Dejar de seguir","Ne plus suivre","Nicht mehr folgen","अनफ़ॉलो करें","إلغاء المتابعة"],
+    "Block": ["Bloquear","Bloquer","Blockieren","ब्लॉक करें","حظر"],
+    "Unblock": ["Desbloquear","Débloquer","Entsperren","अनब्लॉक करें","إلغاء الحظر"],
+    "Requested": ["Solicitado","Demandé","Angefragt","अनुरोध किया गया","تم الطلب"],
+    "Follow requests": ["Solicitudes de seguimiento","Demandes d'abonnement","Follower-Anfragen","फ़ॉलो अनुरोध","طلبات المتابعة"],
+    "Comments": ["Comentarios","Commentaires","Kommentare","टिप्पणियां","التعليقات"],
+    "Reply": ["Responder","Répondre","Antworten","उत्तर दें","رد"],
+    // — modals / actions —
+    "Cancel": ["Cancelar","Annuler","Abbrechen","रद्द करें","إلغاء"],
+    "Next": ["Siguiente","Suivant","Weiter","आगे","التالي"],
+    "Back": ["Atrás","Retour","Zurück","वापस","رجوع"],
+    "Send": ["Enviar","Envoyer","Senden","भेजें","إرسال"],
+    "Save profile": ["Guardar perfil","Enregistrer le profil","Profil speichern","प्रोफ़ाइल सहेजें","حفظ الملف الشخصي"],
+    "Save address": ["Guardar dirección","Enregistrer l'adresse","Adresse speichern","पता सहेजें","حفظ العنوان"],
+    "Send message": ["Enviar mensaje","Envoyer le message","Nachricht senden","संदेश भेजें","إرسال الرسالة"],
+    "Your name": ["Tu nombre","Votre nom","Dein Name","आपका नाम","اسمك"],
+    "How can we help?": ["¿Cómo podemos ayudarte?","Comment pouvons-nous aider ?","Wie können wir helfen?","हम कैसे मदद कर सकते हैं?","كيف يمكننا المساعدة؟"],
+    "Choose your avatar": ["Elige tu avatar","Choisissez votre avatar","Wähle deinen Avatar","अपना अवतार चुनें","اختر صورتك الرمزية"],
+    "Upload photo": ["Subir foto","Importer une photo","Foto hochladen","फ़ोटो अपलोड करें","رفع صورة"],
+    "Color": ["Color","Couleur","Farbe","रंग","اللون"],
+    "Icon": ["Icono","Icône","Symbol","आइकन","أيقونة"],
+    "Email address": ["Correo electrónico","Adresse e-mail","E-Mail-Adresse","ईमेल पता","عنوان البريد الإلكتروني"],
+    "Update email": ["Actualizar correo","Mettre à jour l'e-mail","E-Mail aktualisieren","ईमेल अपडेट करें","تحديث البريد"],
+    "New password": ["Nueva contraseña","Nouveau mot de passe","Neues Passwort","नया पासवर्ड","كلمة مرور جديدة"],
+    "Confirm new password": ["Confirmar nueva contraseña","Confirmer le mot de passe","Neues Passwort bestätigen","नया पासवर्ड पुष्टि करें","تأكيد كلمة المرور"],
+    "Update password": ["Actualizar contraseña","Mettre à jour le mot de passe","Passwort aktualisieren","पासवर्ड अपडेट करें","تحديث كلمة المرور"],
+    "Reset password": ["Restablecer contraseña","Réinitialiser le mot de passe","Passwort zurücksetzen","पासवर्ड रीसेट करें","إعادة تعيين كلمة المرور"],
+    "Send reset link": ["Enviar enlace","Envoyer le lien","Link senden","लिंक भेजें","إرسال الرابط"],
+    "Pick a username": ["Elige un usuario","Choisissez un nom d'utilisateur","Benutzernamen wählen","उपयोगकर्ता नाम चुनें","اختر اسم مستخدم"],
+    "Claim username": ["Reservar usuario","Réserver ce nom","Benutzernamen sichern","उपयोगकर्ता नाम लें","احجز الاسم"],
+    "Got it": ["Entendido","Compris","Verstanden","समझ गया","حسنًا"],
+    "Today": ["Hoy","Aujourd'hui","Heute","आज","اليوم"],
+    "Yesterday": ["Ayer","Hier","Gestern","कल","أمس"],
+    "Calories": ["Calorías","Calories","Kalorien","कैलोरी","السعرات"],
+    "Protein": ["Proteína","Protéines","Protein","प्रोटीन","البروتين"],
+    "Carbs": ["Carbohidratos","Glucides","Kohlenhydrate","कार्ब्स","الكربوهيدرات"],
+    "Fat": ["Grasa","Lipides","Fett","वसा","الدهون"],
+    "Allergy-friendly check": ["Comprobación de alergias","Vérification des allergies","Allergie-Prüfung","एलर्जी जांच","فحص الحساسية"],
+    "Don't have an ingredient?": ["¿Te falta un ingrediente?","Un ingrédient manquant ?","Fehlt eine Zutat?","कोई सामग्री नहीं है?","تنقصك مكوّنة؟"],
+    "Nutrition Tracker": ["Registro nutricional","Suivi nutritionnel","Ernährungs-Tracker","पोषण ट्रैकर","متتبع التغذية"],
+    "Share this recipe": ["Compartir esta receta","Partager cette recette","Rezept teilen","यह रेसिपी साझा करें","شارك هذه الوصفة"],
+    "Pick who gets it": ["Elige quién la recibe","Choisissez les destinataires","Wähle die Empfänger","चुनें कि किसे भेजना है","اختر من يستلمها"],
+    "Recipes people sent you": ["Recetas que te enviaron","Recettes qu'on vous a envoyées","Rezepte, die dir gesendet wurden","आपको भेजी गई रेसिपी","وصفات أرسلها لك الآخرون"],
+    "Pick a background you like": ["Elige un fondo que te guste","Choisissez un fond","Wähle einen Hintergrund","अपनी पसंद की पृष्ठभूमि चुनें","اختر خلفية تعجبك"]
+  };
+
+  function ccLang() {
+    try { return localStorage.getItem(CC_LANG_KEY) || 'en'; } catch (e) { return 'en'; }
+  }
+
+  function ccTranslate(text, lang) {
+    if (!text) return null;
+    const key = text.trim();
+    if (!key) return null;
+    const row = CC_T[key];
+    if (!row) return null;
+    const i = CC_LANG_ORDER.indexOf(lang);
+    if (i < 0 || !row[i]) return null;
+    // Preserve the original leading/trailing whitespace so layout doesn't shift.
+    return text.replace(key, row[i]);
+  }
+
+  // Walk a subtree and translate text nodes + a few user-visible attributes.
+  function ccTranslateTree(root, lang) {
+    if (!root) return;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode(n) {
+        const p = n.parentNode;
+        if (!p) return NodeFilter.FILTER_REJECT;
+        const tag = p.nodeName;
+        if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'TEXTAREA') return NodeFilter.FILTER_REJECT;
+        return n.nodeValue && n.nodeValue.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+      }
+    });
+    const nodes = [];
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) nodes.push(n);
+    nodes.forEach(n => {
+      if (n.__en === undefined) n.__en = n.nodeValue;      // remember the source
+      const out = (lang === 'en') ? n.__en : (ccTranslate(n.__en, lang) || n.__en);
+      if (n.nodeValue !== out) n.nodeValue = out;
+    });
+    const attrs = ['placeholder', 'title', 'aria-label'];
+    const els = root.querySelectorAll ? root.querySelectorAll('[placeholder],[title],[aria-label]') : [];
+    els.forEach(el => {
+      attrs.forEach(a => {
+        if (!el.hasAttribute(a)) return;
+        const cacheKey = '__en_' + a;
+        if (el[cacheKey] === undefined) el[cacheKey] = el.getAttribute(a);
+        const out = (lang === 'en') ? el[cacheKey] : (ccTranslate(el[cacheKey], lang) || el[cacheKey]);
+        if (el.getAttribute(a) !== out) el.setAttribute(a, out);
+      });
+    });
+  }
+
+  function applyLanguage(lang) {
+    if (!CC_LANGS[lang]) lang = 'en';
+    const meta = CC_LANGS[lang];
+    document.documentElement.lang = lang;
+    document.documentElement.dir = meta.dir;
+    document.documentElement.classList.toggle('cc-rtl', meta.dir === 'rtl');
+    ccTranslateTree(document.body, lang);
+    try { localStorage.setItem(CC_LANG_KEY, lang); } catch (e) { /* private mode */ }
+    window.__ccLang = lang;
+  }
+
+  // Re-translate after dynamic renders (feeds, recipes, lists).
+  function ccRetranslate() {
+    const lang = ccLang();
+    if (lang !== 'en') ccTranslateTree(document.body, lang);
+  }
+
+  function openLangModal() {
+    const dd = document.getElementById('userDropdown');
+    if (dd) dd.classList.remove('open');
+    renderLangList();
+    document.getElementById('langModal').classList.add('open');
+  }
+  function closeLangModal() { document.getElementById('langModal').classList.remove('open'); }
+
+  function renderLangList() {
+    const cur = ccLang();
+    document.getElementById('langList').innerHTML = Object.keys(CC_LANGS).map(k => {
+      const l = CC_LANGS[k];
+      return '<div class="lang-row' + (k === cur ? ' on' : '') + '" onclick="pickLang(\'' + k + '\')">' +
+        '<div class="lang-native">' + l.native + '</div>' +
+        '<div class="lang-label">' + l.label + (l.dir === 'rtl' ? ' · RTL' : '') + '</div>' +
+        '<div class="lang-check"><i class="ti ti-check"></i></div></div>';
+    }).join('');
+  }
+
+  function pickLang(k) {
+    applyLanguage(k);
+    renderLangList();
+    showToast(CC_LANGS[k].native);
+  }
+
+  applyLanguage(ccLang());
+
+  // Feeds, recipes and lists are rendered after load, so translate new nodes as
+  // they appear. Only childList is observed — text edits are characterData, so
+  // our own translations can't retrigger this.
+  (function () {
+    let pending = null;
+    const mo = new MutationObserver(() => {
+      const lang = ccLang();
+      if (lang === 'en') return;
+      clearTimeout(pending);
+      pending = setTimeout(() => ccTranslateTree(document.body, lang), 60);
+    });
+    try { mo.observe(document.body, { childList: true, subtree: true }); } catch (e) { /* ignore */ }
+  })();
+
+  // Tag every /api/ POST with the chosen language so AI-generated content
+  // (recipes, steps, substitutions) comes back translated. Endpoints that
+  // don't care simply ignore the extra field.
+  (function () {
+    const _f = window.fetch.bind(window);
+    window.fetch = function (input, init) {
+      try {
+        const url = (typeof input === 'string') ? input : (input && input.url) || '';
+        const lang = ccLang();
+        if (lang && lang !== 'en' && url.indexOf('/api/') !== -1 &&
+            init && init.body && typeof init.body === 'string') {
+          const b = JSON.parse(init.body);
+          if (b && typeof b === 'object' && b.lang === undefined) {
+            b.lang = lang;
+            init = Object.assign({}, init, { body: JSON.stringify(b) });
+          }
+        }
+      } catch (e) { /* not JSON — send unchanged */ }
+      return _f(input, init);
+    };
+  })();
+
+
   function escapeHtml(str) {
     return String(str || '').replace(/[&<>"']/g, c =>
       ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
@@ -6637,6 +8146,131 @@
     const isCollapsed = body.classList.toggle('collapsed');
     toggle.classList.toggle('collapsed', isCollapsed);
     toggle.setAttribute('aria-expanded', String(!isCollapsed));
+  }
+
+  // ── Recipe sections as tiles → sub-pages ──
+  // The section markup stays exactly where it is; we just show one at a time
+  // and hide the grid, so every existing render function keeps working.
+  // Cost has no tile of its own — it lives inside the Ingredients page, next to
+  // the items it prices.
+  const RP_PAGES = {
+    ingredients: { title: 'Ingredients', section: 'ingredientsSection', servings: true, also: 'costSection' },
+    equipment:   { title: 'Equipment',   section: 'equipmentSection',   servings: false },
+    nutrition:   { title: 'Nutrition',   section: 'nutritionSection',   servings: true },
+    method:      { title: 'Method',      section: 'methodSection',      servings: false }
+  };
+  // Things that belong to the grid view and hide when a page is open.
+  const RP_MAIN_IDS = ['recipeMeta', 'allergyBtn', 'rpGrid', 'swapPanel', 'cookItBtn', 'cookedBtn', 'recipeFavBtn', 'shareRecipeBtn'];
+
+  function rpSectionEl(key) {
+    // Equipment/method have no wrapper div, so fall back to the body's parent.
+    const p = RP_PAGES[key];
+    return document.getElementById(p.section) ||
+           (document.getElementById(key + 'Body') || {}).parentElement || null;
+  }
+
+  function rpOpen(key) {
+    const p = RP_PAGES[key];
+    if (!p) return;
+    const panel = document.getElementById('panel-recipe');
+    panel.classList.add('rp-detail-open');
+
+    RP_MAIN_IDS.forEach(id => { const e = document.getElementById(id); if (e) e.style.display = 'none'; });
+    const cal = document.querySelector('#panel-recipe .calorie-banner');
+    if (cal) cal.style.display = 'none';
+
+    // Show only the chosen section, fully expanded.
+    Object.keys(RP_PAGES).forEach(k => {
+      const el = rpSectionEl(k);
+      if (!el) return;
+      el.style.display = (k === key) ? 'block' : 'none';
+    });
+    const body = document.getElementById(key + 'Body');
+    if (body) body.classList.remove('collapsed');
+
+    // Cost rides along with Ingredients rather than having its own tile.
+    const costEl = document.getElementById('costSection');
+    if (costEl) {
+      const showCost = (p.also === 'costSection') && costEl.dataset.hasCost !== '0';
+      costEl.style.display = showCost ? 'block' : 'none';
+      const cb = document.getElementById('costBody');
+      if (cb) cb.classList.remove('collapsed');
+    }
+
+    // Serving size travels to the pages whose numbers it changes.
+    const sel = document.getElementById('servingSelector');
+    const slot = document.getElementById('rpServingSlot');
+    if (sel && slot) {
+      if (p.servings) { slot.appendChild(sel); sel.style.display = ''; }
+      else { sel.style.display = 'none'; }
+    }
+
+    document.getElementById('rpDetailTitle').textContent = p.title;
+    document.getElementById('rpDetailBar').style.display = 'flex';
+    window.__rpPage = key;
+    rpScrollToTop();
+  }
+
+  // The recipe lives below the upload area, so "top" means the top of the
+  // results card, not the top of the document.
+  function rpScrollToTop() {
+    const res = document.getElementById('resultsSection');
+    if (res) res.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    else window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function rpBack(skipScroll) {
+    const panel = document.getElementById('panel-recipe');
+    panel.classList.remove('rp-detail-open');
+    document.getElementById('rpDetailBar').style.display = 'none';
+
+    // Put the serving selector back above the calorie banner.
+    const sel = document.getElementById('servingSelector');
+    const cal = document.querySelector('#panel-recipe .calorie-banner');
+    if (sel && cal && cal.parentElement) {
+      cal.parentElement.insertBefore(sel, cal);
+      sel.style.display = '';
+    }
+    if (cal) cal.style.display = '';
+    RP_MAIN_IDS.forEach(id => { const e = document.getElementById(id); if (e) e.style.display = ''; });
+    Object.keys(RP_PAGES).forEach(k => { const el = rpSectionEl(k); if (el) el.style.display = 'none'; });
+    const costEl = document.getElementById('costSection');
+    if (costEl) costEl.style.display = 'none';
+
+    window.__rpPage = null;
+    if (!skipScroll) rpScrollToTop();
+  }
+
+  // Called after a recipe renders: start on the grid and fill in tile subtitles.
+  function rpReset(recipe) {
+    if (document.getElementById('rpDetailBar')) rpBack(true);
+    if (!recipe) return;
+    const n = (a) => Array.isArray(a) ? a.length : 0;
+    const set = (id, txt) => { const e = document.getElementById(id); if (e && txt) e.textContent = txt; };
+    const ing = n(recipe.ingredients), eq = n(recipe.equipment), st = n(recipe.steps);
+    set('rpSubIngredients', ing ? ing + (ing === 1 ? ' item' : ' items') : 'What you need');
+    set('rpSubEquipment', eq ? eq + (eq === 1 ? ' tool' : ' tools') : 'Tools to use');
+    set('rpSubMethod', st ? st + (st === 1 ? ' step' : ' steps') : 'Step-by-step');
+    set('rpSubNutrition', recipe.calories ? recipe.calories + ' kcal / serving' : 'Per serving');
+    const cost = recipe.totalCost;
+    // Cost now shows inside the Ingredients page, so surface it on that tile.
+    set('rpSubIngredients', ing
+      ? ing + (ing === 1 ? ' item' : ' items') + ((cost || cost === 0) ? ' · $' + Number(cost).toFixed(2) : '')
+      : 'What you need');
+
+    // A tile shouldn't lead to an empty page — hide any section this recipe lacks.
+    const hasNutrition = !!(recipe.nutrition || recipe.calories);
+    const hasCost = (cost || cost === 0) ||
+      (Array.isArray(recipe.ingredients) && recipe.ingredients.some(i => i && i.cost != null));
+    const show = (key, ok) => {
+      const t = document.querySelector('.rp-tile[onclick*="\'' + key + '\'"]');
+      if (t) t.style.display = ok ? '' : 'none';
+    };
+    show('ingredients', ing > 0);
+    show('equipment', eq > 0);
+    show('method', st > 0);
+    show('nutrition', hasNutrition);
+    show('cost', hasCost);
   }
 
   function expandAllSections() {
@@ -6727,6 +8361,12 @@
     if (!r || !Array.isArray(r.steps) || !r.steps.length) { showToast('No steps to cook yet.'); return; }
     cookSteps = r.steps.slice();
     cookIndex = 0;
+    // Resume where they left off if they closed mid-cook on this same dish.
+    const saved = window.__cookResume;
+    if (saved && saved.dish === r.dish && saved.index > 0 && saved.index < cookSteps.length) {
+      cookIndex = saved.index;
+      showToast('Resumed at step ' + (cookIndex + 1));
+    }
     buildCookOverlay();
     document.getElementById('cookOverlay').classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -6871,7 +8511,42 @@
     a._t = setTimeout(() => a.classList.remove('show'), 6500);
   }
 
+  // ── Timer vibration (user-controllable) ──
+  const CC_VIB_KEY = 'cc-vibrate';
+  function vibrateOn() {
+    try { return localStorage.getItem(CC_VIB_KEY) !== '0'; } catch (e) { return true; }
+  }
+  function setVibrate(on) {
+    try { localStorage.setItem(CC_VIB_KEY, on ? '1' : '0'); } catch (e) { /* private mode */ }
+    renderVibToggle();
+  }
+  function renderVibToggle() {
+    const t = document.getElementById('vibToggle');
+    const k = document.getElementById('vibKnob');
+    const l = document.getElementById('vibLabel');
+    if (!t) return;
+    const on = vibrateOn();
+    t.style.background = on ? 'var(--brand)' : 'var(--surface3)';
+    k.style.left = on ? '25px' : '3px';
+    l.textContent = on ? 'On' : 'Off';
+  }
+  // Three pulses so it's felt across a noisy kitchen, matching the beep pattern.
+  function cookVibrate() {
+    if (!vibrateOn()) return;
+    try {
+      const H = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Haptics;
+      if (H) {
+        H.vibrate({ duration: 400 });
+        setTimeout(() => H.vibrate({ duration: 400 }), 600);
+        setTimeout(() => H.vibrate({ duration: 400 }), 1200);
+        return;
+      }
+      if (navigator.vibrate) navigator.vibrate([400, 200, 400, 200, 400]);  // web only
+    } catch (e) { /* ignore */ }
+  }
+
   function cookBeep() {
+    cookVibrate();
     try {
       if (!cookAudioCtx) { const C = window.AudioContext || window.webkitAudioContext; if (!C) return; cookAudioCtx = new C(); }
       if (cookAudioCtx.state === 'suspended') cookAudioCtx.resume();
@@ -6889,17 +8564,32 @@
   }
 
   async function cookScheduleNotif(seconds) {
+    const LN = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications;
+    if (!LN) return;   // web — the in-page beep covers it
     try {
-      const LN = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications;
-      if (!LN) return;
+      // If permission was denied earlier, iOS won't re-prompt; say so once
+      // rather than failing silently and looking broken.
+      let perm = await LN.checkPermissions();
+      if (perm.display !== 'granted') perm = await LN.requestPermissions();
+      if (perm.display !== 'granted') {
+        if (!window.__notifWarned) {
+          window.__notifWarned = true;
+          showToast('Turn on notifications in Settings to be alerted when a timer ends.');
+        }
+        return;
+      }
       cookTimer.notifId = Math.floor(Math.random() * 90000) + 1000;
       await LN.schedule({ notifications: [{
         id: cookTimer.notifId,
         title: 'Capture & Cook — Timer done',
         body: cookStepSummary(cookSteps[cookIndex]),
-        schedule: { at: new Date(Date.now() + seconds * 1000) }
+        schedule: { at: new Date(Date.now() + seconds * 1000), allowWhileIdle: true },
+        sound: 'default',
+        smallIcon: 'ic_stat_icon_config_sample'
       }] });
-    } catch (e) { /* ignore */ }
+    } catch (e) {
+      console.warn('Timer notification failed to schedule:', e);
+    }
   }
 
   async function cookCancelNotif() {
@@ -6912,7 +8602,12 @@
 
   function cookNav(dir) {
     const total = cookSteps.length;
-    if (dir > 0 && cookIndex === total - 1) { closeCookMode(); showToast('Nice work — enjoy your dish! 🍽️'); return; }
+    if (dir > 0 && cookIndex === total - 1) {
+      closeCookMode();
+      window.__cookResume = null;   // finished — next open starts fresh (after close, which saves)
+      showToast('Nice work — enjoy your dish! 🍽️');
+      return;
+    }
     cookIndex = Math.min(total - 1, Math.max(0, cookIndex + dir));
     renderCookStep();
     const b = document.querySelector('.cook-body'); if (b) b.scrollTop = 0;
@@ -6920,6 +8615,10 @@
 
   function closeCookMode() {
     cookTimerClear();
+    // Remember where they were so reopening this dish resumes, not restarts.
+    if (baseRecipe && cookIndex > 0 && cookIndex < cookSteps.length) {
+      window.__cookResume = { dish: baseRecipe.dish, index: cookIndex };
+    }
     const el = document.getElementById('cookOverlay');
     if (el) el.classList.remove('open');
     document.body.style.overflow = '';
@@ -6947,6 +8646,19 @@
   }
 
   // ── Favorites ──
+  // Favourite the recipe currently open on the Cook tab (mirrors the History heart).
+  async function favoriteCurrentRecipe() {
+    if (!currentRecipeId) { showToast('Analyze or open a dish first.'); return; }
+    await toggleFavoriteById(currentRecipeId);
+    const entry = getHistory().find(h => h.id === currentRecipeId);
+    const btn = document.getElementById('recipeFavBtn');
+    if (btn) {
+      btn.innerHTML = (entry && entry.favorite)
+        ? '<i class="ti ti-heart-filled"></i> In your favorites'
+        : '<i class="ti ti-heart"></i> Save to favorites';
+    }
+  }
+
   async function toggleFavoriteById(id) {
     const history = getHistory();
     const entry = history.find(h => h.id === id);
@@ -7035,9 +8747,9 @@
     document.getElementById('resultsSection').classList.add('visible');
     document.getElementById('newAnalysisBtn').classList.add('visible');
 
-    // Switch to the Recipe tab and scroll to top
+    // Switch to the Recipe tab and land ON the dish, not above it.
     switchTab('recipe');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setTimeout(rpScrollToTop, 120);
   }
 
   // ── Reset Password ──
@@ -7207,8 +8919,14 @@
     const meta = currentUser?.user_metadata || {};
     pendingFavPublic = (meta.favorites_public !== false);
     pendingAcctPrivate = (meta.is_private === true);
+    pendingNutriShare = (meta.nutrition_share === true);
+    pendingNutriVis = (meta.nutrition_visibility === 'public') ? 'public' : 'followers';
+    const unInput = document.getElementById('editUsernameInput');
+    if (unInput) unInput.value = myUsername || '';
     renderFavPrivacy();
     renderAcctPrivacy();
+    renderNutriPrivacy();
+    renderVibToggle();
     renderAvatarPicker();
     renderProfileAllergyChips();
     const emailInput = document.getElementById('acctEmailInput');
@@ -7223,16 +8941,18 @@
     const label = document.getElementById('acctPrivacyLabel');
     const hint = document.getElementById('acctPrivacyHint');
     if (!toggle) return;
-    if (!pendingAcctPrivate) {
+    // Toggle ON = private. Switching something on should turn the feature on,
+    // not off — the old mapping read backwards.
+    if (pendingAcctPrivate) {
       toggle.style.background = 'var(--brand)';
       knob.style.left = '25px';
-      label.textContent = 'Public';
-      hint.textContent = 'anyone can follow you instantly.';
-    } else {
-      toggle.style.background = 'var(--border)';
-      knob.style.left = '3px';
       label.textContent = 'Private';
       hint.textContent = 'people must request to follow you, and you approve them.';
+    } else {
+      toggle.style.background = 'var(--surface3)';
+      knob.style.left = '3px';
+      label.textContent = 'Public';
+      hint.textContent = 'anyone can follow you instantly.';
     }
   }
   function toggleAcctPrivacy() {
@@ -7262,6 +8982,265 @@
   function toggleFavPrivacy() {
     pendingFavPublic = !pendingFavPublic;
     renderFavPrivacy();
+  }
+
+  // ── Push notifications ──
+  // Local notifications only fire for things this device scheduled (cook
+  // timers). Anything caused by another person — a comment, a follow, a shared
+  // recipe — needs a real push, which is what this registers for.
+  // Records each step so a failure can be inspected instead of vanishing.
+  window.__pushDiag = { step: 'not started' };
+
+  async function initPushNotifications(verbose) {
+    const say = (s) => { window.__pushDiag.step = s; if (verbose) showToast(s); };
+    const PN = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.PushNotifications;
+    window.__pushDiag = {
+      step: 'starting',
+      pluginFound: !!PN,
+      signedIn: !!currentUser,
+      native: !!CC_NATIVE
+    };
+    if (!PN) { say('Push plugin not available in this build'); return; }
+    if (!currentUser) { say('Not signed in yet'); return; }
+    try {
+      let perm = await PN.checkPermissions();
+      window.__pushDiag.permissionBefore = perm.receive;
+      if (perm.receive !== 'granted') perm = await PN.requestPermissions();
+      window.__pushDiag.permissionAfter = perm.receive;
+      if (perm.receive !== 'granted') {
+        say('Notifications are turned off for this app — enable them in Settings');
+        return;
+      }
+
+      // Fires once APNs issues a token for this install.
+      PN.addListener('registration', async (t) => {
+        const token = t && t.value;
+        window.__pushDiag.tokenReceived = !!token;
+        if (!token) { say('Apple returned an empty token'); return; }
+        try {
+          const { data: sess } = await supaClient.auth.getSession();
+          const jwt = sess && sess.session && sess.session.access_token;
+          if (!jwt) { say('Got a token but no session to save it with'); return; }
+          const r = await fetch('/api/push-token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ access_token: jwt, action: 'register', token, platform: 'ios' })
+          });
+          window.__pushDiag.saveStatus = r.status;
+          if (r.ok) say('Push registered ✓');
+          else say('Token received but the server rejected it (' + r.status + ')');
+        } catch (e) {
+          window.__pushDiag.saveError = String(e && e.message || e);
+          say('Token received but saving it failed');
+        }
+      });
+
+      PN.addListener('registrationError', (e) => {
+        window.__pushDiag.registrationError = String((e && (e.error || e.message)) || e);
+        say('Apple refused to issue a token');
+      });
+
+      // Tapping a push should land on the right screen, same as the in-app bell.
+      PN.addListener('pushNotificationActionPerformed', (a) => {
+        try {
+          const d = (a && a.notification && a.notification.data) || {};
+          if (d.type === 'recipe') { openSharedWithMe(); return; }
+          if (d.type === 'follow_request') { openFollowRequests(); return; }
+          if ((d.type === 'follow' || d.type === 'follow_accepted') && d.actor_id) { openUserProfile(d.actor_id); return; }
+          if (d.post_id) openNotif('', d.post_id, d.type || '', d.actor_id || '');
+        } catch (e) { /* ignore */ }
+      });
+
+      // Clear the badge when a push arrives while the app is open.
+      PN.addListener('pushNotificationReceived', () => { try { refreshNotifBadge(); } catch (e) {} });
+
+      await PN.register();
+      window.__pushDiag.registerCalled = true;
+    } catch (e) {
+      window.__pushDiag.initError = String((e && e.message) || e);
+      say('Push setup failed: ' + String((e && e.message) || e).slice(0, 60));
+      console.warn('push init failed:', e);
+    }
+  }
+
+  // Shows what happened during push setup, and lets you retry. Without this a
+  // failure is invisible on a phone — there's no console to read.
+  async function showPushDiagnostics() {
+    const dd = document.getElementById('userDropdown');
+    if (dd) dd.classList.remove('open');
+    showToast('Checking notifications…');
+    await initPushNotifications(false);
+    // Give the registration callback a moment to land.
+    await new Promise(r => setTimeout(r, 1500));
+
+    const d = window.__pushDiag || {};
+    let server = null;
+    try {
+      const { data: sess } = await supaClient.auth.getSession();
+      const jwt = sess && sess.session && sess.session.access_token;
+      if (jwt) {
+        const res = await fetch('/api/push-test', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ access_token: jwt })
+        });
+        if (res.ok) server = await res.json();
+      }
+    } catch (e) { /* show what we have */ }
+
+    const yn = (v) => v === true ? '✅' : v === false ? '❌' : '—';
+    const rows = [
+      ['Running natively', yn(d.native)],
+      ['Push plugin found', yn(d.pluginFound)],
+      ['Signed in', yn(d.signedIn)],
+      ['Permission', d.permissionAfter || d.permissionBefore || '—'],
+      ['Token from Apple', yn(d.tokenReceived)],
+      ['Saved to server', d.saveStatus ? (d.saveStatus === 200 ? '✅' : '❌ ' + d.saveStatus) : '—'],
+      ['Devices on server', server ? String(server.devicesRegistered) : '—'],
+      ['APNs key valid', server ? yn(server.keyParses) : '—'],
+      ['APNs gateway', server ? server.gateway : '—']
+    ];
+    const problems = [d.registrationError, d.initError, d.saveError, server && server.keyError]
+      .filter(Boolean).map(x => '<div style="color:#c0392b;font-size:12px;margin-top:6px;">' + escapeHtml(String(x)) + '</div>').join('');
+    const shape = server && server.keyShape;
+    const shapeHtml = shape ? '<div style="font-size:11px;color:var(--text3);margin-top:8px;line-height:1.6;font-family:monospace;">' +
+      'len ' + shape.length + ' · newlines ' + (shape.hasRealNewlines ? 'yes' : 'no') +
+      ' · \\n text ' + (shape.hasLiteralBackslashN ? 'yes' : 'no') +
+      ' · CR ' + (shape.hasCarriageReturn ? 'yes' : 'no') +
+      ' · quotes ' + (shape.containsQuotes ? 'yes' : 'no') + '<br>' +
+      'starts: ' + escapeHtml(shape.firstChars) + '<br>' +
+      'ends: ' + escapeHtml(shape.lastChars) +
+      '</div>' : '';
+
+    document.getElementById('pdBody').innerHTML =
+      rows.map(([k, v]) =>
+        '<div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--rule-soft,var(--border));font-size:13.5px;">' +
+        '<span style="color:var(--text2);">' + k + '</span><b>' + escapeHtml(String(v)) + '</b></div>').join('') +
+      problems + shapeHtml +
+      '<div style="font-size:12px;color:var(--text3);margin-top:10px;">Last step: ' + escapeHtml(String(d.step || '—')) + '</div>';
+    document.getElementById('pushDiagModal').classList.add('open');
+  }
+  function closePushDiagnostics() {
+    document.getElementById('pushDiagModal').classList.remove('open');
+  }
+  async function sendTestPush() {
+    try {
+      const { data: sess } = await supaClient.auth.getSession();
+      const jwt = sess && sess.session && sess.session.access_token;
+      if (!jwt) { showToast('Please sign in.'); return; }
+      const res = await fetch('/api/push-test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ access_token: jwt, send: true })
+      });
+      const d = await res.json();
+      const p = d.pushResult;
+      if (p && p.sent) showToast('Test push sent — close the app to see it');
+      else if (!d.devicesRegistered) showToast('No device registered yet');
+      else if (!d.keyParses) showToast('APNs key is not valid on the server');
+      else showToast('Apple rejected it — check the diagnostics');
+    } catch (e) { showToast('Could not send a test push.'); }
+  }
+
+  // ── "Make Yourself": a from-scratch recipe for a shop-bought ingredient ──
+  async function openMakeIngredient(name, qty) {
+    const results = document.getElementById('mkResults');
+    const loading = document.getElementById('mkLoading');
+    document.getElementById('mkTitle').textContent = 'Make ' + name + ' yourself';
+    document.getElementById('mkSub').textContent = 'From scratch, at home';
+    results.classList.remove('visible');
+    results.innerHTML = '';
+    loading.classList.add('visible');
+    document.getElementById('makeModal').classList.add('open');
+    try {
+      const res = await fetch('/api/make-ingredient', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ingredient: name, qty: qty || '', dish: (baseRecipe && baseRecipe.dish) || '', lang: ccLang() })
+      });
+      if (!res.ok) throw new Error('bad response');
+      const d = await res.json();
+      loading.classList.remove('visible');
+      results.classList.add('visible');
+
+      if (!d.makeable) {
+        document.getElementById('mkSub').textContent = 'Better to buy this one';
+        results.innerHTML = '<div class="allergy-status flagged"><i class="ti ti-shopping-cart"></i><div>' +
+          escapeHtml(d.reason || "This isn't practical to make at home — buying it is the way to go.") +
+          '</div></div>';
+        return;
+      }
+
+      document.getElementById('mkTitle').textContent = d.name || ('Homemade ' + name);
+      document.getElementById('mkSub').textContent = 'From scratch, at home';
+      let html = '<div class="mk-meta">' +
+        (d.time ? '<span class="mk-chip">⏱ ' + escapeHtml(d.time) + '</span>' : '') +
+        (d.difficulty ? '<span class="mk-chip">Difficulty: ' + escapeHtml(d.difficulty) + '</span>' : '') +
+        (d.yield ? '<span class="mk-chip">Makes ' + escapeHtml(d.yield) + '</span>' : '') +
+        '</div>';
+      if (d.ingredients.length) {
+        html += '<div class="np-title">You need</div>';
+        html += d.ingredients.map(x =>
+          '<div class="mk-ing"><span>' + (x.emoji || '•') + '</span><span>' + escapeHtml(x.name || '') + '</span>' +
+          (x.qty ? '<b>' + escapeHtml(x.qty) + '</b>' : '') + '</div>').join('');
+      }
+      if (d.steps.length) {
+        html += '<div class="np-title" style="margin-top:14px;">How</div>';
+        html += d.steps.map((s, i) =>
+          '<div class="mk-step"><div class="mk-num">' + (i + 1) + '</div><div>' + escapeHtml(s) + '</div></div>').join('');
+      }
+      if (d.note) html += '<div class="nutri-disclaimer" style="font-style:normal;text-align:left;">' + escapeHtml(d.note) + '</div>';
+      results.innerHTML = html;
+    } catch (e) {
+      loading.classList.remove('visible');
+      results.classList.add('visible');
+      document.getElementById('mkSub').textContent = 'Something went wrong';
+      results.innerHTML = '<div class="allergy-status flagged"><i class="ti ti-alert-triangle"></i>' +
+        '<div>Could not work that out right now. Please try again in a moment.</div></div>';
+    }
+  }
+  function closeMakeIngredient() {
+    document.getElementById('makeModal').classList.remove('open');
+  }
+
+  // ── Nutrition tracker visibility ──
+  let pendingNutriShare = false;
+  let pendingNutriVis = 'followers';   // safer default of the two
+
+  function toggleNutriShare() {
+    pendingNutriShare = !pendingNutriShare;
+    renderNutriPrivacy();
+  }
+  function setNutriVis(v) {
+    pendingNutriVis = (v === 'public') ? 'public' : 'followers';
+    renderNutriPrivacy();
+  }
+  function renderNutriPrivacy() {
+    const toggle = document.getElementById('nutriShareToggle');
+    const knob = document.getElementById('nutriShareKnob');
+    const label = document.getElementById('nutriShareLabel');
+    const hint = document.getElementById('nutriShareHint');
+    const row = document.getElementById('nutriVisRow');
+    if (!toggle) return;
+    if (pendingNutriShare) {
+      toggle.style.background = 'var(--brand)';
+      knob.style.left = '25px';
+      label.textContent = 'Shown';
+      hint.textContent = 'your calories and macros appear on your profile.';
+      row.style.display = 'flex';
+    } else {
+      toggle.style.background = 'var(--surface3)';
+      knob.style.left = '3px';
+      label.textContent = 'Hidden';
+      hint.textContent = "your nutrition tracker isn't shown on your profile.";
+      row.style.display = 'none';
+    }
+    const pub = document.getElementById('nvPublic');
+    const fol = document.getElementById('nvFollowers');
+    if (pub && fol) {
+      pub.classList.toggle('on', pendingNutriVis === 'public');
+      fol.classList.toggle('on', pendingNutriVis !== 'public');
+    }
   }
 
   // Handle a chosen profile photo: compress small, store as base64.
@@ -7355,14 +9334,42 @@
         btn.innerHTML = '<i class="ti ti-check"></i> Save profile';
         return;
       }
+      // Username change: validate, then make sure nobody else holds it.
+      let newUsername = null;
+      const unInput = document.getElementById('editUsernameInput');
+      if (unInput) {
+        const raw = unInput.value.trim().toLowerCase();
+        if (raw && raw !== (myUsername || '').toLowerCase()) {
+          if (!/^[a-z0-9_]{3,20}$/.test(raw)) {
+            showToast('Usernames are 3–20 letters, numbers or underscores.');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="ti ti-check"></i> Save profile';
+            return;
+          }
+          const { data: taken } = await supaClient
+            .from('user_profiles').select('id').eq('username', raw)
+            .neq('id', currentUser.id).limit(1);
+          if (taken && taken.length) {
+            showToast('Username already taken');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="ti ti-check"></i> Save profile';
+            return;
+          }
+          newUsername = raw;
+        }
+      }
+
       const metadata = {
         avatar_color: pendingAvatar.color,
         avatar_icon: pendingAvatar.icon,
         avatar_photo: pendingAvatar.photo || null,
         allergens: pendingAllergens,
         favorites_public: pendingFavPublic,
-        is_private: pendingAcctPrivate
+        is_private: pendingAcctPrivate,
+        nutrition_share: pendingNutriShare,
+        nutrition_visibility: pendingNutriVis
       };
+      if (newUsername) metadata.username = newUsername;
 
       // PRIMARY: save through our own API (server reaches Supabase from Vercel's
       // reliable network — avoids a device's flaky direct-to-Supabase connection).
@@ -7393,9 +9400,20 @@
       }
 
       myAllergens = [...pendingAllergens];
+      if (newUsername) {
+        myUsername = newUsername;
+        // Refresh the caches that still hold the old name, so the change shows
+        // without restarting the app.
+        try {
+          const { data: fresh } = await supaClient.auth.getUser();
+          if (fresh && fresh.user) currentUser = fresh.user;
+        } catch (e) { /* keep the local value */ }
+        window.__feedProfiles = [];
+        try { loadFeed(); } catch (e) { /* feed refreshes on next open */ }
+      }
       applyAvatarToHeader();
       closeProfileModal();
-      showToast('Profile updated');
+      showToast(newUsername ? 'Profile updated — you are now @' + newUsername : 'Profile updated');
     } catch (e) {
       console.warn('Save profile failed:', e);
       const msg = (e && e.message) || '';
@@ -7970,9 +9988,7 @@
         cBtn.innerHTML = '<i class="ti ti-shield-heart"></i> Make this allergy-friendly';
       }
     }
-    if (cHits.length) {
-      setTimeout(() => openAllergyCheck(cHits, 'copycat'), 600);
-    }
+    // The popup never opens on its own — the flagged button is the entry point.
   }
 
   function renderCopycatAtServings(servings) {
@@ -7984,7 +10000,7 @@
     document.getElementById('copycatMeta').innerHTML = [
       r.time ? '<span class="meta-chip"><i class="ti ti-clock"></i> ' + r.time + '</span>' : '',
       '<span class="meta-chip"><i class="ti ti-users"></i> Serves ' + servings + '</span>',
-      r.difficulty ? '<span class="meta-chip"><i class="ti ti-flame"></i> ' + r.difficulty + '</span>' : '',
+      r.difficulty ? '<span class="meta-chip">Difficulty: ' + r.difficulty + '</span>' : '',
     ].filter(Boolean).join('');
 
     // Ingredients scaled
@@ -8129,7 +10145,7 @@
       composerImage = await processImage(file);
       document.getElementById('composerPreview').src = composerImage.dataUrl;
       document.getElementById('composerPreviewWrap').style.display = 'block';
-      document.getElementById('shareBtn').disabled = false;
+      updateShareBtnState();
     } catch (err) {
       showComposerError(err.message || 'Could not read that image.');
     }
@@ -8139,7 +10155,7 @@
     composerImage = null;
     document.getElementById('composerPreviewWrap').style.display = 'none';
     document.getElementById('postFileInput').value = '';
-    document.getElementById('shareBtn').disabled = true;
+    updateShareBtnState();
   }
 
   function showComposerError(msg) {
@@ -8150,47 +10166,63 @@
   function hideComposerError() { document.getElementById('composerError').classList.remove('visible'); }
 
   async function sharePost() {
-    if (!composerImage || !myUsername) return;
+    const captionNow = document.getElementById('composerCaption').value.trim();
+    // A post needs a photo, some text, or both — text-only is fine for
+    // "anyone have a good recipe for…" style posts.
+    if ((!composerImage && !captionNow) || !myUsername) return;
     const btn = document.getElementById('shareBtn');
     btn.disabled = true;
-    btn.innerHTML = '<i class="ti ti-loader-2"></i> Checking photo…';
     hideComposerError();
     try {
-      // 1. AI gate: food photos only
-      const vRes = await fetch('/api/verify-food', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image_data: composerImage.base64, media_type: composerImage.mediaType })
-      });
-      const verdict = await vRes.json();
-      if (!vRes.ok) throw new Error(verdict.error || 'Could not verify the photo.');
-      if (!verdict.isFood) {
-        showComposerError(verdict.reason || 'Only food photos can be shared. Please choose a photo of food.');
-        return;
+      // 1. AI gate: photos must be food. Text-only posts skip this.
+      if (composerImage) {
+        btn.innerHTML = '<i class="ti ti-loader-2"></i> Checking photo…';
+        const vRes = await fetch('/api/verify-food', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image_data: composerImage.base64, media_type: composerImage.mediaType })
+        });
+        const verdict = await vRes.json();
+        if (!vRes.ok) throw new Error(verdict.error || 'Could not verify the photo.');
+        if (!verdict.isFood) {
+          showComposerError(verdict.reason || 'Only food photos can be shared. Please choose a photo of food.');
+          return;
+        }
       }
 
       // 2. Post it
       btn.innerHTML = '<i class="ti ti-loader-2"></i> Sharing…';
-      const caption = document.getElementById('composerCaption').value.trim();
       const { error } = await supaClient.from('posts').insert({
         user_id: currentUser.id,
         username: myUsername,
         author_avatar: (currentUser?.user_metadata?.avatar_photo || null),
-        image_url: composerImage.dataUrl,
-        caption: caption || null
+        // posts.image_url is NOT NULL in the database, so a text-only post
+        // stores an empty string. It's falsy everywhere we check for a photo,
+        // so the feed and profile grid treat it exactly like "no image".
+        image_url: composerImage ? composerImage.dataUrl : '',
+        caption: captionNow || null
       });
       if (error) throw error;
 
       clearComposerImage();
       document.getElementById('composerCaption').value = '';
+      updateShareBtnState();
       showToast('Shared! 🍽️');
       loadFeed();
     } catch (e) {
       showComposerError(e.message || 'Could not share. Please try again.');
     } finally {
-      btn.disabled = !composerImage;
+      updateShareBtnState();
       btn.innerHTML = '<i class="ti ti-send"></i> Share';
     }
+  }
+
+  // Share is allowed with a photo, a caption, or both.
+  function updateShareBtnState() {
+    const btn = document.getElementById('shareBtn');
+    if (!btn) return;
+    const hasText = (document.getElementById('composerCaption')?.value || '').trim().length > 0;
+    btn.disabled = !(composerImage || hasText);
   }
 
   // ── Feed ──
@@ -8322,8 +10354,10 @@
               '<div><div class="feed-username" ' + (p.user_id ? 'onclick="openUserProfile(\'' + p.user_id + '\')" style="cursor:pointer;"' : '') + '>@' + escapeText(shownName) + '</div>' +
               '<div class="feed-time">' + when + '</div></div>' + menu +
             '</div>' +
-            '<img class="feed-image" src="' + p.image_url + '" alt="Food photo" loading="lazy" onclick="openFeedPost(\'' + p.id + '\')" style="cursor:pointer;" />' +
-            '<div class="feed-views" id="views-' + p.id + '"><i class="ti ti-eye" style="vertical-align:-2px;"></i> <span id="viewCount-' + p.id + '">—</span> views</div>' +
+            (p.image_url
+              ? '<img class="feed-image" src="' + p.image_url + '" alt="Food photo" loading="lazy" onclick="openFeedPost(\'' + p.id + '\')" style="cursor:pointer;" />' +
+                '<div class="feed-views" id="views-' + p.id + '"><i class="ti ti-eye" style="vertical-align:-2px;"></i> <span id="viewCount-' + p.id + '">—</span> views</div>'
+              : '') +
             (p.caption ? '<div class="feed-caption">' + escapeText(p.caption) + '</div>' : '') +
             '<div class="reaction-bar">' + reactBar + '</div>' +
             '<button class="comments-toggle" onclick="toggleComments(\'' + p.id + '\')"><i class="ti ti-message-circle" style="font-size:14px;vertical-align:-2px;"></i> Comments</button>' +
@@ -8347,10 +10381,16 @@
       console.warn('Feed load failed:', e);
       const msg = e.message || '';
       const isNetwork = /failed to fetch|network|load failed/i.test(msg);
-      container.innerHTML = '<div class="empty-state">Could not load the feed.<br><small style="color:var(--text3);">' +
-        escapeText(msg) + '</small>' +
-        (isNetwork ? '<br><br><small style="color:var(--text3);">This looks like a blocked connection. If you use an ad blocker, disable it for this site, or open the app in a normal window.</small>' : '') +
-        '</div>';
+      // Show a plain-English cause, not the raw TypeError.
+      container.innerHTML = isNetwork
+        ? '<div class="empty-state"><div class="empty-icon"><i class="ti ti-wifi-off"></i></div>' +
+          '<div style="font-weight:700;margin-bottom:4px;">You\'re offline</div>' +
+          '<div style="font-size:13px;color:var(--text3);">Check your connection and try again.</div>' +
+          '<button class="cooked-btn" style="margin-top:14px;" onclick="loadFeed()">Try again</button></div>'
+        : '<div class="empty-state"><div class="empty-icon"><i class="ti ti-alert-circle"></i></div>' +
+          '<div style="font-weight:700;margin-bottom:4px;">Couldn\'t load the feed</div>' +
+          '<div style="font-size:13px;color:var(--text3);">Please try again in a moment.</div>' +
+          '<button class="cooked-btn" style="margin-top:14px;" onclick="loadFeed()">Try again</button></div>';
     }
   }
 
@@ -8440,21 +10480,36 @@
     } catch (e) { showToast('Could not react. Try again.'); }
   }
 
+  // Send notifications through the API rather than inserting directly, so the
+  // server can also push them to the recipient's device. Inserting from the
+  // client only ever lit up the in-app bell — nothing arrived with the app closed.
+  async function sendNotifications(rows) {
+    if (!Array.isArray(rows) || !rows.length) return;
+    try {
+      const { data: sess } = await supaClient.auth.getSession();
+      const token = sess && sess.session && sess.session.access_token;
+      if (!token) return;
+      await fetch('/api/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ access_token: token, rows })
+      });
+    } catch (e) { console.warn('sendNotifications failed:', e); }
+  }
+
   // Notify the post owner that someone reacted (skip self-reactions)
   async function notifyReaction(postId, type) {
     try {
       const { data: post } = await supaClient
         .from('posts').select('user_id, caption').eq('id', postId).maybeSingle();
       if (!post || post.user_id === currentUser.id) return;
-      await supaClient.from('notifications').insert({
+      await sendNotifications([{
         recipient_id: post.user_id,
-        actor_id: currentUser.id,
-        actor_username: myUsername,
         type: 'reaction',
         post_id: postId,
         reaction_type: type,
         preview: post.caption ? post.caption.slice(0, 80) : null
-      });
+      }]);
     } catch (e) { console.warn('notifyReaction failed:', e); }
   }
 
@@ -8631,7 +10686,7 @@
         });
       }
 
-      if (rows.length) await supaClient.from('notifications').insert(rows);
+      if (rows.length) await sendNotifications(rows);
     } catch (e) { console.warn('notifyComment failed:', e); }
   }
 
@@ -8656,12 +10711,18 @@
   async function reportPost(postId) {
     const reason = prompt('Why are you reporting this post? (optional)') || null;
     try {
-      const { error } = await supaClient.from('post_reports').insert({
-        post_id: postId, reporter_id: currentUser.id, reason
+      const { data: sess } = await supaClient.auth.getSession();
+      const token = sess && sess.session && sess.session.access_token;
+      if (!token) { showToast('Please sign in.'); return; }
+      // Goes through the API so it also reaches support@ for review.
+      const res = await fetch('/api/report-post', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ access_token: token, post_id: postId, reason })
       });
-      if (error) throw error;
-      showToast('Report submitted — thank you.');
-    } catch (e) { showToast('Could not submit report.'); }
+      if (!res.ok) throw new Error('failed');
+      showToast('Report sent — our team will review it.');
+    } catch (e) { showToast('Could not submit report. Please try again.'); }
   }
 
   // ── View another user's profile + their public favorites ──
@@ -8748,13 +10809,22 @@
     const out = await followAction('follow', { target_id: userId });
     if (!out) { showToast(window.__lastFollowError ? ('Follow failed: ' + window.__lastFollowError) : 'Could not follow. Try again.'); renderFollowButton(userId); return; }
     if (out.status === 'pending') { showToast('Follow request sent'); }
-    else { showToast('Following'); }
+    else { showToast('Following'); bumpFollowerCount(userId, +1); }
     renderFollowButton(userId);
   }
   async function doUnfollow(userId) {
+    const wasFollowing = document.querySelector('#upFollowWrap .follow-btn.following') !== null;
     const out = await followAction('unfollow', { target_id: userId });
-    if (out) { showToast('Unfollowed'); }
+    if (out) { showToast('Unfollowed'); if (wasFollowing) bumpFollowerCount(userId, -1); }
     renderFollowButton(userId);
+  }
+  // Update the visible follower count immediately instead of waiting for a reopen.
+  function bumpFollowerCount(userId, delta) {
+    if (window.__viewedUserId !== userId) return;
+    const el = document.getElementById('upFollowerCount');
+    if (!el) return;
+    const n = parseInt(el.textContent, 10);
+    if (!isNaN(n)) el.textContent = Math.max(0, n + delta);
   }
 
   // ── Follow requests inbox ──
@@ -8788,6 +10858,52 @@
   function closeFollowRequests() {
     document.getElementById('followRequestsModal').classList.remove('open');
   }
+
+  // ── Blocked users ──
+  async function openBlockedUsers() {
+    const dd = document.getElementById('userDropdown'); if (dd) dd.classList.remove('open');
+    const modal = document.getElementById('blockedUsersModal');
+    const body = document.getElementById('blockedUsersBody');
+    body.innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="ti ti-loader-2"></i></div>Loading…</div>';
+    modal.classList.add('open');
+    const out = await followAction('list_blocks');
+    if (!out || !out.blocks || !out.blocks.length) {
+      body.innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="ti ti-mood-smile"></i></div>You haven\'t blocked anyone.</div>';
+      return;
+    }
+    const profMap = {};
+    (out.profiles || []).forEach(p => { profMap[p.id] = p; });
+    body.innerHTML = out.blocks.map(b => {
+      const p = profMap[b.blocked_id] || {};
+      const name = p.username || 'user';
+      const av = p.avatar_photo
+        ? '<div class="feed-avatar" style="background:center/cover no-repeat url(\'' + p.avatar_photo + '\');"></div>'
+        : '<div class="feed-avatar" style="background:' + (p.avatar_color || 'var(--brand)') + ';">' + (p.avatar_icon ? '<i class="ti ' + p.avatar_icon + '"></i>' : escapeText(name.charAt(0))) + '</div>';
+      return '<div class="req-row">' + av +
+        '<div style="font-weight:600;flex:1;">@' + escapeText(name) + '</div>' +
+        '<div class="req-actions">' +
+          '<button class="req-approve" onclick="unblockFromList(\'' + b.blocked_id + '\', this)">Unblock</button>' +
+        '</div></div>';
+    }).join('');
+  }
+  function closeBlockedUsers() {
+    document.getElementById('blockedUsersModal').classList.remove('open');
+  }
+  async function unblockFromList(userId, btn) {
+    btn.disabled = true; btn.textContent = '…';
+    const out = await followAction('unblock', { target_id: userId });
+    if (!out) { btn.disabled = false; btn.textContent = 'Unblock'; showToast('Could not unblock. Try again.'); return; }
+    if (window.__blockedIds) window.__blockedIds.delete(userId);
+    const row = btn.closest('.req-row');
+    if (row) row.remove();
+    showToast('User unblocked');
+    // If the list is now empty, show the friendly empty state.
+    const body = document.getElementById('blockedUsersBody');
+    if (body && !body.querySelector('.req-row')) {
+      body.innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="ti ti-mood-smile"></i></div>You haven\'t blocked anyone.</div>';
+    }
+    try { loadFeed(); } catch (e) { /* refreshes on next open */ }
+  }
   async function approveRequest(followerId, btn) {
     btn.disabled = true; btn.textContent = '…';
     await followAction('approve', { follower_id: followerId });
@@ -8803,11 +10919,18 @@
   }
   async function refreshRequestBadge() {
     const out = await followAction('list_requests');
-    const badge = document.getElementById('feedRequestsBadge');
-    if (!badge) return;
     const n = (out && out.requests) ? out.requests.length : 0;
-    if (n > 0) { badge.textContent = n; badge.style.display = 'flex'; }
-    else { badge.style.display = 'none'; }
+    const badge = document.getElementById('feedRequestsBadge');
+    if (badge) {
+      if (n > 0) { badge.textContent = n; badge.style.display = 'flex'; }
+      else { badge.style.display = 'none'; }
+    }
+    // Mirror on the menu item so requests are findable outside the feed too.
+    const dd = document.getElementById('ddReqBadge');
+    if (dd) {
+      if (n > 0) { dd.textContent = n; dd.style.display = 'inline-block'; }
+      else { dd.style.display = 'none'; }
+    }
   }
 
   async function openUserProfile(userId) {
@@ -8843,6 +10966,7 @@
       // throw — guarantees the button shows even if profile data is odd.
       window.__viewedUserId = userId;
       renderFollowButton(userId);
+      renderProfileNutrition(userId);   // no-op unless they've opted in
 
       nameEl.textContent = '@' + ((profile && profile.username) || 'user');
 
@@ -9249,7 +11373,7 @@
       const body = notifText(n).replace(/<[^>]+>/g, '');
       const note = new Notification('Capture & Cook', {
         body: body,
-        icon: '/icon-192.png?v=2',
+        icon: '/icon-192.png?v=3',
         tag: 'cc-notif-' + n.id
       });
       note.onclick = () => { window.focus(); if (n.post_id && typeof openNotif === 'function') openNotif(n.id, n.post_id); };
@@ -9299,6 +11423,10 @@
       return ({ like:'👍', love:'❤️', support:'🙌', yum:'😋' })[n.reaction_type] || '👍';
     }
     if (n.type === 'mention') return '@';
+    if (n.type === 'recipe') return '🍽️';
+    if (n.type === 'follow_request') return '🙋';
+    if (n.type === 'follow') return '👥';
+    if (n.type === 'follow_accepted') return '✅';
     return '💬';
   }
 
@@ -9311,6 +11439,12 @@
     if (n.type === 'mention') {
       return who + ' mentioned you' + (n.preview ? ': \u201c' + escapeText(n.preview) + '\u201d' : '');
     }
+    if (n.type === 'recipe') {
+      return who + ' shared a recipe with you' + (n.preview ? ': <b>' + escapeText(n.preview) + '</b>' : '');
+    }
+    if (n.type === 'follow_request') return who + ' requested to follow you';
+    if (n.type === 'follow') return who + ' started following you';
+    if (n.type === 'follow_accepted') return who + ' accepted your follow request';
     return who + ' commented' + (n.preview ? ': \u201c' + escapeText(n.preview) + '\u201d' : ' on your photo');
   }
 
@@ -9338,7 +11472,7 @@
         return;
       }
       list.innerHTML = data.map(n =>
-        '<div class="notif-item' + (n.is_read ? '' : ' unread') + '" onclick="openNotif(\'' + n.id + '\',\'' + (n.post_id || '') + '\')">' +
+        '<div class="notif-item' + (n.is_read ? '' : ' unread') + '" onclick="openNotif(\'' + n.id + '\',\'' + (n.post_id || '') + '\',\'' + (n.type || '') + '\',\'' + (n.actor_id || '') + '\')">' +
           '<div class="notif-icon">' + notifIcon(n) + '</div>' +
           '<div><div class="notif-text">' + notifText(n) + '</div>' +
           '<div class="notif-when">' + timeAgo(n.created_at) + '</div></div>' +
@@ -9351,18 +11485,39 @@
     }
   }
 
-  async function openNotif(notifId, postId) {
+  async function openNotif(notifId, postId, type, actorId) {
     // Mark this one read, close panel, jump to the community feed
     try { await supaClient.from('notifications').update({ is_read: true }).eq('id', notifId); } catch (e) {}
     document.getElementById('notifPanel').classList.remove('open');
     refreshNotifBadge();
+    if (type === 'recipe') { openSharedWithMe(); return; }
+    if (type === 'follow_request') { openFollowRequests(); return; }
+    if ((type === 'follow' || type === 'follow_accepted') && actorId) { openUserProfile(actorId); return; }
     if (postId) {
       switchMode('community');
-      // Give the feed a moment to render, then scroll to the post if present
-      setTimeout(() => {
+      // The post may not be in the current view — the "Following" filter or an
+      // older post would both miss it, which is why this used to do nothing.
+      const sel = document.getElementById('feedViewSelect');
+      if (sel && sel.value !== 'public') { sel.value = 'public'; onFeedViewChange(); }
+
+      // Poll for the card instead of guessing a fixed delay.
+      const deadline = Date.now() + 5000;
+      (function findPost() {
         const el = document.getElementById('post-' + postId);
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 600);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          el.classList.add('notif-flash');
+          setTimeout(() => el.classList.remove('notif-flash'), 2200);
+          // A comment notification should show the comment, not just the photo.
+          if (type === 'comment' || type === 'mention') {
+            const wrap = document.getElementById('comments-' + postId);
+            if (wrap && !wrap.classList.contains('open')) toggleComments(postId);
+          }
+          return;
+        }
+        if (Date.now() < deadline) { setTimeout(findPost, 200); return; }
+        showToast("Couldn't find that post — it may have been removed.");
+      })();
     }
   }
 

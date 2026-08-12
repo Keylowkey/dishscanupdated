@@ -36,8 +36,25 @@ export default async function handler(req, res) {
       gateway: process.env.APNS_PRODUCTION === '1' ? 'production' : 'sandbox'
     };
     if (process.env.APNS_PRIVATE_KEY) {
+      const raw = String(process.env.APNS_PRIVATE_KEY);
+      // Structural facts only — never the key content itself.
+      diag.keyShape = {
+        length: raw.length,
+        hasRealNewlines: raw.includes('\n'),
+        hasLiteralBackslashN: raw.includes('\\n'),
+        hasCarriageReturn: raw.includes('\r'),
+        startsWithBegin: raw.trim().startsWith('-----BEGIN'),
+        endsWithEnd: raw.trim().endsWith('-----'),
+        firstChars: raw.slice(0, 27),   // "-----BEGIN PRIVATE KEY----" is not sensitive
+        lastChars: raw.slice(-25),      // "-----END PRIVATE KEY-----" likewise
+        containsQuotes: raw.includes('"') || raw.includes("'")
+      };
       try {
-        let pem = String(process.env.APNS_PRIVATE_KEY).replace(/\\n/g, '\n').trim();
+        let pem = raw.replace(/\\n/g, '\n').replace(/\r/g, '').trim();
+        // Strip a wrapping pair of quotes some UIs add on paste.
+        if ((pem.startsWith('"') && pem.endsWith('"')) || (pem.startsWith("'") && pem.endsWith("'"))) {
+          pem = pem.slice(1, -1);
+        }
         if (!pem.includes('\n')) {
           const m = pem.match(/-----BEGIN ([A-Z ]+)-----([\s\S]*?)-----END \1-----/);
           if (m) {
