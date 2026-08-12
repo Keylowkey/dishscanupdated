@@ -9012,6 +9012,17 @@
         return;
       }
 
+      // Listeners must only be attached once — this function runs on every
+      // launch and on every diagnostics run, which would otherwise stack
+      // duplicate handlers and fire the save repeatedly.
+      if (window.__pushListenersAttached) {
+        window.__pushDiag.step = 'listeners already attached';
+        await PN.register();
+        window.__pushDiag.registerCalled = true;
+        return;
+      }
+      window.__pushListenersAttached = true;
+
       // Fires once APNs issues a token for this install.
       PN.addListener('registration', async (t) => {
         const token = t && t.value;
@@ -9070,8 +9081,12 @@
     if (dd) dd.classList.remove('open');
     showToast('Checking notifications…');
     await initPushNotifications(false);
-    // Give the registration callback a moment to land.
-    await new Promise(r => setTimeout(r, 1500));
+    // APNs can take several seconds to hand back a token, especially on a
+    // cold start or a weak connection. Poll rather than guessing one interval.
+    for (let i = 0; i < 24; i++) {
+      if (window.__pushDiag && window.__pushDiag.tokenReceived) break;
+      await new Promise(r => setTimeout(r, 500));
+    }
 
     const d = window.__pushDiag || {};
     let server = null;
@@ -9094,6 +9109,7 @@
       ['Push plugin found', yn(d.pluginFound)],
       ['Signed in', yn(d.signedIn)],
       ['Permission', d.permissionAfter || d.permissionBefore || '—'],
+      ['register() called', yn(d.registerCalled)],
       ['Token from Apple', yn(d.tokenReceived)],
       ['Saved to server', d.saveStatus ? (d.saveStatus === 200 ? '✅' : '❌ ' + d.saveStatus) : '—'],
       ['Devices on server', server ? String(server.devicesRegistered) : '—'],

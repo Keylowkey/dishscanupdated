@@ -5,7 +5,7 @@
 // Never returns the key material itself — only whether it parses.
 
 import { verifyToken } from '../lib/auth.js';
-import { sendPush } from '../lib/apns.js';
+import { sendPush, normalizePem } from '../lib/apns.js';
 import crypto from 'node:crypto';
 
 export default async function handler(req, res) {
@@ -49,20 +49,10 @@ export default async function handler(req, res) {
         lastChars: raw.slice(-25),      // "-----END PRIVATE KEY-----" likewise
         containsQuotes: raw.includes('"') || raw.includes("'")
       };
+      // Use the SAME normalizer the sender uses. This had its own copy, which
+      // drifted and made the diagnostic report failures the real path wouldn't hit.
       try {
-        let pem = raw.replace(/\\n/g, '\n').replace(/\r/g, '').trim();
-        // Strip a wrapping pair of quotes some UIs add on paste.
-        if ((pem.startsWith('"') && pem.endsWith('"')) || (pem.startsWith("'") && pem.endsWith("'"))) {
-          pem = pem.slice(1, -1);
-        }
-        if (!pem.includes('\n')) {
-          const m = pem.match(/-----BEGIN ([A-Z ]+)-----([\s\S]*?)-----END \1-----/);
-          if (m) {
-            const body = m[2].replace(/\s+/g, '');
-            pem = `-----BEGIN ${m[1]}-----\n${(body.match(/.{1,64}/g) || []).join('\n')}\n-----END ${m[1]}-----`;
-          }
-        }
-        const k = crypto.createPrivateKey(pem);
+        const k = crypto.createPrivateKey(normalizePem(raw));
         diag.keyParses = true;
         diag.keyType = k.asymmetricKeyType;
       } catch (e) {
