@@ -13,6 +13,7 @@
 //   delete_received { id }
 
 import { verifyToken } from '../lib/auth.js';
+import { notifyAll } from '../lib/notify.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -117,21 +118,13 @@ export default async function handler(req, res) {
         return res.status(502).json({ error: 'Could not share.', detail: t.slice(0, 200) });
       }
 
-      // Ride the existing notification system so the bell lights up.
-      try {
-        const nr = await fetch(`${SUPABASE_URL}/rest/v1/notifications`, {
-          method: 'POST',
-          headers: { ...H, Prefer: 'return=minimal' },
-          body: JSON.stringify(valid.map(rid => ({
-            recipient_id: rid,
-            actor_id: me,
-            actor_username: username,
-            type: 'recipe',
-            preview: name
-          })))
-        });
-        if (!nr.ok) console.error('share notify failed:', nr.status, await nr.text().catch(() => ''));
-      } catch (e) { console.error('share notify error:', e); }
+      await notifyAll({ SUPABASE_URL, headers: H }, valid.map(rid => ({
+        recipient_id: rid,
+        actor_id: me,
+        actor_username: username,
+        type: 'recipe',
+        preview: name
+      })));
 
       return res.status(200).json({ ok: true, sent: valid.length, skipped: recipient_ids.length - valid.length });
     }

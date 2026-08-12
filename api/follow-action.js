@@ -12,6 +12,7 @@
 //   block_status { target_id } -> { blocked } did I block this user
 
 import { verifyToken } from '../lib/auth.js';
+import { notifyAll } from '../lib/notify.js';
 
 const ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY ||
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNudnpycXBjYmJseHB5cGFvZW52Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MzA4OTYsImV4cCI6MjA5NTMwNjg5Nn0.pIVpjNCeKlVpLGyr_PEKECHAbHJvyGjkTZj8jikBshY';
@@ -30,14 +31,7 @@ export default async function handler(req, res) {
 
   // Insert a bell notification; failures are logged, never fatal.
   async function notify(row) {
-    try {
-      const r = await fetch(`${SUPABASE_URL}/rest/v1/notifications`, {
-        method: 'POST',
-        headers: { ...H, Prefer: 'return=minimal' },
-        body: JSON.stringify(row)
-      });
-      if (!r.ok) console.error('notify failed:', r.status, await r.text().catch(() => ''));
-    } catch (e) { console.error('notify error:', e); }
+    await notifyAll({ SUPABASE_URL, headers: H }, [row]);
   }
   async function usernameOf(id) {
     try {
