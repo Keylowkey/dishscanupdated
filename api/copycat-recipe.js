@@ -3,6 +3,7 @@
 // as close as possible to the original, but lighter in calories.
 
 import { languageInstruction } from '../lib/i18n-data.js';
+import { guard } from '../lib/guard.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -11,6 +12,10 @@ export default async function handler(req, res) {
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') {
+
+  // Costs money per call — require a real signed-in account and cap the rate.
+  const me = await guard(req, res, { bucket: 'copycat-recipe', max: 40 });
+  if (!me) return;
     return res.status(405).json({ error: 'Method not allowed' });
   }
 

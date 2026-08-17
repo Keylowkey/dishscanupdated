@@ -1,4 +1,5 @@
-// /api/search-takeout-options.js — for the Takeout tab text search.
+
+import { guard } from '../lib/guard.js';// /api/search-takeout-options.js — for the Takeout tab text search.
 // Given a dish search (e.g. "orange chicken"), returns a list of restaurant
 // chains known for that item, each with estimated calories and typical price,
 // plus a generic "Classic takeout-style" option. The user picks one, and the
@@ -37,6 +38,10 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  // Costs money per call — require a real signed-in account and cap the rate.
+  const me = await guard(req, res, { bucket: 'search-takeout-options', max: 60 });
+  if (!me) return;
 
   const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
   if (!ANTHROPIC_KEY) return res.status(500).json({ error: 'Server not configured' });

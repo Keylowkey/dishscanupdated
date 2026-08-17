@@ -4,7 +4,7 @@
     "node": "24.x"
   },
   "scripts": {
-    "copy:web": "rm -rf www && mkdir -p www && cp index.html icon-192.png icon-512.png www/"
+    "copy:web": "rm -rf www && mkdir -p www/assets && cp index.html icon-192.png icon-512.png www/ && rsync -a --exclude 'icon-*.png' assets/ www/assets/"
   },
   "dependencies": {
     "@capacitor/android": "^8.4.1",

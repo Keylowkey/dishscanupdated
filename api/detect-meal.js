@@ -1,4 +1,5 @@
-// /api/detect-meal.js — Capture & Cook Takeout Nutrition Detector
+
+import { guard } from '../lib/guard.js';// /api/detect-meal.js — Capture & Cook Takeout Nutrition Detector
 // Identifies restaurant + menu item from packaging/meal photo and returns
 // the published nutrition panel. Returns { detectable: false } if it can't
 // confidently identify the meal.
@@ -10,6 +11,10 @@ export default async function handler(req, res) {
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') {
+
+  // Costs money per call — require a real signed-in account and cap the rate.
+  const me = await guard(req, res, { bucket: 'detect-meal', max: 60 });
+  if (!me) return;
     return res.status(405).json({ error: 'Method not allowed' });
   }
 

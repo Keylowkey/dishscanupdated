@@ -1,9 +1,19 @@
+import { guard } from '../lib/guard.js';
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
+
+
+  // Billed per call by Google. Same rule as the AI routes: signed-in users only.
+
+  // This route is GET, so the token arrives as an Authorization header.
+
+  const me = await guard(req, res, { bucket: 'places', max: 120 });
+
+  if (!me) return;
 
   const GOOGLE_KEY = process.env.GOOGLE_PLACES_API_KEY;
   if (!GOOGLE_KEY) {
