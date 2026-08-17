@@ -1,10 +1,15 @@
-// /api/verify-food.js — gate: only food photos may be shared to the feed
+
+import { guard } from '../lib/guard.js';// /api/verify-food.js — gate: only food photos may be shared to the feed
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  // Costs money per call — require a real signed-in account and cap the rate.
+  const me = await guard(req, res, { bucket: 'verify-food', max: 80 });
+  if (!me) return;
 
   const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
   if (!ANTHROPIC_KEY) return res.status(500).json({ error: 'API key not configured.' });

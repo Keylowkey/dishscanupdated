@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Capture &amp; Cook</string>
+    <string name="title_activity_main">Capture &amp; Cook</string>
+    <string name="package_name">com.captureandcook.app</string>
+    <string name="custom_url_scheme">com.captureandcook.app</string>
+</resources>

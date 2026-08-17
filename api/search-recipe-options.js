@@ -8,6 +8,7 @@
 // Guard rails: rejects branded/restaurant-only items (e.g. "Big Mac") and non-food.
 // Inline search cache (best-effort; falls back to AI on any miss/error).
 import { languageInstruction } from '../lib/i18n-data.js';
+import { guard } from '../lib/guard.js';
 
 async function cacheGet(kind, query) {
   const U = process.env.SUPABASE_URL, K = process.env.SUPABASE_SERVICE_KEY;
@@ -40,6 +41,10 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  // Costs money per call — require a real signed-in account and cap the rate.
+  const me = await guard(req, res, { bucket: 'search-recipe-options', max: 60 });
+  if (!me) return;
 
   const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
   if (!ANTHROPIC_KEY) return res.status(500).json({ error: 'Server not configured' });

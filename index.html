@@ -3831,6 +3831,281 @@
   }
   .cam-flash { border-radius: 18px; }
 
+  /* ══ 3b SNAP HERO — camera-first cook screen ══ */
+  .cook-headline {
+    font-family: var(--font-display);
+    font-size: 25px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.15;
+    color: var(--text); margin: 0.4rem 0 1rem; text-wrap: pretty;
+  }
+  .cook-hero {
+    position: relative;
+    background: var(--sage);
+    border: 2px solid var(--ink);
+    border-radius: 26px;
+    box-shadow: 6px 6px 0 var(--ink-shadow);
+    padding: 18px;
+    overflow: hidden;
+    margin-bottom: 1.1rem;
+  }
+  .cook-hero::before {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background: repeating-linear-gradient(-45deg, rgba(255,255,255,0.07) 0 12px, transparent 12px 24px);
+  }
+  .cook-hero > * { position: relative; }
+  /* upload zone becomes a light dashed well on the green */
+  .cook-hero .upload-zone {
+    background: rgba(255,255,255,0.12);
+    border: 2px dashed rgba(255,255,255,0.7);
+    box-shadow: none;
+    margin: 0 0 12px;
+  }
+  .cook-hero .upload-zone.has-image { border-style: solid; border-color: #fff; background: rgba(0,0,0,0.15); }
+  .cook-hero .upload-icon-wrap {
+    background: #fff; border: 2px solid var(--ink); border-radius: 22px;
+    transform: rotate(-6deg); box-shadow: 4px 4px 0 rgba(0,0,0,0.22);
+  }
+  .cook-hero .upload-icon-wrap i { color: var(--sage) !important; }
+  .cook-hero .upload-title { color: #fff; font-size: 18px; }
+  .cook-hero .upload-sub { color: rgba(255,255,255,0.92); }
+  .cook-hero .fmt-pill { color: #fff; border-color: rgba(255,255,255,0.75); background: rgba(255,255,255,0.12); }
+  .cook-hero .upload-actions { display: flex; gap: 10px; margin: 0; }
+  .cook-hero .upload-action-btn { flex: 1; box-shadow: 3px 3px 0 rgba(0,0,0,0.25); }
+  .cook-hero .upload-action-btn:first-child { background: var(--amber); color: var(--ink); }
+  .cook-hero .upload-action-btn:last-child { background: #fff; color: var(--ink); }
+
+  /* quiet fallback rows */
+  .no-photo-divider { margin: 0.2rem 0 0.9rem; }
+  .no-photo-divider span {
+    font-family: var(--font-display); font-weight: 800; font-size: 11.5px;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--text3);
+  }
+  #cookView .recipe-search { margin-bottom: 10px; }
+  #cookView .recipe-search-bar { padding: 4px 4px 4px 14px; }
+  .recipe-search-go.link-go { background: var(--amber); color: var(--ink); }
+
+  /* ══════════ SNACK CLUB — FULL APP PASS ══════════
+     Everything below carries the 3b language into the rest of the app:
+     chunky ink outlines, offset shadows, sticker tilts, 800-weight display type. */
+
+  /* ── Section headings & result tabs ── */
+  .results-section .recipe-name,
+  .nutri-item-name,
+  .page-view-title { font-family: var(--font-display); font-weight: 800; letter-spacing: -0.03em; }
+  .section-toggle {
+    background: var(--surface);
+    border: 2px solid var(--ink);
+    border-radius: var(--radius);
+    box-shadow: 3px 3px 0 var(--ink-shadow);
+    padding: 12px 14px;
+    margin-bottom: 10px;
+  }
+  .section-toggle:hover { opacity: 1; transform: translate(-1px,-1px); box-shadow: 5px 5px 0 var(--ink-shadow); }
+  .section-chevron { color: var(--sage); }
+  .tabs { flex-wrap: wrap; }
+  .tab { background: var(--surface); box-shadow: 2px 2px 0 transparent; }
+  .tab.active { box-shadow: 3px 3px 0 var(--ink-shadow); }
+
+  /* ── Servings picker ── */
+  .serving-selector {
+    background: var(--surface);
+    border: 2px solid var(--ink);
+    border-radius: var(--radius-lg);
+    box-shadow: 4px 4px 0 var(--ink-shadow);
+    padding: 14px;
+  }
+  .serving-label { font-weight: 800; letter-spacing: -0.01em; }
+  .serving-opt { background: var(--surface2); box-shadow: 2px 2px 0 var(--ink-shadow); }
+  .serving-opt.active { box-shadow: 3px 3px 0 var(--ink-shadow); }
+
+  /* ── Ingredients: sticker chips ── */
+  .ingredient-item {
+    background: var(--surface);
+    border: 2px solid var(--ink);
+    border-radius: 18px;
+    box-shadow: 3px 3px 0 var(--ink-shadow);
+  }
+  .ing-emoji {
+    background: var(--sage-light);
+    border: 2px solid var(--ink);
+    border-radius: 12px;
+    transform: rotate(-4deg);
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .ing-name { font-weight: 700; }
+  .mk-btn {
+    border: 2px solid var(--ink);
+    border-radius: 12px;
+    font-weight: 800;
+    background: var(--amber);
+    color: var(--ink);
+    box-shadow: 2px 2px 0 var(--ink-shadow);
+  }
+  .mk-btn:hover { transform: translate(-1px,-1px); box-shadow: 3px 3px 0 var(--ink-shadow); }
+
+  /* ── Method steps: numbered stickers ── */
+  .step-item {
+    background: var(--surface);
+    border: 2px solid var(--ink);
+    border-radius: 18px;
+    box-shadow: 3px 3px 0 var(--ink-shadow);
+  }
+  .step-num, .mk-num {
+    background: var(--sage);
+    color: #fff;
+    border: 2px solid var(--ink);
+    border-radius: 50%;
+    font-weight: 800;
+    transform: rotate(-5deg);
+    flex-shrink: 0;
+  }
+
+  /* ── Macros & nutrition ── */
+  .macro-card {
+    border: 2px solid var(--ink);
+    border-radius: 18px;
+    box-shadow: 3px 3px 0 var(--ink-shadow);
+  }
+  .macro-card:nth-child(1) { background: var(--sage-light); }
+  .macro-card:nth-child(2) { background: var(--amber-light); }
+  .macro-value { font-family: var(--font-display); font-weight: 800; letter-spacing: -0.02em; }
+  .macro-label { font-weight: 700; }
+  .nutri-facts {
+    border: 2px solid var(--ink);
+    border-radius: 20px;
+    box-shadow: 4px 4px 0 var(--ink-shadow);
+    overflow: hidden;
+  }
+  .nutri-facts-title { font-family: var(--font-display); font-weight: 800; letter-spacing: -0.01em; }
+  .nutri-row-label { font-weight: 600; }
+  .nutri-row-value { font-weight: 800; }
+  .nutri-cal-banner, .calorie-banner, .cost-banner {
+    border: 2px solid var(--ink);
+    border-radius: 20px;
+    box-shadow: 4px 4px 0 var(--ink-shadow);
+  }
+  .cal-icon-wrap {
+    background: var(--amber);
+    border: 2px solid var(--ink);
+    border-radius: 15px;
+    transform: rotate(-6deg);
+  }
+  .cal-icon-wrap i { color: var(--ink) !important; }
+  .cal-value, .nutri-cal-value { font-family: var(--font-display); font-weight: 800; letter-spacing: -0.02em; }
+  .nutri-conf-pill { border: 1.5px solid var(--ink); border-radius: 99px; font-weight: 800; }
+
+  /* ── Takeout option cards ── */
+  .opt-card {
+    border: 2px solid var(--ink);
+    border-radius: 20px;
+    box-shadow: 3px 3px 0 var(--ink-shadow);
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .opt-card:hover { transform: translate(-1px,-1px); box-shadow: 5px 5px 0 var(--ink-shadow); background: var(--surface); }
+  .opt-card-icon {
+    border: 2px solid var(--ink);
+    border-radius: 14px;
+    transform: rotate(-5deg);
+  }
+  .opt-card-restaurant { font-weight: 800; letter-spacing: -0.01em; }
+  .opt-badge { border: 1.5px solid var(--ink); border-radius: 99px; font-weight: 800; }
+  .copycat-cta {
+    border: 2px solid var(--ink);
+    border-radius: 18px;
+    font-weight: 800;
+    box-shadow: 4px 4px 0 var(--ink-shadow);
+  }
+  .copycat-cta:hover { transform: translate(-1px,-1px); box-shadow: 6px 6px 0 var(--ink-shadow); }
+
+  /* ── Allergy & swaps ── */
+  .allergy-status, .swap-card, .swap-panel {
+    border: 2px solid var(--ink);
+    border-radius: 18px;
+    box-shadow: 3px 3px 0 var(--ink-shadow);
+  }
+  .swap-allergen-tag { border: 1.5px solid var(--ink); border-radius: 99px; font-weight: 800; }
+  .swap-title { font-weight: 800; }
+  .swap-total-val { font-family: var(--font-display); font-weight: 800; }
+
+  /* ── History / Favorites ── */
+  .history-card {
+    border: 2px solid var(--ink) !important;
+    border-radius: 20px;
+    box-shadow: 3px 3px 0 var(--ink-shadow);
+    overflow: hidden;
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .history-card:hover { transform: translate(-1px,-1px); box-shadow: 5px 5px 0 var(--ink-shadow); }
+  .history-thumb { border-right: 2px solid var(--ink); }
+  .stat-card {
+    border: 2px solid var(--ink);
+    border-radius: 18px;
+    box-shadow: 3px 3px 0 var(--ink-shadow);
+  }
+  .stat-card:nth-child(1) { background: var(--sage-light); }
+  .stat-card:nth-child(2) { background: var(--amber-light); }
+  .stat-value { font-family: var(--font-display); font-weight: 800; letter-spacing: -0.02em; }
+  .stat-label { font-weight: 700; }
+
+  /* ── Community feed ── */
+  .feed-card { border: 2px solid var(--ink); box-shadow: 5px 5px 0 var(--ink-shadow); }
+  .feed-image { border-top: 2px solid var(--ink); border-bottom: 2px solid var(--ink); }
+  .feed-username { font-weight: 800; }
+  .feed-view-select, .feed-requests-btn {
+    border: 2px solid var(--ink);
+    border-radius: var(--radius);
+    font-weight: 700;
+    box-shadow: 3px 3px 0 var(--ink-shadow);
+  }
+  .feed-requests-badge { border: 2px solid var(--ink); font-weight: 800; }
+  .reaction-bar { border-top: 2px solid var(--border); }
+  .composer-caption { font-family: var(--font-body); }
+
+  /* ── Empty states & toasts ── */
+  .empty-state { font-weight: 600; }
+  .empty-icon {
+    border: 2px solid var(--ink);
+    border-radius: 20px;
+    transform: rotate(-6deg);
+    box-shadow: 3px 3px 0 var(--ink-shadow);
+    background: var(--surface);
+  }
+  .empty-icon i { color: var(--sage) !important; }
+  .toast {
+    border: 2px solid var(--ink);
+    border-radius: 18px;
+    font-weight: 700;
+    box-shadow: 5px 5px 0 var(--ink-shadow);
+  }
+  .error-banner, .notif-banner {
+    border: 2px solid var(--ink);
+    border-radius: 18px;
+    box-shadow: 3px 3px 0 var(--ink-shadow);
+    font-weight: 600;
+  }
+
+  /* ── Spinner & timer ── */
+  .spinner { border-width: 4px; border-color: var(--border); border-top-color: var(--sage); }
+  .ring-fg { stroke-width: 15; }
+  .cook-timer-ring { filter: drop-shadow(4px 4px 0 var(--ink-shadow)); }
+  .t-val { font-family: var(--font-display); }
+
+  /* ── Misc buttons that were still flat ── */
+  .new-analysis-btn, .log-meal-btn, .cook-timer-btn, .fab, .primary-btn {
+    border: 2px solid var(--ink);
+    border-radius: 16px;
+    font-weight: 800;
+    box-shadow: 3px 3px 0 var(--ink-shadow);
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .new-analysis-btn:hover, .log-meal-btn:hover, .cook-timer-btn:hover {
+    transform: translate(-1px,-1px); box-shadow: 5px 5px 0 var(--ink-shadow);
+  }
+  .filter-sort, .feed-toolbar select {
+    border: 2px solid var(--ink) !important;
+    border-radius: 99px;
+    font-weight: 700;
+  }
+
   /* Camera: real double-strobe flash with outward glow */
   .scan-stage.active .scan-cam .cam-flash { animation: camFlash2 1.8s ease-in-out infinite; background: #fff; }
   @keyframes camFlash2 {
@@ -4107,33 +4382,9 @@
   <!-- COOK MODE -->
   <div class="mode-view active" id="cookView">
 
-  <div class="recipe-search">
-    <div class="recipe-search-bar">
-      <i class="ti ti-search"></i>
-      <input type="text" id="cookSearchInput" placeholder="Search a recipe"
-        autocomplete="off" onkeydown="if(event.key==='Enter'){searchCookRecipe();}" />
-      <button class="recipe-search-go" id="cookSearchGo" onclick="searchCookRecipe()">Search</button>
-    </div>
-    <div class="recipe-search-hint">Type any dish to cook at home — no photo needed.</div>
-  </div>
+  <div class="cook-headline">See a dish you love?<br>Snap it. 🍳</div>
 
-  <div class="search-divider"><span>or paste a link</span></div>
-  <div class="recipe-search">
-    <div class="recipe-search-bar">
-      <i class="ti ti-link"></i>
-      <input type="text" id="linkImportInput" placeholder="Instagram, YouTube or TikTok link"
-        autocomplete="off" autocapitalize="off" inputmode="url" onkeydown="if(event.key==='Enter'){importFromLinkInput();}" />
-      <button class="recipe-search-go" id="linkImportClear" onclick="var i=document.getElementById('linkImportInput'); i.value=''; i.focus();" style="background:var(--surface2);color:var(--text2);margin-right:6px;" aria-label="Clear link">✕</button>
-      <button class="recipe-search-go" id="linkImportGo" onclick="importFromLinkInput()">Import</button>
-    </div>
-    <div class="recipe-search-hint">Paste a recipe reel or video link — we'll turn it into a full recipe.</div>
-  </div>
-
-  <div class="filter-bar" id="cookFilterBar"></div>
-  <div class="recipe-options" id="cookOptions"></div>
-
-  <div class="search-divider"><span>or upload a photo</span></div>
-
+  <div class="cook-hero">
   <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()" role="button" tabindex="0" aria-label="Upload a dish photo">
     <div class="upload-placeholder" id="uploadPlaceholder">
       <div class="upload-icon-wrap"><i class="ti ti-camera-plus" style="font-size:26px;color:#fff;"></i></div>
@@ -4161,6 +4412,32 @@
       <i class="ti ti-photo"></i> Choose Photo
     </button>
   </div>
+  </div>
+
+  <div class="search-divider no-photo-divider"><span>no photo?</span></div>
+
+  <div class="recipe-search">
+    <div class="recipe-search-bar">
+      <i class="ti ti-search"></i>
+      <input type="text" id="cookSearchInput" placeholder="Search any recipe by name"
+        autocomplete="off" onkeydown="if(event.key==='Enter'){searchCookRecipe();}" />
+      <button class="recipe-search-go" id="cookSearchGo" onclick="searchCookRecipe()">Go</button>
+    </div>
+  </div>
+
+  <div class="recipe-search">
+    <div class="recipe-search-bar">
+      <i class="ti ti-link"></i>
+      <input type="text" id="linkImportInput" placeholder="Paste a Reel / TikTok / YouTube link"
+        autocomplete="off" autocapitalize="off" inputmode="url" onkeydown="if(event.key==='Enter'){importFromLinkInput();}" />
+      <button class="recipe-search-go" id="linkImportClear" onclick="var i=document.getElementById('linkImportInput'); i.value=''; i.focus();" style="background:var(--surface2);color:var(--text2);margin-right:6px;" aria-label="Clear link">✕</button>
+      <button class="recipe-search-go link-go" id="linkImportGo" onclick="importFromLinkInput()">Import</button>
+    </div>
+  </div>
+
+  <div class="filter-bar" id="cookFilterBar"></div>
+  <div class="recipe-options" id="cookOptions"></div>
+
 
   <!-- Guided Camera Modal -->
   <div class="camera-modal" id="cameraModal">
@@ -4830,22 +5107,6 @@
       </div>
     </div>
 
-    <div style="border-top:0.5px solid var(--border);margin:18px 0 4px;padding-top:16px;">
-      <div style="font-size:13px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:4px;">
-        <i class="ti ti-palette" style="vertical-align:-2px;font-size:15px;"></i> Appearance
-      </div>
-    </div>
-
-    <div class="support-field">
-      <label>Color</label>
-      <div class="avatar-swatch-row" id="avatarColors"></div>
-    </div>
-
-    <div class="support-field">
-      <label>Icon</label>
-      <div class="avatar-icon-row" id="avatarIcons"></div>
-    </div>
-
     <div class="support-field">
       <label>Favorites privacy</label>
       <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;">
@@ -5323,7 +5584,7 @@
       <p>You must be at least 13 years old to use the Service. If you are under 18, you may use the Service only with the consent of a parent or guardian. By using the Service you represent that you meet these requirements.</p>
 
       <h2>3. Your Account</h2>
-      <p>You are responsible for your account and for keeping your password secure. You must provide accurate information. We may suspend or terminate accounts that violate these Terms. You may delete your account at any time by contacting <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="86f5f3f6f6e9f4f2c6e5e7f6f2f3f4e3e7e8e2e5e9e9eda8e5e9eb">[email&#160;protected]</a>.</p>
+      <p>You are responsible for your account and for keeping your password secure. You must provide accurate information. We may suspend or terminate accounts that violate these Terms. You may delete your account at any time by contacting <a href="mailto:support@captureandcook.com">support@captureandcook.com</a>.</p>
 
       <h2>4. Important: AI-Generated Content, Allergy &amp; Health Disclaimer</h2>
       <p>The Service's recipes, calorie counts, nutrition facts, ingredient lists, equipment lists, cost estimates, restaurant-meal identifications, and allergy/dietary substitution suggestions are <strong>generated by artificial intelligence and are estimates only.</strong> They may be inaccurate or incomplete.</p>
@@ -5376,7 +5637,7 @@
       <p>We may update these Terms. We will post the updated version with a new effective date; material changes may be announced in the app. Continued use after changes means you accept them.</p>
 
       <h2>15. Contact</h2>
-      <p>Questions about these Terms: <a href="/cdn-cgi/l/email-protection#94e7e1e4e4fbe6e0d4f7f5e4e0e1e6f1f5faf0f7fbfbffbaf7fbf9"><span class="__cf_email__" data-cfemail="b5c6c0c5c5dac7c1f5d6d4c5c1c0c7d0d4dbd1d6dadade9bd6dad8">[email&#160;protected]</span></a></p>
+      <p>Questions about these Terms: <a href="mailto:support@captureandcook.com">support@captureandcook.com</a></p>
     </div>
 
     <!-- PRIVACY -->
@@ -5430,7 +5691,7 @@
       <p>These providers process data on our behalf under their own security and privacy commitments. We do not sell your personal information.</p>
 
       <h2>6. Data Retention &amp; Deletion</h2>
-      <p>We keep your data while your account is active. You can delete individual posts, comments, and history items in the app, or request full account deletion by emailing <a href="/cdn-cgi/l/email-protection#5e2d2b2e2e312c2a1e3d3f2e2a2b2c3b3f303a3d313135703d3133"><span class="__cf_email__" data-cfemail="81f2f4f1f1eef3f5c1e2e0f1f5f4f3e4e0efe5e2eeeeeaafe2eeec">[email&#160;protected]</span></a> — we will delete your account data within 30 days, except where retention is required for legal or security reasons.</p>
+      <p>We keep your data while your account is active. You can delete individual posts, comments, and history items in the app, or request full account deletion by emailing <a href="mailto:support@captureandcook.com">support@captureandcook.com</a> — we will delete your account data within 30 days, except where retention is required for legal or security reasons.</p>
 
       <h2>7. Security</h2>
       <p>We use industry-standard measures including encrypted connections (HTTPS), hashed passwords, and database row-level security. No system is perfectly secure; please use a strong, unique password.</p>
@@ -5439,7 +5700,7 @@
       <p>The Service is not directed to children under 13, and we do not knowingly collect personal information from children under 13. If you believe a child under 13 has created an account, contact us and we will delete it.</p>
 
       <h2>9. Your Rights</h2>
-      <p>Depending on where you live, you may have rights to access, correct, or delete your personal information. To exercise these rights, email <a href="/cdn-cgi/l/email-protection#e3909693938c9197a380829397969186828d87808c8c88cd808c8e"><span class="__cf_email__" data-cfemail="8dfef8fdfde2fff9cdeeecfdf9f8ffe8ece3e9eee2e2e6a3eee2e0">[email&#160;protected]</span></a>. We will respond within a reasonable time.</p>
+      <p>Depending on where you live, you may have rights to access, correct, or delete your personal information. To exercise these rights, email <a href="mailto:support@captureandcook.com">support@captureandcook.com</a>. We will respond within a reasonable time.</p>
 
       <h2>10. Cookies &amp; Local Storage</h2>
       <p>We use minimal browser storage to keep you signed in and to remember device-level preferences (such as a saved address fallback). We do not use third-party advertising cookies.</p>
@@ -5448,7 +5709,7 @@
       <p>We may update this Policy and will post the new version here with an updated effective date. Material changes may be announced in the app.</p>
 
       <h2>12. Contact</h2>
-      <p>Privacy questions or requests: <a href="/cdn-cgi/l/email-protection#097a7c7979667b7d496a68797d7c7b6c68676d6a666662276a6664"><span class="__cf_email__" data-cfemail="e5969095958a9791a586849591909780848b81868a8a8ecb868a88">[email&#160;protected]</span></a><br>Capture &amp; Cook LLC, Michigan, USA</p>
+      <p>Privacy questions or requests: <a href="mailto:support@captureandcook.com">support@captureandcook.com</a><br>Capture &amp; Cook LLC, Michigan, USA</p>
     </div>
 
   </div>
@@ -5458,7 +5719,7 @@
 
 <div class="toast" id="toast"></div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script>
   // ── One-time service-worker eviction (runs before anything else) ──
   // Old PWA service workers cached on a device keep intercepting requests until
   // they're unregistered AND the page reloads. This evicts any stuck worker,
@@ -5538,6 +5799,42 @@
   const SUPABASE_URL = 'https://cnvzrqpcbblxpypaoenv.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNudnpycXBjYmJseHB5cGFvZW52Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MzA4OTYsImV4cCI6MjA5NTMwNjg5Nn0.pIVpjNCeKlVpLGyr_PEKECHAbHJvyGjkTZj8jikBshY';
   let supaClient = null;
+
+    // ── Attach the session token to every /api/ call ────────────────────────
+    // The endpoints that spend money (Claude, Google Places) now require a
+    // signed-in account. Rather than editing each call site — and missing the
+    // next one someone adds — wrap fetch once. POSTs get `access_token` in the
+    // JSON body (what the handlers read); GETs get an Authorization header.
+    // ccApiFetch installed
+    (function () {
+      const realFetch = window.fetch.bind(window);
+      window.fetch = async function (input, init) {
+        try {
+          const url = typeof input === 'string' ? input : (input && input.url) || '';
+          if (/^\/api\//.test(url) || /captureandcook\.com\/api\//.test(url)) {
+            init = init ? { ...init } : {};
+            const { data: sess } = await supaClient.auth.getSession();
+            const token = sess && sess.session && sess.session.access_token;
+            if (token) {
+              const headers = new Headers(init.headers || (typeof input !== 'string' && input.headers) || {});
+              if (!headers.has('Authorization')) headers.set('Authorization', 'Bearer ' + token);
+              init.headers = headers;
+              // Only rewrite bodies we know are JSON objects we own.
+              if (typeof init.body === 'string' && init.body.trim().startsWith('{')) {
+                try {
+                  const b = JSON.parse(init.body);
+                  if (b && typeof b === 'object' && !b.access_token) {
+                    b.access_token = token;
+                    init.body = JSON.stringify(b);
+                  }
+                } catch (e) { /* not ours — leave it alone */ }
+              }
+            }
+          }
+        } catch (e) { /* never let auth plumbing break a request */ }
+        return realFetch(input, init);
+      };
+    })();
   try {
     supaClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
       auth: {
@@ -7668,7 +7965,7 @@
       const av = u.avatar_photo
         ? '<div class="sr-avatar" style="background-image:url(\'' + u.avatar_photo + '\');"></div>'
         : '<div class="sr-avatar" style="background:' + (u.avatar_color || 'var(--sage)') + ';">' +
-          (u.avatar_icon ? '<i class="ti ' + u.avatar_icon + '"></i>' : escapeHtml((u.username || 'u').charAt(0).toUpperCase())) + '</div>';
+          '<i class="ti ti-chef-hat"></i>' + '</div>';
       return '<div class="sr-row' + (on ? ' on' : '') + '" onclick="toggleSrPick(\'' + u.id + '\')">' + av +
         '<div class="sr-name">@' + escapeHtml(u.username || 'user') +
         (u.mutual ? '<div class="sr-mutual">YOU FOLLOW EACH OTHER</div>' : '') + '</div>' +
@@ -8868,8 +9165,10 @@
   }
 
   // ── Profile Picture (preset avatars) ──
-  const AVATAR_COLORS = ['#1d9e75', '#d4791a', '#d4537e', '#4a6fd4', '#9b5de5', '#e8729a', '#2bb3a3', '#e0892b'];
-  const AVATAR_ICONS = ['ti-chef-hat', 'ti-tools-kitchen-2', 'ti-soup', 'ti-salad', 'ti-meat', 'ti-cheese', 'ti-coffee', 'ti-cake'];
+  // Users no longer pick a colour or icon. Anyone without a profile photo gets
+  // the same chef's hat, so the app reads consistently.
+  const CC_DEFAULT_AVATAR_ICON = 'ti-chef-hat';
+  const CC_DEFAULT_AVATAR_COLOR = '#1d9e75';
 
   function getSavedAvatar() {
     const meta = currentUser?.user_metadata || {};
@@ -8887,13 +9186,10 @@
     if (av && av.photo) {
       el.style.background = 'center/cover no-repeat url("' + av.photo + '")';
       el.innerHTML = '';
-    } else if (av && av.color && av.icon) {
-      el.style.background = av.color;
-      el.innerHTML = '<i class="ti ' + av.icon + '" style="font-size:' + (iconSize || 18) + 'px;color:#fff;"></i>';
     } else {
-      el.style.background = 'var(--sage)';
-      el.style.color = '#fff';
-      el.textContent = (initial || 'U').charAt(0).toUpperCase();
+      // No photo → chef's hat, always. No initials, no per-user colours.
+      el.style.background = CC_DEFAULT_AVATAR_COLOR;
+      el.innerHTML = '<i class="ti ' + CC_DEFAULT_AVATAR_ICON + '" style="font-size:' + (iconSize || 18) + 'px;color:#fff;"></i>';
     }
   }
 
@@ -8910,8 +9206,8 @@
     document.getElementById('userDropdown').classList.remove('open');
     const current = getSavedAvatar();
     pendingAvatar = {
-      color: current.color || AVATAR_COLORS[0],
-      icon: current.icon || AVATAR_ICONS[0],
+      color: CC_DEFAULT_AVATAR_COLOR,
+      icon: CC_DEFAULT_AVATAR_ICON,
       photo: current.photo || null
     };
     pendingAllergens = [...myAllergens];
@@ -9326,31 +9622,22 @@
   }
 
   function renderAvatarPicker() {
-    // Preview
+    // Colour/icon choice was removed — everyone without a photo gets the same
+    // chef's hat, so this only maintains the preview now.
     const preview = document.getElementById('avatarPreview');
+    if (!preview) return;
     if (pendingAvatar.photo) {
       preview.style.background = 'center/cover no-repeat url("' + pendingAvatar.photo + '")';
       preview.innerHTML = '';
-      document.getElementById('avatarRemovePhotoBtn').style.display = '';
+      const rm = document.getElementById('avatarRemovePhotoBtn');
+      if (rm) rm.style.display = '';
     } else {
-      preview.style.background = pendingAvatar.color;
-      preview.innerHTML = '<i class="ti ' + pendingAvatar.icon + '" style="font-size:34px;color:#fff;"></i>';
-      document.getElementById('avatarRemovePhotoBtn').style.display = 'none';
+      preview.style.background = CC_DEFAULT_AVATAR_COLOR;
+      preview.innerHTML = '<i class="ti ' + CC_DEFAULT_AVATAR_ICON + '" style="font-size:34px;color:#fff;"></i>';
+      const rm = document.getElementById('avatarRemovePhotoBtn');
+      if (rm) rm.style.display = 'none';
     }
-
-    // Colors
-    document.getElementById('avatarColors').innerHTML = AVATAR_COLORS.map(c =>
-      '<button class="avatar-swatch' + (c === pendingAvatar.color ? ' active' : '') + '" style="background:' + c + ';" onclick="pickAvatarColor(\'' + c + '\')"></button>'
-    ).join('');
-
-    // Icons
-    document.getElementById('avatarIcons').innerHTML = AVATAR_ICONS.map(ic =>
-      '<button class="avatar-icon-opt' + (ic === pendingAvatar.icon ? ' active' : '') + '" onclick="pickAvatarIcon(\'' + ic + '\')"><i class="ti ' + ic + '"></i></button>'
-    ).join('');
   }
-
-  function pickAvatarColor(c) { pendingAvatar.color = c; renderAvatarPicker(); }
-  function pickAvatarIcon(ic) { pendingAvatar.icon = ic; renderAvatarPicker(); }
 
   async function saveProfile() {
     const btn = document.getElementById('saveProfileBtn');
@@ -10379,7 +10666,7 @@
         return (
           '<div class="feed-card" id="post-' + p.id + '">' +
             '<div class="feed-head">' +
-              '<div class="feed-avatar"' + avatarTap + (avatarPhoto ? 'background:center/cover no-repeat url(\'' + avatarPhoto + '\');"' : '"') + '>' + (avatarPhoto ? '' : escapeText(shownName.charAt(0))) + '</div>' +
+              '<div class="feed-avatar"' + avatarTap + (avatarPhoto ? 'background:center/cover no-repeat url(\'' + avatarPhoto + '\');"' : '"') + '>' + (avatarPhoto ? '' : '<i class="ti ti-chef-hat"></i>') + '</div>' +
               '<div><div class="feed-username" ' + (p.user_id ? 'onclick="openUserProfile(\'' + p.user_id + '\')" style="cursor:pointer;"' : '') + '>@' + escapeText(shownName) + '</div>' +
               '<div class="feed-time">' + when + '</div></div>' + menu +
             '</div>' +
@@ -10607,7 +10894,7 @@
     const tap = c.user_id ? ' onclick="openUserProfile(\'' + c.user_id + '\')" style="cursor:pointer;"' : '';
     const avatar = c.author_avatar
       ? '<div class="comment-avatar"' + (c.user_id ? ' onclick="openUserProfile(\'' + c.user_id + '\')" style="cursor:pointer;background:center/cover no-repeat url(\'' + c.author_avatar + '\');"' : ' style="background:center/cover no-repeat url(\'' + c.author_avatar + '\');"') + '></div>'
-      : '<div class="comment-avatar"' + tap + '>' + escapeText((c.username || '?').charAt(0)) + '</div>';
+      : '<div class="comment-avatar"' + tap + ' style="background:#1d9e75;"><i class="ti ti-chef-hat"></i></div>';
     const replyBtn = isReply ? '' :
       '<button class="comment-reply-btn" onclick="openReplyInput(\'' + c.id + '\')">Reply</button>';
     return '<div class="comment-row' + (isReply ? ' is-reply' : '') + '">' +
@@ -10875,7 +11162,7 @@
       const name = p.username || 'user';
       const av = p.avatar_photo
         ? '<div class="feed-avatar" style="background:center/cover no-repeat url(\'' + p.avatar_photo + '\');"></div>'
-        : '<div class="feed-avatar" style="background:' + (p.avatar_color || 'var(--brand)') + ';">' + (p.avatar_icon ? '<i class="ti ' + p.avatar_icon + '"></i>' : escapeText(name.charAt(0))) + '</div>';
+        : '<div class="feed-avatar" style="background:#1d9e75;"><i class="ti ti-chef-hat"></i></div>';
       return '<div class="req-row">' + av +
         '<div style="font-weight:600;">@' + escapeText(name) + '</div>' +
         '<div class="req-actions">' +
@@ -10907,7 +11194,7 @@
       const name = p.username || 'user';
       const av = p.avatar_photo
         ? '<div class="feed-avatar" style="background:center/cover no-repeat url(\'' + p.avatar_photo + '\');"></div>'
-        : '<div class="feed-avatar" style="background:' + (p.avatar_color || 'var(--brand)') + ';">' + (p.avatar_icon ? '<i class="ti ' + p.avatar_icon + '"></i>' : escapeText(name.charAt(0))) + '</div>';
+        : '<div class="feed-avatar" style="background:#1d9e75;"><i class="ti ti-chef-hat"></i></div>';
       return '<div class="req-row">' + av +
         '<div style="font-weight:600;flex:1;">@' + escapeText(name) + '</div>' +
         '<div class="req-actions">' +
@@ -11009,9 +11296,7 @@
         avEl.textContent = '';
       } else {
         avEl.style.background = profile.avatar_color || 'var(--brand)';
-        avEl.innerHTML = profile.avatar_icon
-          ? '<i class="ti ' + profile.avatar_icon + '"></i>'
-          : escapeText((profile.username || 'u').charAt(0).toUpperCase());
+        avEl.innerHTML = '<i class="ti ti-chef-hat"></i>';
       }
 
       // Build the body: posts section, then favorites section.
@@ -11157,7 +11442,7 @@
       const av = u.avatar_photo
         ? '<div class="feed-avatar" style="background:center/cover no-repeat url(\'' + u.avatar_photo + '\');"></div>'
         : '<div class="feed-avatar" style="background:' + (u.avatar_color || 'var(--brand)') + ';">' +
-          (u.avatar_icon ? '<i class="ti ' + u.avatar_icon + '"></i>' : escapeText(name.charAt(0).toUpperCase())) + '</div>';
+          '<i class="ti ti-chef-hat"></i>' + '</div>';
       return '<div class="req-row" style="cursor:pointer;" onclick="closeFollowList(); openUserProfile(\'' + u.id + '\')">' +
         av + '<div style="font-weight:600;">@' + escapeText(name) + '</div>' +
         '<i class="ti ti-chevron-right" style="color:var(--text3);margin-left:auto;"></i></div>';

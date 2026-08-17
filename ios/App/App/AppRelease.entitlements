@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Release builds (TestFlight and the App Store) get production APNs.
+	     Debug builds keep App.entitlements / development. Shipping a
+	     development entitlement to the store means every push is rejected. -->
+	<key>aps-environment</key>
+	<string>production</string>
+</dict>
+</plist>
