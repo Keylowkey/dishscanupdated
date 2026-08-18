@@ -4407,9 +4407,6 @@
         <button class="dropdown-item" onclick="openLangModal()">
           <i class="ti ti-language"></i> Language
         </button>
-        <button class="dropdown-item" onclick="showPushDiagnostics()">
-          <i class="ti ti-bell-cog"></i> Notifications
-        </button>
         <button class="dropdown-item" onclick="openBlockedUsers()">
           <i class="ti ti-ban"></i> Blocked users
         </button>
@@ -5175,7 +5172,7 @@
         <div style="font-size:13px;color:var(--text-soft);line-height:1.4;">
           <span id="favPrivacyLabel">Public</span> — <span id="favPrivacyHint">others can view your favorites when they tap your avatar.</span>
         </div>
-        <button type="button" id="favPrivacyToggle" onclick="toggleFavPrivacy()"
+        <button type="button" id="favPrivacyToggle" role="switch" aria-label="Favorites privacy" onclick="toggleFavPrivacy()"
           style="flex-shrink:0;width:52px;height:30px;border-radius:15px;border:none;cursor:pointer;position:relative;transition:background .2s;background:var(--brand);">
           <span id="favPrivacyKnob" style="position:absolute;top:3px;left:25px;width:24px;height:24px;border-radius:50%;background:#fff;transition:left .2s;"></span>
         </button>
@@ -5188,7 +5185,7 @@
         <div style="font-size:13px;color:var(--text-soft);line-height:1.4;">
           <span id="acctPrivacyLabel">Public</span> — <span id="acctPrivacyHint">anyone can follow you instantly.</span>
         </div>
-        <button type="button" id="acctPrivacyToggle" onclick="toggleAcctPrivacy()"
+        <button type="button" id="acctPrivacyToggle" role="switch" aria-label="Account privacy" onclick="toggleAcctPrivacy()"
           style="flex-shrink:0;width:52px;height:30px;border-radius:15px;border:none;cursor:pointer;position:relative;transition:background .2s;background:var(--brand);">
           <span id="acctPrivacyKnob" style="position:absolute;top:3px;left:25px;width:24px;height:24px;border-radius:50%;background:#fff;transition:left .2s;"></span>
         </button>
@@ -5201,7 +5198,7 @@
         <div style="font-size:13px;color:var(--text-soft);line-height:1.4;">
           <span id="vibLabel">On</span> — your phone buzzes when a cooking timer finishes.
         </div>
-        <button type="button" id="vibToggle" onclick="setVibrate(!vibrateOn())"
+        <button type="button" id="vibToggle" role="switch" aria-label="Cook timer vibration" onclick="setVibrate(!vibrateOn())"
           style="flex-shrink:0;width:52px;height:30px;border-radius:15px;border:none;cursor:pointer;position:relative;transition:background .2s;background:var(--brand);">
           <span id="vibKnob" style="position:absolute;top:3px;left:25px;width:24px;height:24px;border-radius:50%;background:#fff;transition:left .2s;"></span>
         </button>
@@ -5214,7 +5211,7 @@
         <div style="font-size:13px;color:var(--text-soft);line-height:1.4;">
           <span id="nutriShareLabel">Hidden</span> — <span id="nutriShareHint">your nutrition tracker isn't shown on your profile.</span>
         </div>
-        <button type="button" id="nutriShareToggle" onclick="toggleNutriShare()"
+        <button type="button" id="nutriShareToggle" role="switch" aria-label="Show nutrition on my profile" onclick="toggleNutriShare()"
           style="flex-shrink:0;width:52px;height:30px;border-radius:15px;border:none;cursor:pointer;position:relative;transition:background .2s;background:var(--surface3);">
           <span id="nutriShareKnob" style="position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:left .2s;"></span>
         </button>
@@ -11813,8 +11810,13 @@
       }
       // Clear local session and reload to the login screen.
       try {
+        // Everything this app owns, not just the session. Leaving the
+        // nutrition log, calorie goal and saved home address behind meant a
+        // deleted account's data was inherited by whoever signed in next on
+        // the same device.
         Object.keys(localStorage).forEach((k) => {
-          if (k.startsWith('capture-cook-auth') || k.startsWith('sb-') || k.includes('supabase')) localStorage.removeItem(k);
+          if (k.startsWith('capture-cook-auth') || k.startsWith('sb-') || k.includes('supabase')
+              || k.startsWith('cc-') || k.startsWith('cc_')) localStorage.removeItem(k);
         });
       } catch (e) {}
       currentUser = null;
