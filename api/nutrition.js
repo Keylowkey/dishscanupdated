@@ -49,6 +49,38 @@ export default async function handler(req, res) {
     const me = await verifyToken(access_token);
     if (!me) return res.status(401).json({ error: 'Invalid or expired session.' });
 
+    // ── Daily calorie goal ────────────────────────────────────────────────
+    // Stored on the profile so it survives a reinstall or a new device. The
+    // client keeps its own copy in localStorage so the tracker still shows a
+    // goal offline; this is the durable record.
+    if (action === 'get_goal') {
+      const r = await fetch(
+        `${SUPABASE_URL}/rest/v1/user_profiles?select=daily_calorie_goal&user_id=eq.${me}`, { headers: H });
+      const rows = r.ok ? await r.json() : [];
+      const goal = rows[0] && rows[0].daily_calorie_goal;
+      return res.status(200).json({ ok: true, goal: goal ? Number(goal) : null });
+    }
+
+    if (action === 'set_goal') {
+      // null clears the goal. Otherwise clamp to a sane range — a typo like
+      // 20000 shouldn't render the progress bar meaningless.
+      let goal = req.body.goal;
+      if (goal === null || goal === '' || goal === undefined) {
+        goal = null;
+      } else {
+        goal = Math.round(Number(goal));
+        if (!Number.isFinite(goal) || goal <= 0) return res.status(400).json({ error: 'Enter a number of calories.' });
+        goal = Math.min(10000, Math.max(500, goal));
+      }
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/user_profiles?user_id=eq.${me}`, {
+        method: 'PATCH',
+        headers: { ...H, Prefer: 'return=minimal' },
+        body: JSON.stringify({ daily_calorie_goal: goal })
+      });
+      if (!r.ok) return res.status(500).json({ error: 'Could not save your goal.' });
+      return res.status(200).json({ ok: true, goal });
+    }
+
     if (action === 'sync') {
       const { entries } = req.body;
       if (Array.isArray(entries) && entries.length) {

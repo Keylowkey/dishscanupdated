@@ -1735,6 +1735,21 @@
   }
   .lower-btn:hover { background: #b8650f; }
 
+  /* Warns when logging this dish would push the day past the calorie goal. */
+  .cal-warn {
+    display: flex; align-items: flex-start; gap: 9px;
+    border: 2px solid var(--ink); border-radius: 14px;
+    padding: 10px 12px; margin: -6px 0 14px;
+    box-shadow: 3px 3px 0 var(--ink-shadow);
+    font-size: 12.5px; font-weight: 700; line-height: 1.45;
+  }
+  .cal-warn i { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .cal-warn.over { background: #fdecea; border-color: #c0392b; color: #96271b; }
+  .cal-warn.over i { color: #c0392b; }
+  .cal-warn.near { background: var(--amber-light, #fdf3d8); color: #7a5600; }
+  .cal-warn.near i { color: #b8860b; }
+  .cal-warn b { font-weight: 900; }
+
   /* ── Cost Banner ── */
   .cost-banner {
     background: var(--sage-50);
@@ -3616,6 +3631,52 @@
   }
   .nt-day-btn:disabled { opacity: 0.35; cursor: default; }
   .nt-day-label { font-weight: 800; font-size: 14.5px; }
+  /* ── Daily calorie goal ── */
+  .nt-goal {
+    border: 2px solid var(--ink); border-radius: 16px; background: var(--surface);
+    box-shadow: 3px 3px 0 var(--ink-shadow); padding: 13px 14px; margin-bottom: 12px;
+  }
+  .nt-goal-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .nt-goal-nums { font-size: 19px; font-weight: 800; letter-spacing: -0.02em; }
+  .nt-goal-nums .nt-goal-of { font-size: 13px; color: var(--text2); font-weight: 700; }
+  .nt-goal-edit {
+    border: 2px solid var(--ink); border-radius: 10px; background: var(--surface2);
+    font-family: var(--font-body); font-weight: 800; font-size: 11.5px; color: var(--text);
+    padding: 5px 10px; cursor: pointer; flex-shrink: 0; box-shadow: 2px 2px 0 var(--ink-shadow);
+  }
+  .nt-goal-bar {
+    height: 13px; border-radius: 999px; border: 2px solid var(--ink);
+    background: var(--surface2); overflow: hidden; margin-top: 10px;
+  }
+  .nt-goal-fill {
+    height: 100%; background: var(--sage); border-radius: 999px;
+    transition: width .35s ease, background .2s ease;
+  }
+  .nt-goal-fill.near { background: var(--amber, #f0b429); }
+  .nt-goal-fill.over { background: #e0574c; }
+  .nt-goal-note { font-size: 12px; font-weight: 700; color: var(--text2); margin-top: 8px; }
+  .nt-goal-note.over { color: #c0392b; }
+  .nt-goal-empty { font-size: 12.5px; color: var(--text2); line-height: 1.5; }
+  /* Inline editor */
+  .nt-goal-set { display: flex; gap: 8px; align-items: center; margin-top: 10px; }
+  .nt-goal-input {
+    flex: 1; min-width: 0; padding: 9px 11px; border-radius: 11px;
+    border: 2px solid var(--ink); background: var(--surface2); color: var(--text);
+    font-family: var(--font-body); font-weight: 800; font-size: 15px;
+  }
+  .nt-goal-save, .nt-goal-cancel {
+    border: 2px solid var(--ink); border-radius: 11px; padding: 9px 13px; cursor: pointer;
+    font-family: var(--font-body); font-weight: 800; font-size: 12.5px;
+    box-shadow: 2px 2px 0 var(--ink-shadow); flex-shrink: 0;
+  }
+  .nt-goal-save { background: var(--sage); color: #fff; }
+  .nt-goal-cancel { background: var(--surface2); color: var(--text); }
+  .nt-goal-presets { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+  .nt-goal-preset {
+    border: 2px solid var(--ink); border-radius: 999px; background: var(--surface2);
+    font-family: var(--font-body); font-weight: 800; font-size: 11.5px; color: var(--text);
+    padding: 5px 11px; cursor: pointer;
+  }
   .nt-macros { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
   .nt-macro {
     background: var(--surface2); border: 2px solid var(--ink); border-radius: 14px;
@@ -3698,8 +3759,7 @@
   }
   .rp-tile:hover { transform: translate(-1px, -1px); box-shadow: 5px 5px 0 var(--ink-shadow); }
   .rp-tile:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--ink-shadow); }
-  /* Method spans the full width — it's the one you reach for most. */
-  .rp-tile.wide { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 14px; }
+  /* All four sections are equal squares now — Method included. */
   .rp-tile-ico {
     width: 42px; height: 42px; border-radius: 13px; flex-shrink: 0;
     background: var(--sage-light); border: 2px solid var(--ink);
@@ -4565,6 +4625,9 @@
         <button class="lower-btn" onclick="toggleSwap()"><i class="ti ti-leaf" style="font-size:14px;"></i> Lower calories</button>
       </div>
 
+      <!-- Populated when this dish would push the day past the calorie goal -->
+      <div class="cal-warn" id="calWarn" style="display:none;"></div>
+
       <!-- Tap a tile to open that section as its own page -->
       <div class="rp-grid" id="rpGrid">
         <button class="rp-tile" onclick="rpOpen('ingredients')">
@@ -4582,11 +4645,10 @@
           <div class="rp-tile-txt"><div class="rp-tile-name">Nutrition</div>
             <div class="rp-tile-sub" id="rpSubNutrition">Per serving</div></div>
         </button>
-        <button class="rp-tile wide" onclick="rpOpen('method')">
+        <button class="rp-tile" onclick="rpOpen('method')">
           <div class="rp-tile-ico"><i class="ti ti-list-numbers"></i></div>
           <div class="rp-tile-txt"><div class="rp-tile-name">Method</div>
             <div class="rp-tile-sub" id="rpSubMethod">Step-by-step</div></div>
-          <i class="ti ti-chevron-right rp-tile-arrow"></i>
         </button>
       </div>
 
@@ -5463,6 +5525,7 @@
       <div class="nt-day-label" id="ntDayLabel">Today</div>
       <button class="nt-day-btn" id="ntNextBtn" onclick="ntShift(1)" aria-label="Next day"><i class="ti ti-chevron-right"></i></button>
     </div>
+    <div class="nt-goal" id="ntGoalCard"></div>
     <div class="nt-macros" id="ntMacros"></div>
     <div class="nt-minis" id="ntMinis"></div>
     <div id="ntMeals"></div>
@@ -7491,6 +7554,7 @@
 
     // Calories are per-serving — stays the same regardless of serving count
     document.getElementById('calValue').textContent = r.calories;
+    renderCalWarning(r.calories);
 
     // Ingredients scaled
     document.getElementById('ingredientsGrid').innerHTML = r.ingredients.map(i => {
@@ -7863,12 +7927,197 @@
     } catch (e) { /* offline — try again next time */ }
   }
 
+  // ── Daily calorie goal ──────────────────────────────────────────────────
+  // Kept on-device so the tracker still works offline, and mirrored to the
+  // profile so it survives a reinstall or a new phone. Local is read first;
+  // the server wins once it answers.
+  const NT_GOAL_KEY = 'cc_nt_goal';
+  let ntGoalEditing = false;
+
+  function ntGoalRead() {
+    const v = Number(localStorage.getItem(NT_GOAL_KEY));
+    return Number.isFinite(v) && v > 0 ? v : null;
+  }
+  function ntGoalWrite(v) {
+    try {
+      if (v) localStorage.setItem(NT_GOAL_KEY, String(v));
+      else localStorage.removeItem(NT_GOAL_KEY);
+    } catch (e) { /* storage full — the server copy still holds */ }
+  }
+
+  async function ntGoalFetch() {
+    if (!currentUser) return;
+    try {
+      const { data: sess } = await supaClient.auth.getSession();
+      const token = sess && sess.session && sess.session.access_token;
+      if (!token) return;
+      const res = await fetch('/api/nutrition', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ access_token: token, action: 'get_goal' })
+      });
+      if (!res.ok) return;
+      const out = await res.json();
+      // Don't repaint while they're typing, and don't repaint if nothing moved.
+      if (!ntGoalEditing && out.goal !== ntGoalRead()) {
+        ntGoalWrite(out.goal);
+        renderNutriTrack();
+      }
+    } catch (e) { /* offline — the local copy stands */ }
+  }
+
+  async function ntGoalPush(goal) {
+    if (!currentUser) return;
+    try {
+      const { data: sess } = await supaClient.auth.getSession();
+      const token = sess && sess.session && sess.session.access_token;
+      if (!token) return;
+      await fetch('/api/nutrition', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ access_token: token, action: 'set_goal', goal })
+      });
+    } catch (e) { /* offline — pushed again next time it changes */ }
+  }
+
+  function ntGoalEdit() { ntGoalEditing = true; renderNutriTrack(); ntGoalFocus(); }
+  function ntGoalCancel() { ntGoalEditing = false; renderNutriTrack(); }
+  function ntGoalFocus() {
+    const i = document.getElementById('ntGoalInput');
+    if (i) { i.focus(); i.select(); }
+  }
+  function ntGoalPreset(v) {
+    const i = document.getElementById('ntGoalInput');
+    if (i) { i.value = v; i.focus(); }
+  }
+  function ntGoalKeydown(e) { if (e.key === 'Enter') { e.preventDefault(); ntGoalSave(); } }
+
+  function ntGoalSave() {
+    const i = document.getElementById('ntGoalInput');
+    if (!i) return;
+    const raw = String(i.value || '').trim();
+    if (!raw) { ntGoalClear(); return; }
+    const v = Math.round(Number(raw));
+    if (!Number.isFinite(v) || v <= 0) { showToast('Enter a number of calories.'); return; }
+    if (v < 500 || v > 10000) { showToast('Pick a goal between 500 and 10,000 calories.'); return; }
+    ntGoalWrite(v);
+    ntGoalEditing = false;
+    renderNutriTrack();
+    refreshCalWarning();
+    ntGoalPush(v);
+    showToast('Daily goal set to ' + v.toLocaleString() + ' cal');
+  }
+
+  function ntGoalClear() {
+    ntGoalWrite(null);
+    ntGoalEditing = false;
+    renderNutriTrack();
+    refreshCalWarning();
+    ntGoalPush(null);
+    showToast('Daily goal removed');
+  }
+
+  // Paint the goal card against one day's calorie total.
+  function renderNtGoal(consumed) {
+    const el = document.getElementById('ntGoalCard');
+    if (!el) return;
+    const goal = ntGoalRead();
+
+    if (ntGoalEditing) {
+      el.innerHTML =
+        '<div class="nt-goal-top"><div class="nt-goal-nums">Daily goal</div></div>' +
+        '<div class="nt-goal-set">' +
+          '<input class="nt-goal-input" id="ntGoalInput" type="number" inputmode="numeric" ' +
+            'min="500" max="10000" step="50" placeholder="e.g. 2000" ' +
+            'value="' + (goal || '') + '" onkeydown="ntGoalKeydown(event)">' +
+          '<button class="nt-goal-save" onclick="ntGoalSave()">Save</button>' +
+          '<button class="nt-goal-cancel" onclick="ntGoalCancel()">Cancel</button>' +
+        '</div>' +
+        '<div class="nt-goal-presets">' +
+          [1500, 1800, 2000, 2200, 2500].map(function (v) {
+            return '<button class="nt-goal-preset" onclick="ntGoalPreset(' + v + ')">' + v.toLocaleString() + '</button>';
+          }).join('') +
+          (goal ? '<button class="nt-goal-preset" onclick="ntGoalClear()">Remove goal</button>' : '') +
+        '</div>';
+      return;
+    }
+
+    if (!goal) {
+      el.innerHTML =
+        '<div class="nt-goal-top">' +
+          '<div class="nt-goal-empty">Set a daily calorie goal to see how each day compares.</div>' +
+          '<button class="nt-goal-edit" onclick="ntGoalEdit()">Set goal</button>' +
+        '</div>';
+      return;
+    }
+
+    const pct = Math.min(100, Math.round((consumed / goal) * 100));
+    const over = consumed > goal;
+    const near = !over && consumed >= goal * 0.9;
+    const diff = Math.abs(goal - consumed);
+    const note = over ? diff.toLocaleString() + ' cal over your goal'
+                      : diff.toLocaleString() + ' cal left';
+
+    el.innerHTML =
+      '<div class="nt-goal-top">' +
+        '<div class="nt-goal-nums">' + consumed.toLocaleString() +
+          ' <span class="nt-goal-of">/ ' + goal.toLocaleString() + ' cal</span></div>' +
+        '<button class="nt-goal-edit" onclick="ntGoalEdit()">Edit</button>' +
+      '</div>' +
+      '<div class="nt-goal-bar"><div class="nt-goal-fill' + (over ? ' over' : near ? ' near' : '') +
+        '" style="width:' + pct + '%"></div></div>' +
+      '<div class="nt-goal-note' + (over ? ' over' : '') + '">' + note + '</div>';
+  }
+
+  // Warn on the recipe page when eating this dish would take the day past the
+  // calorie goal, or bring it uncomfortably close. Silent when no goal is set —
+  // this should never nag someone who hasn't asked to be tracked.
+  // The recipe page may already be open when the goal changes or a meal is
+  // logged. Re-derive the warning from what's on screen.
+  function refreshCalWarning() {
+    const v = document.getElementById('calValue');
+    if (v) renderCalWarning(parseFloat(String(v.textContent).replace(/[^0-9.]/g, '')) || 0);
+  }
+
+  function renderCalWarning(dishCalories) {
+    const el = document.getElementById('calWarn');
+    if (!el) return;
+    const goal = ntGoalRead();
+    const cals = Math.round(Number(dishCalories) || 0);
+    const hide = () => { el.style.display = 'none'; el.innerHTML = ''; el.className = 'cal-warn'; };
+    if (!goal || !cals) { hide(); return; }
+
+    const today = (ntRead()[ntDayKey(0)] || [])
+      .reduce((t, m) => t + (Number(m.calories) || 0), 0);
+    const after = today + cals;
+    const pct = after / goal;
+
+    let cls, text;
+    if (after > goal) {
+      cls = 'over';
+      text = 'This would put you <b>' + (after - goal).toLocaleString() +
+             ' cal over</b> your ' + goal.toLocaleString() + ' cal daily goal.';
+    } else if (pct >= 0.9) {
+      cls = 'near';
+      text = 'This would bring you to <b>' + after.toLocaleString() + ' of ' +
+             goal.toLocaleString() + ' cal</b> — only ' +
+             (goal - after).toLocaleString() + ' left for the day.';
+    } else {
+      hide();
+      return;
+    }
+
+    el.className = 'cal-warn ' + cls;
+    el.innerHTML = '<i class="ti ti-alert-triangle-filled"></i><div>' + text + '</div>';
+    el.style.display = 'flex';
+  }
+
   function openNutriTrack() {
     const dd = document.getElementById('userDropdown');
     if (dd) dd.classList.remove('open');
     ntOffset = 0;
+    ntGoalEditing = false;
     renderNutriTrack();
     document.getElementById('nutriTrackModal').classList.add('open');
+    ntGoalFetch();   // refresh from the profile in the background
   }
   function closeNutriTrack() {
     document.getElementById('nutriTrackModal').classList.remove('open');
@@ -7895,6 +8144,8 @@
     document.getElementById('ntNextBtn').disabled = ntOffset >= 0;
 
     const sum = f => Math.round(meals.reduce((t, m) => t + (Number(m[f]) || 0), 0));
+    // Goal card compares this day's calories against the target.
+    renderNtGoal(sum('calories'));
     document.getElementById('ntMacros').innerHTML = [
       ['calories', 'Calories', ''], ['protein_g', 'Protein', 'g'],
       ['carbs_g', 'Carbs', 'g'], ['fat_g', 'Fat', 'g']
