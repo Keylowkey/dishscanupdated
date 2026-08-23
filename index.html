@@ -11034,8 +11034,28 @@
     }
   });
 
+  // Record that this user has seen a post. Safe to call repeatedly — the
+  // server upserts on (post_id, viewer_id), so a view is only ever counted
+  // once per person no matter how many times they react or re-react.
+  async function recordPostView(postId) {
+    try {
+      const { data: sess } = await supaClient.auth.getSession();
+      const token = sess && sess.session && sess.session.access_token;
+      if (!token) return;
+      const res = await fetch('/api/post-view', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'record', access_token: token, post_id: postId })
+      });
+      if (!res.ok) return;
+      const out = await res.json();
+      const el = document.getElementById('viewCount-' + postId);
+      if (el && typeof out.count === 'number') el.textContent = out.count;
+    } catch (e) { /* a missed view must never break the reaction */ }
+  }
+
   async function toggleReaction(postId, type) {
     try {
+      recordPostView(postId);   // seeing it is what counts, not which branch
       const current = myReactions[postId];
       if (current === type) {
         await supaClient.from('post_reactions').delete()
