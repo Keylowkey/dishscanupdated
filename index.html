@@ -5011,7 +5011,7 @@
     <div class="composer" id="composer">
       <div class="composer-head">
         <div class="composer-title">Share what you made</div>
-        <div class="composer-sub">Food photos only — we check every upload 🍽️</div>
+        <div class="composer-sub">Share a dish or just say something — photos must be food, and every post is checked 🍽️</div>
       </div>
       <div class="composer-preview-wrap" id="composerPreviewWrap" style="display:none;">
         <img id="composerPreview" class="composer-preview" alt="Your dish" />
@@ -5663,7 +5663,7 @@
       <p>When you post photos, captions, comments, or other content ("User Content"):</p>
       <ul>
         <li><strong>You own your content.</strong> You grant us a non-exclusive, worldwide, royalty-free license to host, display, and distribute it within the Service so the features work (e.g., showing your post in the feed).</li>
-        <li><strong>Food photos only.</strong> The community feed is for photos of food and drink. We use automated screening and may remove content that is not food-related.</li>
+        <li><strong>Food photos, and cooking talk.</strong> Photos shared to the community feed must be of food or drink. You can also post text on its own — a question, a recommendation, or what you cooked. Every post, comment and reply is screened automatically. Sexual content, political campaigning, illegal or criminal content, hate or harassment, violence, and spam are not permitted, in words or images, and may be removed along with the account that posted them.</li>
         <li><strong>You are responsible</strong> for what you post. Do not post content that is illegal, infringing, hateful, harassing, sexually explicit, violent, deceptive, or that violates anyone's privacy or rights.</li>
         <li>We may remove any User Content or restrict any account at our discretion, including in response to user reports.</li>
         <li>Other users can see your username and the content you share publicly.</li>
@@ -10738,18 +10738,28 @@
     btn.disabled = true;
     hideComposerError();
     try {
-      // 1. AI gate: photos must be food. Text-only posts skip this.
-      if (composerImage) {
-        btn.innerHTML = '<i class="ti ti-loader-2"></i> Checking photo…';
+      // 1. Content gate. Photos must be food; both words and photos are
+      //    screened for sexual, political, criminal, hateful and violent
+      //    content. Text-only posts used to skip this entirely.
+      if (composerImage || captionNow) {
+        btn.innerHTML = '<i class="ti ti-loader-2"></i> ' + (composerImage ? 'Checking photo…' : 'Checking…');
+        const vBody = { text: captionNow || '' };
+        if (composerImage) {
+          vBody.image_data = composerImage.base64;
+          vBody.media_type = composerImage.mediaType;
+        }
         const vRes = await fetch('/api/verify-food', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ image_data: composerImage.base64, media_type: composerImage.mediaType })
+          body: JSON.stringify(vBody)
         });
         const verdict = await vRes.json();
-        if (!vRes.ok) throw new Error(verdict.error || 'Could not verify the photo.');
-        if (!verdict.isFood) {
-          showComposerError(verdict.reason || 'Only food photos can be shared. Please choose a photo of food.');
+        if (!vRes.ok) throw new Error(verdict.error || 'Could not check that post.');
+        const passed = composerImage ? verdict.isFood === true : verdict.ok === true;
+        if (!passed) {
+          showComposerError(verdict.reason ||
+            (composerImage ? 'Only food photos can be shared. Please choose a photo of food.'
+                           : "That post can't be shared here."));
           return;
         }
       }
@@ -11182,6 +11192,7 @@
     const input = document.getElementById('replyInput-' + parentId);
     const content = input.value.trim();
     if (!content || !myUsername) return;
+    if (!(await moderateText(content))) return;
     try {
       const { error } = await supaClient.from('post_comments').insert({
         post_id: postId, user_id: currentUser.id, username: myUsername,
@@ -11195,10 +11206,32 @@
     } catch (e) { showToast('Could not reply. Try again.'); }
   }
 
+  // Screen a piece of user text before it enters the feed. Comments and
+  // replies went in completely unchecked, so the moderation promise only
+  // ever covered posts. Returns true when it is safe to publish.
+  async function moderateText(content) {
+    try {
+      const res = await fetch('/api/verify-food', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: content })
+      });
+      const v = await res.json();
+      if (!res.ok) { showToast(v.error || 'Could not check that. Try again.'); return false; }
+      if (v.ok !== true) { showToast(v.reason || "That can't be posted here."); return false; }
+      return true;
+    } catch (e) {
+      // A network failure is not a licence to publish unscreened.
+      showToast('Could not check that right now. Try again.');
+      return false;
+    }
+  }
+
   async function addComment(postId) {
     const input = document.getElementById('commentInput-' + postId);
     const content = input.value.trim();
     if (!content || !myUsername) return;
+    if (!(await moderateText(content))) return;
     try {
       const { error } = await supaClient.from('post_comments').insert({
         post_id: postId, user_id: currentUser.id, username: myUsername,
