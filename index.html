@@ -30,10 +30,19 @@
 <meta name="theme-color" content="#181818" media="(prefers-color-scheme: dark)" />
 <meta name="theme-color" content="#fdfbf7" media="(prefers-color-scheme: light)" />
 <link rel="apple-touch-icon" href="/icon-192.png?v=3" />
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Bricolage+Grotesque:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Typefaces bundled rather than fetched from Google. Was two network hops
+     (googleapis for the css, gstatic for the woff2) before text could render
+     in the right face. Regenerate with: python3 scripts/build-fonts.py -->
+<link rel="stylesheet" href="vendor/fonts.css" />
+<!-- Bundled and subset to the 89 icons actually used. Was 203KB of CSS and a
+     778KB font fetched from jsdelivr on @latest, so every icon waited on the
+     network and the package could change under us without warning.
+     Regenerate with: python3 scripts/build-icons.py -->
+<link rel="stylesheet" href="vendor/tabler-icons.subset.css" />
+<!-- Bundled rather than fetched from jsdelivr: the app could not start until a
+     third-party CDN responded, which cost ~300ms on wifi and far more on a poor
+     cellular connection — and made startup depend on someone else being up. -->
+<script src="vendor/supabase-js-2.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {

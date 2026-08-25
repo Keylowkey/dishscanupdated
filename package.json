@@ -4,7 +4,7 @@
     "node": "24.x"
   },
   "scripts": {
-    "copy:web": "rm -rf www && mkdir -p www/assets && cp index.html icon-192.png icon-512.png www/ && rsync -a --exclude 'icon-*.png' assets/ www/assets/"
+    "copy:web": "rm -rf www && mkdir -p www/assets www/vendor/fonts && cp index.html icon-192.png icon-512.png www/ && rsync -a --exclude 'icon-*.png' assets/ www/assets/ && cp vendor/supabase-js-2.min.js vendor/tabler-icons.subset.css vendor/fonts.css www/vendor/ && cp vendor/fonts/*.woff2 www/vendor/fonts/"
   },
   "dependencies": {
     "@capacitor/android": "^8.4.1",
