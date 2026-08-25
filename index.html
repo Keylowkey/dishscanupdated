@@ -7194,6 +7194,139 @@
     wrap.classList.add('visible');
   }
 
+  // ── Streaming recipe generation ────────────────────────────────────────
+  // A recipe takes 12–17 seconds to generate. Waiting for the whole thing
+  // means a spinner for the full duration; streaming lets the dish name land
+  // in about a second and the rest fill in behind it. Same total time, but
+  // the app stops feeling stalled.
+
+  // Pull out the top-level fields that have finished arriving in partial JSON.
+  // Deliberately not "repair the JSON and parse it" — that guesses at values
+  // still mid-token and paints garbage. A field appears only once complete.
+  function ccPartialJson(text) {
+    const out = {};
+    const s = String(text || '');
+    const start = s.indexOf('{');
+    if (start === -1) return out;
+    const strEnd = (str, i) => {
+      if (str[i] !== '"') return -1;
+      for (let j = i + 1; j < str.length; j++) {
+        if (str[j] === '\\') { j++; continue; }
+        if (str[j] === '"') return j;
+      }
+      return -1;
+    };
+    const valEnd = (str, i) => {
+      const c = str[i];
+      if (c === '"') return strEnd(str, i);
+      if (c === '{' || c === '[') {
+        const open = c, close = c === '{' ? '}' : ']';
+        let depth = 0;
+        for (let j = i; j < str.length; j++) {
+          if (str[j] === '"') { const e = strEnd(str, j); if (e === -1) return -1; j = e; continue; }
+          if (str[j] === open) depth++;
+          else if (str[j] === close) { depth--; if (depth === 0) return j; }
+        }
+        return -1;
+      }
+      for (let j = i; j < str.length; j++) if (/[,\}\]\s]/.test(str[j])) return j - 1;
+      return -1;
+    };
+    const arrayItems = (str, i) => {
+      const items = []; let j = i + 1;
+      while (j < str.length) {
+        while (j < str.length && /[\s,]/.test(str[j])) j++;
+        if (j >= str.length || str[j] === ']') break;
+        const e = valEnd(str, j);
+        if (e === -1) break;
+        try { items.push(JSON.parse(str.slice(j, e + 1))); } catch (err) { break; }
+        j = e + 1;
+      }
+      return items;
+    };
+    let i = start + 1;
+    while (i < s.length) {
+      while (i < s.length && /[\s,]/.test(s[i])) i++;
+      if (i >= s.length || s[i] === '}') break;
+      if (s[i] !== '"') break;
+      const ke = strEnd(s, i);
+      if (ke === -1) break;
+      let key;
+      try { key = JSON.parse(s.slice(i, ke + 1)); } catch (e) { break; }
+      i = ke + 1;
+      while (i < s.length && /\s/.test(s[i])) i++;
+      if (s[i] !== ':') break;
+      i++;
+      while (i < s.length && /\s/.test(s[i])) i++;
+      if (i >= s.length) break;
+      const ve = valEnd(s, i);
+      if (ve === -1) {
+        if (s[i] === '[') {
+          const partial = arrayItems(s, i);
+          if (partial.length) out[key] = partial;
+        }
+        break;
+      }
+      try { out[key] = JSON.parse(s.slice(i, ve + 1)); } catch (e) { break; }
+      i = ve + 1;
+    }
+    return out;
+  }
+
+  // Fields renderRecipe() needs to exist. Without these, painting a half-
+  // arrived recipe throws on .map of undefined.
+  const CC_RECIPE_SKELETON = {
+    dish: '', servings: 0, time: '', difficulty: '', dietary: '', calories: 0,
+    nutrition: {}, equipment: [], ingredients: [], steps: [], swaps: [], totalCost: 0
+  };
+
+  /**
+   * Ask the server to stream a recipe. Calls onPartial() as fields complete and
+   * resolves with the finished recipe. Throws if streaming is unavailable, so
+   * the caller can fall back to the plain request.
+   */
+  async function ccStreamRecipe(body, onPartial) {
+    const res = await fetch('/api/search-recipe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(Object.assign({ stream: true }, body))
+    });
+    if (!res.ok) {
+      let e = {}; try { e = await res.json(); } catch (err) { /* not json */ }
+      throw new Error(e.error || ('Recipe failed (' + res.status + ').'));
+    }
+    if (!res.body || !res.body.getReader) throw new Error('streaming unsupported');
+
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    let sse = '', text = '', finished = null, lastSig = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      sse += dec.decode(value, { stream: true });
+      let idx;
+      while ((idx = sse.indexOf('\n\n')) !== -1) {
+        const raw = sse.slice(0, idx); sse = sse.slice(idx + 2);
+        const line = raw.split('\n').find(l => l.indexOf('data:') === 0);
+        if (!line) continue;
+        let evt;
+        try { evt = JSON.parse(line.slice(5).trim()); } catch (e) { continue; }
+        if (evt.error) throw new Error(evt.error);
+        if (evt.done) { finished = evt.recipe; continue; }
+        if (typeof evt.t !== 'string') continue;
+        text += evt.t;
+        const partial = ccPartialJson(text);
+        // Only repaint when something actually changed, not per token.
+        const sig = Object.keys(partial).map(k =>
+          k + (Array.isArray(partial[k]) ? ':' + partial[k].length : '')).join('|');
+        if (sig !== lastSig) { lastSig = sig; try { onPartial(partial); } catch (e) { /* keep streaming */ } }
+      }
+    }
+    if (!finished) throw new Error('The recipe did not finish generating.');
+    return finished;
+  }
+
   // ── Cook search: step 2 — user picked a variation → build full recipe ──
   async function pickCookOption(idx) {
     const o = cookOptionList[idx];
@@ -7208,16 +7341,43 @@
 
     try {
       activateStage('ls', 2);
-      const res = await fetch('/api/search-recipe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: cookSearchQuery, variation: o.variation })
-      });
-      if (!res.ok) {
-        const e = await res.json().catch(() => ({}));
-        throw new Error(e.error || 'Recipe failed (' + res.status + '). Please try again.');
+      const reqBody = { query: cookSearchQuery, variation: o.variation };
+      let recipe = null;
+      let shown = false;
+
+      // Paint each field the moment it finishes arriving. The dish name lands
+      // about 1% into the response, so the results panel replaces the spinner
+      // almost immediately instead of after the full 12-17 seconds.
+      const paint = (partial) => {
+        if (!partial.dish) return;            // nothing worth showing yet
+        renderRecipe(Object.assign({}, CC_RECIPE_SKELETON, partial));
+        document.getElementById('dishDetectedLabel').textContent = partial.dish;
+        if (!shown) {
+          shown = true;
+          document.getElementById('loadingSection').classList.remove('visible');
+          document.getElementById('resultsSection').classList.add('visible');
+          document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      };
+
+      try {
+        recipe = await ccStreamRecipe(reqBody, paint);
+      } catch (streamErr) {
+        // Streaming can fail for reasons that say nothing about the recipe: an
+        // older WebKit, a proxy that buffers, a dropped connection. Fall back to
+        // the plain request rather than showing the user an error.
+        console.warn('Streaming unavailable, using single response:', streamErr.message);
+        const res = await fetch('/api/search-recipe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(reqBody)
+        });
+        if (!res.ok) {
+          const e = await res.json().catch(() => ({}));
+          throw new Error(e.error || 'Recipe failed (' + res.status + '). Please try again.');
+        }
+        recipe = await res.json();
       }
-      const recipe = await res.json();
       activateStage('ls', 3);
       detectedDish = recipe.searchKeyword || recipe.dish;
       currentRecipeId = await addToHistory(recipe, null);

@@ -4,6 +4,7 @@
 // stays for general home cooking — those belong on the Takeout tab.
 import { languageInstruction } from '../lib/i18n-data.js';
 import { guard } from '../lib/guard.js';
+import { streamCompletion } from '../lib/stream.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -50,6 +51,21 @@ Rules:
 - totalCost should equal the sum of all ingredient costs
 - BE CONSISTENT: for the same dish, always return the same name and similar costs`;
 
+  const fullPrompt = prompt + languageInstruction(lang);
+
+  // Opt-in streaming. Clients that don't ask for it — including every build
+  // already on the App Store — fall through to the single-response path below
+  // and see no change at all.
+  if (req.body && req.body.stream === true) {
+    return streamCompletion(res, {
+      key: ANTHROPIC_KEY,
+      model: 'claude-sonnet-4-5',
+      maxTokens: 2500,
+      temperature: 0.1,
+      prompt: fullPrompt
+    });
+  }
+
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -62,7 +78,7 @@ Rules:
         model: 'claude-sonnet-4-5',
         max_tokens: 2500,
         temperature: 0.1,
-        messages: [{ role: 'user', content: [{ type: 'text', text: prompt + languageInstruction(lang) }] }]
+        messages: [{ role: 'user', content: [{ type: 'text', text: fullPrompt }] }]
       })
     });
 
