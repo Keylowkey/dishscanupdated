@@ -26,3 +26,12 @@ android/.gradle/
 
 # macOS
 .DS_Store
+
+# Android signing — never commit these
+android/keystore.properties
+*.jks
+*.keystore
+android/local.properties
+# Firebase service account
+firebase-service-account.json
+android/app/google-services.json

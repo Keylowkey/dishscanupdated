@@ -9704,7 +9704,8 @@
   // Records each step so a failure can be inspected instead of vanishing.
   window.__pushDiag = { step: 'not started' };
 
-  // Persist an APNs token against the signed-in account.
+  // Persist the device's push token against the signed-in account. iOS sends
+    // an APNs token, Android an FCM one; the server routes on `platform`.
   async function savePushToken(token, say) {
     try {
       const { data: sess } = await supaClient.auth.getSession();
@@ -9713,7 +9714,10 @@
       const r = await fetch('/api/push-token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ access_token: jwt, action: 'register', token, platform: 'ios' })
+        // Capacitor reports the real platform. Hardcoding 'ios' would file every
+          // Android token as APNs, and every Android push would fail.
+          body: JSON.stringify({ access_token: jwt, action: 'register', token,
+            platform: (window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform()) || 'ios' })
       });
       window.__pushDiag.saveStatus = r.status;
       if (r.ok) say('Push registered ✓');
