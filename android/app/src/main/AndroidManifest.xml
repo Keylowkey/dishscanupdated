@@ -18,6 +18,17 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!-- OAuth and email-confirmation links come back to
+                 com.captureandcook.app://auth/... . iOS declares this scheme in
+                 Info.plist (CFBundleURLTypes); Android needs the equivalent here
+                 or the redirect goes nowhere and sign-in never completes. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="com.captureandcook.app" />
+            </intent-filter>
         </activity>
 
         <provider
