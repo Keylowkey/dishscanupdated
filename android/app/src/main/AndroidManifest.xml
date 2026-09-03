@@ -29,7 +29,33 @@
         </provider>
     </application>
 
-    <!-- Permissions -->
+    <!-- Permissions.
+         Capacitor only declares INTERNET by default; everything the app
+         actually does had to be added. maxSdkVersion on the legacy storage
+         permission keeps Play from flagging it on Android 13+, where
+         READ_MEDIA_IMAGES replaced it. -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- Photographing a dish -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <!-- Choosing an existing food photo -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+
+    <!-- Finding nearby grocery stores -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+    <!-- Cook-timer alerts and social notifications. POST_NOTIFICATIONS is
+         required from Android 13; VIBRATE powers the timer haptics. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!-- The camera is optional: a user can search or paste a link instead, and
+         requiring it would hide the app from tablets that lack one. -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
 </manifest>
