@@ -9752,8 +9752,8 @@
       // Listeners must only be attached once — this function runs on every
       // launch and on every diagnostics run, which would otherwise stack
       // duplicate handlers and fire the save repeatedly.
-      // Remember the last token so a re-run can re-save it even if iOS decides
-      // not to fire the event again.
+      // Remember the last token so a re-run can re-save it even if the platform
+      // decides not to fire the event again.
       if (window.__pushListenersAttached) {
         window.__pushDiag.step = 'listeners already attached';
         window.__pushDiag.tokenReceived = !!window.__pushLastToken;
@@ -9769,14 +9769,14 @@
       await PN.addListener('registration', async (t) => {
         const token = t && t.value;
         window.__pushDiag.tokenReceived = !!token;
-        if (!token) { say('Apple returned an empty token'); return; }
+        if (!token) { say('The push service returned an empty token'); return; }
         window.__pushLastToken = token;
         await savePushToken(token, say);
       });
 
       await PN.addListener('registrationError', (e) => {
         window.__pushDiag.registrationError = String((e && (e.error || e.message)) || e);
-        say('Apple refused to issue a token');
+        say('The push service refused to issue a token');
       });
 
       // Tapping a push should land on the right screen, same as the in-app bell.
@@ -9793,7 +9793,8 @@
       // Clear the badge when a push arrives while the app is open.
       await PN.addListener('pushNotificationReceived', () => { try { refreshNotifBadge(); } catch (e) {} });
 
-      // Only now, with every handler genuinely attached, ask iOS for a token.
+      // Only now, with every handler genuinely attached, ask for a token.
+      // iOS goes to APNs, Android to Firebase; the plugin hides the difference.
       window.__pushListenersAttached = true;
       await PN.register();
       window.__pushDiag.registerCalled = true;
