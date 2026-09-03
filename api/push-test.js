@@ -6,6 +6,7 @@
 
 import { verifyToken } from '../lib/auth.js';
 import { sendPush, normalizePem } from '../lib/apns.js';
+import { sendFcm } from '../lib/fcm.js';
 import crypto from 'node:crypto';
 
 export default async function handler(req, res) {
@@ -60,11 +61,51 @@ export default async function handler(req, res) {
       }
     }
 
+    // 1b. The Android half. Same idea: report whether the credentials work,
+    //     never the key itself. Exchanging the JWT for an OAuth token proves
+    //     the whole chain in one call.
+    diag.fcm = {
+      FCM_PROJECT_ID: !!process.env.FCM_PROJECT_ID,
+      FCM_CLIENT_EMAIL: !!process.env.FCM_CLIENT_EMAIL,
+      FCM_PRIVATE_KEY: !!process.env.FCM_PRIVATE_KEY,
+      keyParses: false,
+      googleAcceptsIt: false
+    };
+    if (process.env.FCM_PRIVATE_KEY) {
+      const raw = String(process.env.FCM_PRIVATE_KEY);
+      diag.fcm.keyShape = {
+        length: raw.length,
+        looksBase64: !raw.includes('-----BEGIN'),
+        hasRealNewlines: raw.includes('\n'),
+        hasLiteralBackslashN: raw.includes('\\n')
+      };
+      try {
+        crypto.createPrivateKey(normalizePem(raw));
+        diag.fcm.keyParses = true;
+      } catch (e) { diag.fcm.keyError = String(e.message || e).slice(0, 120); }
+    }
+    if (diag.fcm.keyParses && diag.fcm.FCM_CLIENT_EMAIL) {
+      // A send to a deliberately invalid token: a 400 back means Google
+      // authenticated us and rejected the token, which is what we want to see.
+      try {
+        const probe = await sendFcm(['diagnostic-not-a-real-token'], {
+          title: 'diagnostic', body: 'diagnostic', data: {}
+        });
+        diag.fcm.googleAcceptsIt = probe.failed === 1 && probe.sent === 0;
+        diag.fcm.probe = probe;
+      } catch (e) { diag.fcm.probeError = String(e.message || e).slice(0, 120); }
+    }
+
     // 2. How many devices has this user registered?
     let tokens = [];
     try {
-      const r = await fetch(`${SUPABASE_URL}/rest/v1/device_tokens?select=token&user_id=eq.${me}`, { headers: H });
-      tokens = r.ok ? (await r.json()).map(t => t.token) : [];
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/device_tokens?select=token,platform&user_id=eq.${me}`, { headers: H });
+      const rows = r.ok ? await r.json() : [];
+      tokens = rows.map(t => t.token);
+      diag.devicesByPlatform = {
+        ios: rows.filter(t => t.platform !== 'android').length,
+        android: rows.filter(t => t.platform === 'android').length
+      };
     } catch (e) { /* leave empty */ }
     diag.devicesRegistered = tokens.length;
 
