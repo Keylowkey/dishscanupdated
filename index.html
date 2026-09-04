@@ -6296,6 +6296,47 @@
     }
   }
 
+  // ── Android hardware back button ──────────────────────────────────────
+  // Android treats back as a primary navigation gesture; iOS has no
+  // equivalent, so nothing here handled it and the button did nothing at all
+  // — modals stayed open, and the app ignored a control users rely on.
+  // Dismiss the topmost layer, and only leave the app when nothing is open.
+  (function () {
+    if (!CC_App || !CC_App.addListener) return;
+    CC_App.addListener('backButton', function () {
+      try {
+        // 1. A reaction popover is the lightest thing on screen.
+        const pop = document.querySelector('.react-popover.open');
+        if (pop) { pop.classList.remove('open'); return; }
+
+        // 2. Any open modal. Last in the DOM is the one on top.
+        const modals = document.querySelectorAll('.support-modal.open, .modal.open');
+        if (modals.length) { modals[modals.length - 1].classList.remove('open'); return; }
+
+        // 3. The account menu.
+        const dd = document.getElementById('userDropdown');
+        if (dd && dd.classList.contains('open')) { dd.classList.remove('open'); return; }
+
+        // 4. Cook mode is full-screen; back should leave it, not the app.
+        const cook = document.getElementById('cookOverlay');
+        if (cook && cook.classList.contains('open')) { closeCookMode(); return; }
+
+        // 5. A recipe sub-page (Ingredients, Method…) returns to the recipe.
+        const bar = document.getElementById('rpDetailBar');
+        if (bar && bar.style.display !== 'none' && typeof rpBack === 'function') { rpBack(); return; }
+
+        // 6. On the Community tab, go back to Cook rather than leaving.
+        const community = document.getElementById('communityView');
+        if (community && !community.classList.contains('hidden') &&
+            typeof switchTab === 'function') { switchTab('cook'); return; }
+
+        // 7. Nothing open: minimise rather than destroy the activity, so
+        //    returning to the app is instant instead of a cold start.
+        if (CC_App.minimizeApp) CC_App.minimizeApp();
+      } catch (e) { /* never let this trap the user in the app */ }
+    });
+  })();
+
   // ── Google Sign In ──
   async function handleGoogleSignIn() {
     try {

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12+ backup/transfer rules.
+     The app's WebView localStorage holds a live Supabase session token, the
+     user's saved home address and their nutrition log. Backing that up to
+     Google Drive, or restoring it onto a different device, would move a
+     working login and personal data somewhere the user never chose to put it.
+     Nothing of value is lost by excluding it: the nutrition log and calorie
+     goal already sync to the account, and signing in again restores the rest. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="root" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="file" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="root" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="file" />
+    </device-transfer>
+</data-extraction-rules>
