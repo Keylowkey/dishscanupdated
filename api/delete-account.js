@@ -36,15 +36,34 @@ export default async function handler(req, res) {
 
     // 1) Anonymize their posts so community threads survive as "[deleted user]".
     //    (We blank the username on their profile row; posts read author from it.)
+    //    daily_calorie_goal is cleared here too — it is health data, and Play's
+    //    Data safety declaration promises deletion covers it.
     await fetch(`${SUPABASE_URL}/rest/v1/user_profiles?id=eq.${uid}`, {
       method: 'PATCH',
       headers: adminHeaders,
-      body: JSON.stringify({ username: '[deleted user]', avatar_photo: null, avatar_icon: null, avatar_color: null, favorites_public: false })
+      body: JSON.stringify({ username: '[deleted user]', avatar_photo: null, avatar_icon: null, avatar_color: null, favorites_public: false, daily_calorie_goal: null })
     }).catch(() => {});
 
-    // 2) Delete their private data: dishes (history/favorites) and reactions.
-    await fetch(`${SUPABASE_URL}/rest/v1/dishes?user_id=eq.${uid}`, { method: 'DELETE', headers: adminHeaders }).catch(() => {});
-    await fetch(`${SUPABASE_URL}/rest/v1/post_reactions?user_id=eq.${uid}`, { method: 'DELETE', headers: adminHeaders }).catch(() => {});
+    // 2) Delete every row keyed to this user. Anything not listed here outlives
+    //    the account, so the list is deliberately exhaustive: leaving the
+    //    nutrition log behind would keep health data for an account that no
+    //    longer exists, and leaving device_tokens behind would keep pushing
+    //    notifications to their phone.
+    const del = (path) =>
+      fetch(`${SUPABASE_URL}/rest/v1/${path}`, { method: 'DELETE', headers: adminHeaders }).catch(() => {});
+    await Promise.all([
+      del(`dishes?user_id=eq.${uid}`),          // history and favorites
+      del(`post_reactions?user_id=eq.${uid}`),
+      del(`nutrition_log?user_id=eq.${uid}`),   // logged meals — health data
+      del(`device_tokens?user_id=eq.${uid}`),   // stop push to their devices
+      del(`post_views?viewer_id=eq.${uid}`),
+      del(`follows?follower_id=eq.${uid}`),
+      del(`follows?following_id=eq.${uid}`),
+      del(`blocks?blocker_id=eq.${uid}`),
+      del(`blocks?blocked_id=eq.${uid}`),
+      del(`shared_recipes?sender_id=eq.${uid}`),
+      del(`shared_recipes?recipient_id=eq.${uid}`)
+    ]);
 
     // 3) Delete the auth user itself.
     const delRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${uid}`, {
