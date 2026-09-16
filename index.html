@@ -6929,6 +6929,16 @@
     }
   });
 
+  // A script error used to leave the UI frozen mid-action with nothing on
+  // screen. Surface it instead, so a failure is visible rather than silent.
+  window.addEventListener('error', (e) => {
+    try { showError('Error: ' + (e.message || 'script error') + ' (' + (e.lineno || '?') + ')'); } catch (_) {}
+  });
+  window.addEventListener('unhandledrejection', (e) => {
+    const r = e && e.reason;
+    try { showError('Error: ' + ((r && r.message) || String(r))); } catch (_) {}
+  });
+
   function showError(msg) {
     const b = document.getElementById('errorBanner');
     b.innerHTML = '<i class="ti ti-alert-circle" style="font-size:15px;vertical-align:-2px;margin-right:6px;"></i>' + msg;
@@ -6989,7 +6999,12 @@
 
       // Save to cloud history with thumbnail
       const thumbBase64 = 'data:' + uploadedMediaType + ';base64,' + uploadedBase64;
-      currentRecipeId = await addToHistory(recipe, thumbBase64);
+      // Saving to history is best-effort. Awaiting it here meant a slow or
+      // failing save held back the recipe the user was already waiting for.
+      currentRecipeId = null;
+      addToHistory(recipe, thumbBase64)
+        .then(id => { currentRecipeId = id; })
+        .catch(() => {});
 
       // Reset cooked button
       const btn = document.getElementById('cookedBtn');
@@ -7052,7 +7067,12 @@
       if (!recipe || !recipe.dish) throw new Error('Could not read a recipe from that link.');
       activateStage('ls', 3);
       detectedDish = recipe.searchKeyword || recipe.dish;
-      currentRecipeId = await addToHistory(recipe, null);
+      // Saving to history is best-effort. Awaiting it here meant a slow or
+      // failing save held back the recipe the user was already waiting for.
+      currentRecipeId = null;
+      addToHistory(recipe, null)
+        .then(id => { currentRecipeId = id; })
+        .catch(() => {});
       const btn = document.getElementById('cookedBtn');
       if (btn) { btn.classList.remove('cooked'); btn.innerHTML = '<i class="ti ti-checks"></i> I cooked this dish'; }
       renderRecipe(recipe);
@@ -7257,11 +7277,26 @@
 
     try {
       activateStage('ls', 2);
-      const res = await fetch('/api/search-recipe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: cookSearchQuery, variation: o.variation })
-      });
+      // Without a deadline a stalled request leaves the loading stages spinning
+      // with nothing to explain it. Building a recipe takes ~15s, so 90s is
+      // generous; past that something is wrong and the user should hear so.
+      const ctl = new AbortController();
+      const timer = setTimeout(() => ctl.abort(), 90000);
+      let res;
+      try {
+        res = await fetch('/api/search-recipe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: cookSearchQuery, variation: o.variation }),
+          signal: ctl.signal
+        });
+      } catch (e) {
+        throw new Error(e && e.name === 'AbortError'
+          ? 'That took too long. Check your connection and try again.'
+          : 'Could not reach the kitchen. Check your connection and try again.');
+      } finally {
+        clearTimeout(timer);
+      }
       if (!res.ok) {
         const e = await res.json().catch(() => ({}));
         throw new Error(e.error || 'Recipe failed (' + res.status + '). Please try again.');
@@ -7269,7 +7304,12 @@
       const recipe = await res.json();
       activateStage('ls', 3);
       detectedDish = recipe.searchKeyword || recipe.dish;
-      currentRecipeId = await addToHistory(recipe, null);
+      // Saving to history is best-effort. Awaiting it here meant a slow or
+      // failing save held back the recipe the user was already waiting for.
+      currentRecipeId = null;
+      addToHistory(recipe, null)
+        .then(id => { currentRecipeId = id; })
+        .catch(() => {});
       const btn = document.getElementById('cookedBtn');
       btn.classList.remove('cooked');
       btn.innerHTML = '<i class="ti ti-checks"></i> I cooked this dish';
