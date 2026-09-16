@@ -4323,7 +4323,7 @@
       Continue with Google
     </button>
 
-    <button class="apple-btn" onclick="handleAppleSignIn()">
+    <button class="apple-btn" id="appleSignInBtn" onclick="handleAppleSignIn()">
       <svg class="apple-icon" viewBox="0 0 17 17" xmlns="http://www.w3.org/2000/svg">
         <path fill="#fff" d="M13.9 12.9c-.24.55-.52 1.06-.85 1.53-.45.64-.82 1.08-1.1 1.32-.44.4-.9.6-1.4.62-.36 0-.79-.1-1.29-.31-.5-.2-.96-.31-1.38-.31-.44 0-.91.1-1.42.31-.51.21-.92.32-1.24.33-.48.02-.96-.19-1.43-.63-.31-.26-.7-.72-1.16-1.38-.5-.7-.9-1.51-1.22-2.44-.34-1-.51-1.97-.51-2.91 0-1.08.23-2.01.7-2.79.37-.63.86-1.12 1.47-1.48.61-.36 1.28-.55 2-.56.38 0 .87.12 1.49.35.62.23 1.01.35 1.18.35.13 0 .57-.14 1.31-.41.7-.25 1.29-.36 1.78-.32 1.32.11 2.31.63 2.97 1.57-1.18.72-1.77 1.72-1.76 3 .01 1 .37 1.83 1.09 2.49.32.31.69.55 1.09.72-.09.25-.18.5-.29.74zM11.44 1.4c0 .81-.3 1.56-.88 2.26-.71.83-1.57 1.31-2.5 1.23-.01-.1-.02-.2-.02-.31 0-.78.34-1.6.94-2.29.3-.35.68-.63 1.15-.86.46-.22.9-.35 1.31-.37.01.11.01.22.01.34z"/>
       </svg>
@@ -6047,6 +6047,14 @@
   }
 
   function showAuthScreen() {
+    // Sign in with Apple stays on iOS — Apple requires it wherever a third-party
+    // sign-in is offered — but on Android it only leads to a web flow that
+    // confuses people, so hide it there.
+    const platform = (window.Capacitor && window.Capacitor.getPlatform
+      && window.Capacitor.getPlatform()) || 'web';
+    const appleBtn = document.getElementById('appleSignInBtn');
+    if (appleBtn && platform === 'android') appleBtn.style.display = 'none';
+
     document.getElementById('authScreen').classList.remove('hidden');
     document.getElementById('appPage').classList.add('hidden');
     document.body.classList.remove('in-app');
