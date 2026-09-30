@@ -36,13 +36,15 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>Capture &amp; Cook uses the camera so you can take a photo of a dish to identify it and get its recipe.</string>
+	<string>Capture &amp; Cook uses the camera so you can photograph a dish to get its recipe, or record a cooking video to share with the community.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Capture &amp; Cook uses the microphone to record sound when you film a cooking video to share with the community.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Capture &amp; Cook uses your location to find nearby grocery stores and restaurants for your recipes.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Capture &amp; Cook can save recipe and dish images to your photo library.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Capture &amp; Cook lets you choose a food photo from your library to identify a dish and get its recipe.</string>
+	<string>Capture &amp; Cook lets you choose a food photo from your library to get its recipe, or a photo or video to share with the community.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>
