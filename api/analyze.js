@@ -1,5 +1,6 @@
 import { languageInstruction } from '../lib/i18n-data.js';
 import { guard } from '../lib/guard.js';
+import { MAKEABLE_EXAMPLE, COOKING_EQUIPMENT_EXAMPLE, EXTRA_RULES, normalizeRecipeExtras } from '../lib/recipe-extras.js';
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -41,7 +42,7 @@ For equipment, list the cooking appliances, tools, and cookware actually needed 
 
 Respond ONLY with a raw JSON object - no markdown, no backticks, no explanation outside the JSON. Use exactly this structure:
 
-{"dish":"Specific Full Dish Name","servings":2,"time":"30 min","difficulty":"Easy","dietary":"Vegetarian or Contains meat etc","calories":420,"nutrition":{"protein_g":28,"carbs_g":45,"fat_g":14,"saturated_fat_g":4,"fiber_g":6,"sugar_g":8,"sodium_mg":620,"cholesterol_mg":75},"equipment":[{"emoji":"🍳","name":"Large skillet"},{"emoji":"🔪","name":"Chef's knife"}],"ingredients":[{"emoji":"appropriate food emoji","name":"Ingredient name","qty":"1 cup","cost":2.50}],"steps":["Detailed step one.","Detailed step two."],"swaps":[{"from":"Original ingredient","to":"Healthier alternative","saving":60}],"searchKeyword":"short keyword","totalCost":15.50,"costNote":"Based on US national average grocery prices"}
+{"dish":"Specific Full Dish Name","servings":2,"time":"30 min","difficulty":"Easy","dietary":"Vegetarian or Contains meat etc","calories":420,"nutrition":{"protein_g":28,"carbs_g":45,"fat_g":14,"saturated_fat_g":4,"fiber_g":6,"sugar_g":8,"sodium_mg":620,"cholesterol_mg":75},"equipment":[{"emoji":"🍳","name":"Large skillet"},{"emoji":"🔪","name":"Chef's knife"}],${COOKING_EQUIPMENT_EXAMPLE},"ingredients":[{"emoji":"appropriate food emoji","name":"Ingredient name","qty":"1 cup","cost":2.50,${MAKEABLE_EXAMPLE}}],"steps":["Detailed step one.","Detailed step two."],"swaps":[{"from":"Original ingredient","to":"Healthier alternative","saving":60}],"searchKeyword":"short keyword","totalCost":15.50,"costNote":"Based on US national average grocery prices"}
 
 Rules:
 - 6-8 ingredients with accurate emojis AND realistic cost estimates (USD)
@@ -52,7 +53,7 @@ Rules:
 - nutrition: realistic PER-SERVING values as numbers (grams for macros, mg for sodium/cholesterol). Estimate all eight fields from the ingredients. These are estimates.
 - 1-3 word searchKeyword for finding this dish at restaurants
 - totalCost should equal the sum of all ingredient costs
-- BE CONSISTENT: For the same dish, always return the same name and similar costs`;
+- BE CONSISTENT: For the same dish, always return the same name and similar costs${EXTRA_RULES}`;
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -96,7 +97,7 @@ Rules:
 
     try {
       const recipe = JSON.parse(clean);
-      return res.status(200).json(recipe);
+      return res.status(200).json(normalizeRecipeExtras(recipe));
     } catch (parseErr) {
       return res.status(500).json({ 
         error: 'Could not parse recipe. Raw response: ' + text.substring(0, 500)

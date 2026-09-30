@@ -4,6 +4,7 @@
 // stays for general home cooking — those belong on the Takeout tab.
 import { languageInstruction } from '../lib/i18n-data.js';
 import { guard } from '../lib/guard.js';
+import { MAKEABLE_EXAMPLE, COOKING_EQUIPMENT_EXAMPLE, EXTRA_RULES, normalizeRecipeExtras } from '../lib/recipe-extras.js';
 import { streamCompletion } from '../lib/stream.js';
 
 export default async function handler(req, res) {
@@ -39,7 +40,7 @@ When creating the recipe, be specific and authentic. For international dishes us
 
 Respond ONLY with a raw JSON object - no markdown, no backticks, no explanation outside the JSON. Use exactly this structure:
 
-{"dish":"Specific Full Dish Name","servings":4,"time":"45 min","difficulty":"Medium","dietary":"Vegetarian or Contains meat etc","calories":420,"nutrition":{"protein_g":28,"carbs_g":45,"fat_g":14,"saturated_fat_g":4,"fiber_g":6,"sugar_g":8,"sodium_mg":620,"cholesterol_mg":75},"equipment":[{"emoji":"🍳","name":"Large skillet"},{"emoji":"🔪","name":"Chef's knife"}],"ingredients":[{"emoji":"🥚","name":"Ingredient name","qty":"1 cup","cost":2.50}],"steps":["Detailed step one.","Detailed step two."],"swaps":[{"from":"Original ingredient","to":"Healthier alternative","saving":60}],"searchKeyword":"short keyword","totalCost":15.50,"costNote":"Based on US national average grocery prices"}
+{"dish":"Specific Full Dish Name","servings":4,"time":"45 min","difficulty":"Medium","dietary":"Vegetarian or Contains meat etc","calories":420,"nutrition":{"protein_g":28,"carbs_g":45,"fat_g":14,"saturated_fat_g":4,"fiber_g":6,"sugar_g":8,"sodium_mg":620,"cholesterol_mg":75},"equipment":[{"emoji":"🍳","name":"Large skillet"},{"emoji":"🔪","name":"Chef's knife"}],${COOKING_EQUIPMENT_EXAMPLE},"ingredients":[{"emoji":"🥚","name":"Ingredient name","qty":"1 cup","cost":2.50,${MAKEABLE_EXAMPLE}}],"steps":["Detailed step one.","Detailed step two."],"swaps":[{"from":"Original ingredient","to":"Healthier alternative","saving":60}],"searchKeyword":"short keyword","totalCost":15.50,"costNote":"Based on US national average grocery prices"}
 
 Rules:
 - 6-8 ingredients with accurate emojis AND realistic cost estimates (USD)
@@ -49,7 +50,7 @@ Rules:
 - Accurate per-serving calorie estimate
 - nutrition: realistic PER-SERVING values as numbers (grams for macros, mg for sodium/cholesterol) for all eight fields, estimated from the ingredients. These are estimates.
 - totalCost should equal the sum of all ingredient costs
-- BE CONSISTENT: for the same dish, always return the same name and similar costs`;
+- BE CONSISTENT: for the same dish, always return the same name and similar costs${EXTRA_RULES}`;
 
   const fullPrompt = prompt + languageInstruction(lang);
 
@@ -95,7 +96,7 @@ Rules:
 
     try {
       const recipe = JSON.parse(clean);
-      return res.status(200).json(recipe);
+      return res.status(200).json(normalizeRecipeExtras(recipe));
     } catch (parseErr) {
       return res.status(500).json({ error: 'Could not parse recipe.' });
     }

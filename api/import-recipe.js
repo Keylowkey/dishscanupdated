@@ -7,10 +7,11 @@
 
 import { languageInstruction } from '../lib/i18n-data.js';
 import { guard } from '../lib/guard.js';
+import { MAKEABLE_EXAMPLE, COOKING_EQUIPMENT_EXAMPLE, EXTRA_RULES, normalizeRecipeExtras } from '../lib/recipe-extras.js';
 
 const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15';
 
-const RECIPE_JSON = `{"dish":"Specific Full Dish Name","servings":2,"time":"30 min","difficulty":"Easy","dietary":"Vegetarian or Contains meat etc","calories":420,"nutrition":{"protein_g":28,"carbs_g":45,"fat_g":14,"saturated_fat_g":4,"fiber_g":6,"sugar_g":8,"sodium_mg":620,"cholesterol_mg":75},"equipment":[{"emoji":"🍳","name":"Large skillet"},{"emoji":"🔪","name":"Chef's knife"}],"ingredients":[{"emoji":"appropriate food emoji","name":"Ingredient name","qty":"1 cup","cost":2.50}],"steps":["Detailed step one.","Detailed step two."],"swaps":[{"from":"Original ingredient","to":"Healthier alternative","saving":60}],"searchKeyword":"short keyword","totalCost":15.50,"costNote":"Based on US national average grocery prices"}`;
+const RECIPE_JSON = `{"dish":"Specific Full Dish Name","servings":2,"time":"30 min","difficulty":"Easy","dietary":"Vegetarian or Contains meat etc","calories":420,"nutrition":{"protein_g":28,"carbs_g":45,"fat_g":14,"saturated_fat_g":4,"fiber_g":6,"sugar_g":8,"sodium_mg":620,"cholesterol_mg":75},"equipment":[{"emoji":"🍳","name":"Large skillet"},{"emoji":"🔪","name":"Chef's knife"}],${COOKING_EQUIPMENT_EXAMPLE},"ingredients":[{"emoji":"appropriate food emoji","name":"Ingredient name","qty":"1 cup","cost":2.50,${MAKEABLE_EXAMPLE}}],"steps":["Detailed step one.","Detailed step two."],"swaps":[{"from":"Original ingredient","to":"Healthier alternative","saving":60}],"searchKeyword":"short keyword","totalCost":15.50,"costNote":"Based on US national average grocery prices"}`;
 
 const RULES = `Rules:
 - 6-8 ingredients with accurate emojis AND realistic cost estimates (USD)
@@ -20,7 +21,7 @@ const RULES = `Rules:
 - Accurate per-serving calorie estimate
 - nutrition: realistic PER-SERVING numeric values for all eight fields
 - 1-3 word searchKeyword
-- totalCost should equal the sum of all ingredient costs
+- totalCost should equal the sum of all ingredient costs${EXTRA_RULES}
 Respond ONLY with a raw JSON object — no markdown, no backticks, no text outside the JSON.`;
 
 export default async function handler(req, res) {
@@ -82,7 +83,7 @@ export default async function handler(req, res) {
       return res.status(422).json({ error: "Couldn't read a dish from that link. Try sharing a screenshot of the dish instead." });
     }
     if (sourceTitle && recipe) recipe.sourceTitle = sourceTitle;
-    return res.status(200).json(recipe);
+    return res.status(200).json(normalizeRecipeExtras(recipe));
   } catch (err) {
     return res.status(500).json({ error: 'Server error: ' + (err && err.message || err) });
   }

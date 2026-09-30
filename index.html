@@ -3986,6 +3986,30 @@
   .serving-opt { background: var(--surface2); box-shadow: 2px 2px 0 var(--ink-shadow); }
   .serving-opt.active { box-shadow: 3px 3px 0 var(--ink-shadow); }
 
+  /* ── Equipment: choose which appliance to cook with ── */
+  .cook-with { margin: 0 0 16px; }
+  .cook-with-label {
+    font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--text3); margin-bottom: 8px;
+  }
+  .cook-with-opts { display: flex; flex-wrap: wrap; gap: 8px; }
+  .cw-opt {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 9px 13px; border: 2px solid var(--ink); border-radius: 14px;
+    background: var(--surface2); color: var(--text); font: inherit; font-weight: 700;
+    box-shadow: 2px 2px 0 var(--ink-shadow); cursor: pointer;
+  }
+  .cw-opt.active { background: var(--sage); color: #fff; box-shadow: 3px 3px 0 var(--ink-shadow); }
+  .cw-opt:disabled { opacity: .6; cursor: progress; }
+  .cw-opt .cw-tag {
+    font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em;
+    padding: 2px 6px; border-radius: 6px; background: var(--sage-light); color: var(--sage-dark);
+  }
+  .cw-opt.active .cw-tag { background: rgba(255,255,255,.25); color: #fff; }
+  .cw-opt .cw-warn { color: #b45309; font-size: 15px; }
+  .cw-opt.active .cw-warn { color: #fff; }
+  .cook-with-note { margin-top: 10px; font-size: 13.5px; line-height: 1.5; color: var(--text2); }
+
   /* ── Ingredients: sticker chips ── */
   .ingredient-item {
     background: var(--surface);
@@ -4605,15 +4629,14 @@
         <i class="ti ti-shield-heart"></i> Make this allergy-friendly
       </button>
 
-      <div class="serving-selector" id="servingSelector">
+      <!-- Lives on the Ingredients page only; hidden on the recipe overview. -->
+      <div class="serving-selector" id="servingSelector" style="display:none;">
         <span class="serving-label">Serving size</span>
         <div class="serving-options" id="servingOptions">
+          <button class="serving-opt" data-serving="1" onclick="setServings(1)">1</button>
           <button class="serving-opt" data-serving="2" onclick="setServings(2)">2</button>
           <button class="serving-opt" data-serving="4" onclick="setServings(4)">4</button>
           <button class="serving-opt" data-serving="6" onclick="setServings(6)">6</button>
-          <button class="serving-opt" data-serving="8" onclick="setServings(8)">8</button>
-          <button class="serving-opt" data-serving="10" onclick="setServings(10)">10</button>
-          <button class="serving-opt" data-serving="12" onclick="setServings(12)">12</button>
         </div>
       </div>
 
@@ -4721,6 +4744,8 @@
           <i class="ti ti-chevron-down section-chevron"></i>
         </button>
         <div class="section-body" id="equipmentBody">
+          <!-- Pick which appliance to cook with; rewrites the method to suit -->
+          <div class="cook-with" id="cookWith" style="display:none;"></div>
           <div class="equipment-grid" id="equipmentGrid"></div>
         </div>
       </div>
@@ -4971,12 +4996,10 @@
         <div class="serving-selector">
           <span class="serving-label">Serving size</span>
           <div class="serving-options" id="copycatServingOptions">
+            <button class="serving-opt copycat-serving-opt" data-serving="1" onclick="setCopycatServings(1)">1</button>
             <button class="serving-opt copycat-serving-opt" data-serving="2" onclick="setCopycatServings(2)">2</button>
             <button class="serving-opt copycat-serving-opt" data-serving="4" onclick="setCopycatServings(4)">4</button>
             <button class="serving-opt copycat-serving-opt" data-serving="6" onclick="setCopycatServings(6)">6</button>
-            <button class="serving-opt copycat-serving-opt" data-serving="8" onclick="setCopycatServings(8)">8</button>
-            <button class="serving-opt copycat-serving-opt" data-serving="10" onclick="setCopycatServings(10)">10</button>
-            <button class="serving-opt copycat-serving-opt" data-serving="12" onclick="setCopycatServings(12)">12</button>
           </div>
         </div>
 
@@ -5588,6 +5611,24 @@
       <div class="allergy-loading-text">Working out how to make it…</div>
     </div>
     <div class="allergy-results" id="mkResults"></div>
+  </div>
+</div>
+
+<!-- Shown before switching to an appliance that changes how the dish turns out -->
+<div class="support-modal" id="methodWarnModal">
+  <div class="support-card allergy-card">
+    <button class="support-close" onclick="closeMethodWarn(false)" aria-label="Close"><i class="ti ti-x"></i></button>
+    <div class="support-card-header">
+      <div class="support-card-icon" style="background:#fdecc8;color:#b45309;"><i class="ti ti-alert-triangle"></i></div>
+      <div>
+        <div class="support-card-title">It may not taste the same</div>
+        <div class="support-card-sub" id="methodWarnSub">This dish is best made another way.</div>
+      </div>
+    </div>
+    <p id="methodWarnNote" style="margin:4px 0 18px;line-height:1.55;color:var(--text2);"></p>
+    <button class="support-submit" id="methodWarnGo" onclick="closeMethodWarn(true)">Use it anyway</button>
+    <button class="support-submit" id="methodWarnKeep" onclick="closeMethodWarn(false)"
+      style="margin-top:10px;background:var(--surface2);color:var(--text);border:0.5px solid var(--border);">Keep the original</button>
   </div>
 </div>
 
@@ -6319,7 +6360,13 @@
 
         // 2. Any open modal. Last in the DOM is the one on top.
         const modals = document.querySelectorAll('.support-modal.open, .modal.open');
-        if (modals.length) { modals[modals.length - 1].classList.remove('open'); return; }
+        if (modals.length) {
+          const top = modals[modals.length - 1];
+          // The appliance warning is waiting on an answer; back means "keep it".
+          if (top.id === 'methodWarnModal' && typeof closeMethodWarn === 'function') { closeMethodWarn(false); return; }
+          top.classList.remove('open');
+          return;
+        }
 
         // 3. The account menu.
         const dd = document.getElementById('userDropdown');
@@ -7489,7 +7536,121 @@
     return found;
   }
 
+  // ── Cook it with: switch the main appliance and rewrite the method ──
+  // The recipe as first generated is kept as methodBase; each appliance the
+  // cook switches to is rewritten once by /api/adapt-method and cached, so
+  // flipping back and forth is instant. Variants carry their link to the
+  // base as non-enumerable properties, so saving or sharing one stores a
+  // plain recipe rather than dragging the original along with it.
+  let methodBase = null;
+  let methodVariants = {};
+  let methodBusy = false;
+  let methodWarnResolve = null;
+
+  function methodOptions() {
+    const ce = methodBase && methodBase.cookingEquipment;
+    if (!ce || !Array.isArray(ce.alternatives) || !ce.alternatives.length) return [];
+    return [{ name: ce.primary, emoji: ce.emoji, fit: 'original' }].concat(ce.alternatives);
+  }
+  function activeMethodName(r) {
+    return (r && r.__methodName) ||
+      (methodBase && methodBase.cookingEquipment && methodBase.cookingEquipment.primary) || '';
+  }
+
+  function renderCookWith(r) {
+    const wrap = document.getElementById('cookWith');
+    if (!wrap) return;
+    const opts = methodOptions();
+    if (!opts.length) { wrap.style.display = 'none'; wrap.innerHTML = ''; return; }
+    const active = activeMethodName(r).toLowerCase();
+    wrap.innerHTML =
+      '<div class="cook-with-label">Cook it with</div>' +
+      '<div class="cook-with-opts">' + opts.map((o, i) =>
+        '<button class="cw-opt' + (o.name.toLowerCase() === active ? ' active' : '') +
+          '" onclick="pickCookMethod(' + i + ')">' +
+          '<span>' + escapeHtml(o.emoji || '🍳') + '</span>' + escapeHtml(o.name) +
+          (o.fit === 'original' ? ' <span class="cw-tag">Best</span>'
+            : o.fit === 'compromise' ? ' <i class="ti ti-alert-triangle cw-warn" aria-label="May taste different"></i>' : '') +
+        '</button>').join('') +
+      '</div>' +
+      (r && r.__methodNote ? '<div class="cook-with-note">' + escapeHtml(r.__methodNote) + '</div>' : '');
+    wrap.style.display = '';
+  }
+
+  function showMethodVariant(v) {
+    const keep = currentServings;
+    renderRecipe(v);
+    if (keep) setServings(keep);
+    rpOpen('equipment');
+  }
+
+  function confirmMethodWarn(alt, primary) {
+    document.getElementById('methodWarnSub').textContent =
+      primary + ' gives the best result for this dish.';
+    document.getElementById('methodWarnNote').textContent =
+      alt.note || ('Cooking this with ' + alt.name.toLowerCase() + ' works, but the texture and flavour will be different.');
+    document.getElementById('methodWarnGo').textContent = 'Use ' + alt.name.toLowerCase() + ' anyway';
+    document.getElementById('methodWarnKeep').textContent = 'Keep ' + primary.toLowerCase();
+    document.getElementById('methodWarnModal').classList.add('open');
+    return new Promise(resolve => { methodWarnResolve = resolve; });
+  }
+  function closeMethodWarn(ok) {
+    document.getElementById('methodWarnModal').classList.remove('open');
+    const done = methodWarnResolve;
+    methodWarnResolve = null;
+    if (done) done(!!ok);
+  }
+
+  async function pickCookMethod(i) {
+    if (methodBusy) return;
+    const o = methodOptions()[i];
+    if (!o) return;
+    const key = o.name.toLowerCase();
+    if (key === activeMethodName(baseRecipe).toLowerCase()) return;
+
+    if (o.fit === 'original') { showMethodVariant(methodBase); return; }
+    if (methodVariants[key]) { showMethodVariant(methodVariants[key]); return; }
+
+    if (o.fit === 'compromise' &&
+        !(await confirmMethodWarn(o, methodBase.cookingEquipment.primary))) return;
+
+    methodBusy = true;
+    const btns = Array.from(document.querySelectorAll('.cw-opt'));
+    btns.forEach(b => { b.disabled = true; });
+    if (btns[i]) btns[i].innerHTML = '<i class="ti ti-loader-2"></i> Rewriting for ' + escapeHtml(o.name.toLowerCase()) + '…';
+    try {
+      const res = await fetch('/api/adapt-method', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recipe: methodBase, equipment: o.name, lang: ccLang() })
+      });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok || !Array.isArray(out.steps) || !out.steps.length) {
+        throw new Error(out.error || 'Could not rewrite the method. Please try again.');
+      }
+      const v = Object.assign({}, methodBase, {
+        steps: out.steps,
+        equipment: (out.equipment && out.equipment.length) ? out.equipment : methodBase.equipment,
+        time: out.time || methodBase.time
+      });
+      Object.defineProperty(v, '__methodBase', { value: methodBase, enumerable: false });
+      Object.defineProperty(v, '__methodName', { value: o.name, enumerable: false });
+      Object.defineProperty(v, '__methodNote', { value: out.note || o.note || '', enumerable: false });
+      methodVariants[key] = v;
+      methodBusy = false;
+      showMethodVariant(v);
+      showToast('Method updated for ' + o.name.toLowerCase());
+    } catch (e) {
+      methodBusy = false;
+      renderCookWith(baseRecipe);
+      showToast(e.message || 'Could not rewrite the method.');
+    }
+  }
+
   function renderRecipe(r) {
+    // A fresh recipe resets the appliance switcher; re-showing the original
+    // or one of its rewritten variants keeps the cache.
+    if (r !== methodBase && !r.__methodBase) { methodBase = r; methodVariants = {}; }
     baseRecipe = r;
     baseServings = (r.servings && r.servings > 0) ? r.servings : 1;
     currentServings = baseServings;
@@ -7512,6 +7673,7 @@
       equipToggle.style.display = 'none';
       equipBody.style.display = 'none';
     }
+    renderCookWith(r);
 
     // Start with sections expanded for every newly loaded recipe
     expandAllSections();
@@ -7544,6 +7706,13 @@
     // LAST: the section renderers above un-hide their own wrappers, so collapse
     // everything back to the tile grid only after they've all run.
     rpReset(r);
+
+    // Let the Equipment tile say there's a choice, e.g. "Skillet · 2 other options".
+    const alts = methodOptions().length - 1;
+    const eqSub = document.getElementById('rpSubEquipment');
+    if (eqSub && alts > 0) {
+      eqSub.textContent = activeMethodName(r) + ' · ' + alts + (alts === 1 ? ' other option' : ' other options');
+    }
   }
 
   // Render the per-serving nutrition block for a home recipe. Mirrors the
@@ -7660,8 +7829,10 @@
         ? '<span class="ing-cost">$' + scaledCost.toFixed(2) + '</span>'
         : '';
       const scaledQty = scaleQty(i.qty, factor);
-      const mk = '<button class="mk-btn" onclick="openMakeIngredient(' + JSON.stringify(String(i.name || '')).replace(/"/g, '&quot;') +
-        ',' + JSON.stringify(String(scaledQty || '')).replace(/"/g, '&quot;') + ')">Make</button>';
+      const mk = isMakeable(i)
+        ? '<button class="mk-btn" onclick="openMakeIngredient(' + JSON.stringify(String(i.name || '')).replace(/"/g, '&quot;') +
+          ',' + JSON.stringify(String(scaledQty || '')).replace(/"/g, '&quot;') + ')">Make</button>'
+        : '';
       return '<div class="ingredient-item"><span class="ing-emoji">' + i.emoji + '</span><div><div class="ing-name">' + i.name + '</div><div class="ing-qty">' + scaledQty + '</div></div>' + mk + costBadge + '</div>';
     }).join('');
 
@@ -7690,7 +7861,35 @@
     }
   }
 
-  const SERVING_OPTIONS = [2, 4, 6, 8, 10, 12];
+  const SERVING_OPTIONS = [1, 2, 4, 6];
+  // Should this ingredient get a "Make" button? New recipes say so directly
+  // (ingredients[].makeable, decided by the model with the whole dish in
+  // view). Recipes saved before that field existed fall back to a name check,
+  // which only has to be right about the obvious cases.
+  const MAKEABLE_WORDS = [
+    'butter', 'ghee', 'cheese', 'ricotta', 'paneer', 'mozzarella', 'mascarpone',
+    'yogurt', 'yoghurt', 'labneh', 'sauce', 'dressing', 'vinaigrette', 'mayo',
+    'aioli', 'pesto', 'salsa', 'hummus', 'guacamole', 'tzatziki', 'tahini',
+    'stock', 'broth', 'dough', 'pasta', 'noodle', 'gnocchi', 'bread', 'tortilla',
+    'pita', 'naan', 'crust', 'breadcrumb', 'crouton', 'seasoning', 'spice blend',
+    'rub', 'masala', 'curry paste', 'marinade', 'glaze', 'jam', 'jelly', 'compote',
+    'syrup', 'caramel', 'frosting', 'whipped cream', 'buttermilk', 'almond milk',
+    'oat milk', 'coconut milk', 'ketchup', 'mustard', 'gravy', 'chutney',
+    'pickle', 'kimchi', 'sauerkraut', 'chili oil', 'harissa'
+  ];
+  // Names that contain a makeable word but are raw produce or a basic product.
+  const NOT_MAKEABLE = [
+    'butternut', 'butter lettuce', 'butter bean', 'buttercup', 'cheesecloth',
+    'bread flour', 'pasta water', 'stockpot'
+  ];
+  function isMakeable(ing) {
+    if (!ing) return false;
+    if (typeof ing.makeable === 'boolean') return ing.makeable;
+    const n = String(ing.name || '').toLowerCase();
+    if (!n || NOT_MAKEABLE.some(w => n.includes(w))) return false;
+    return MAKEABLE_WORDS.some(w => n.includes(w));
+  }
+
   function nearestServingOption(n) {
     if (!n || n < 1) return SERVING_OPTIONS[0];
     return SERVING_OPTIONS.reduce((best, opt) =>
@@ -8799,7 +8998,7 @@
   const RP_PAGES = {
     ingredients: { title: 'Ingredients', section: 'ingredientsSection', servings: true, also: 'costSection' },
     equipment:   { title: 'Equipment',   section: 'equipmentSection',   servings: false },
-    nutrition:   { title: 'Nutrition',   section: 'nutritionSection',   servings: true },
+    nutrition:   { title: 'Nutrition',   section: 'nutritionSection',   servings: false },
     method:      { title: 'Method',      section: 'methodSection',      servings: false }
   };
   // Things that belong to the grid view and hide when a page is open.
@@ -8867,13 +9066,11 @@
     panel.classList.remove('rp-detail-open');
     document.getElementById('rpDetailBar').style.display = 'none';
 
-    // Put the serving selector back above the calorie banner.
+    // Serving size belongs to the Ingredients page only, so it stays hidden
+    // on the overview rather than returning above the calorie banner.
     const sel = document.getElementById('servingSelector');
     const cal = document.querySelector('#panel-recipe .calorie-banner');
-    if (sel && cal && cal.parentElement) {
-      cal.parentElement.insertBefore(sel, cal);
-      sel.style.display = '';
-    }
+    if (sel) sel.style.display = 'none';
     if (cal) cal.style.display = '';
     RP_MAIN_IDS.forEach(id => { const e = document.getElementById(id); if (e) e.style.display = ''; });
     Object.keys(RP_PAGES).forEach(k => { const el = rpSectionEl(k); if (el) el.style.display = 'none'; });
