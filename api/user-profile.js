@@ -74,7 +74,7 @@ export default async function handler(req, res) {
     if (canSeeContent) {
       try {
         const postsRes = await fetch(
-          `${SUPABASE_URL}/rest/v1/posts?select=id,image_url,caption,created_at&user_id=eq.${encodeURIComponent(user_id)}&order=created_at.desc&limit=50`,
+          `${SUPABASE_URL}/rest/v1/posts?select=*&user_id=eq.${encodeURIComponent(user_id)}&order=created_at.desc&limit=50`,
           { headers }
         );
         posts = postsRes.ok ? await postsRes.json() : [];

@@ -62,9 +62,13 @@ export default async function handler(req, res) {
   const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
   if (!ANTHROPIC_KEY) return res.status(500).json({ error: 'API key not configured.' });
 
-  const { image_data, media_type, text } = req.body || {};
+  const { image_data, media_type, text, frames } = req.body || {};
   const caption = typeof text === 'string' ? text.trim() : '';
-  if (!image_data && !caption) return res.status(400).json({ error: 'Missing image.' });
+  // A video arrives as a handful of still frames sampled across its length.
+  const videoFrames = (Array.isArray(frames) ? frames : [])
+    .filter(f => f && typeof f.data === 'string' && f.data.length > 0 && f.data.length < 1500000)
+    .slice(0, 5);
+  if (!image_data && !caption && !videoFrames.length) return res.status(400).json({ error: 'Missing image.' });
 
   try {
     // ── Words ────────────────────────────────────────────────────────────
@@ -88,7 +92,44 @@ Respond ONLY with raw JSON: {"ok": true} or {"ok": false, "reason": "short frien
           reason: (verdict && verdict.reason) || "That post can't be shared here."
         });
       }
-      if (!image_data) return res.status(200).json({ ok: true, isFood: true });
+      if (!image_data && !videoFrames.length) return res.status(200).json({ ok: true, isFood: true });
+    }
+
+    // ── Video ────────────────────────────────────────────────────────────
+    // Judged as one piece, not frame by frame. The photo rule below demands
+    // food be the clear subject, which would reject any cooking video whose
+    // opening shot is the cook talking to camera.
+    if (videoFrames.length) {
+      const verdict = await ask(ANTHROPIC_KEY,
+`You screen short videos for a home-cooking community app. You are given
+still frames sampled in order across ONE video.
+
+Allow videos about food and cooking: cooking or baking, prepping ingredients,
+plating, tasting, a finished dish, a restaurant meal or food market, and a
+person talking to camera about food. People may be on screen.
+
+Reject the whole video if ANY frame shows:
+${DISALLOWED}
+
+Also reject a video that is clearly not about food or cooking at all, such as
+a selfie video, a pet, scenery, or a screen recording of something unrelated.
+
+Respond ONLY with raw JSON: {"isFood": true} or {"isFood": false, "reason": "short friendly reason"}`,
+        [
+          ...videoFrames.map(f => ({
+            type: 'image',
+            source: { type: 'base64', media_type: f.media_type || 'image/jpeg', data: f.data }
+          })),
+          { type: 'text', text: 'These frames are from one video. Does it pass? JSON only.' }
+        ]);
+
+      if (!verdict) {
+        return res.status(200).json({
+          isFood: false, ok: false,
+          reason: 'Could not check that video. Please try again.'
+        });
+      }
+      return res.status(200).json({ ...verdict, ok: verdict.isFood === true });
     }
 
     // ── Photo ────────────────────────────────────────────────────────────

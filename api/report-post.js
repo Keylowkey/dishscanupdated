@@ -49,7 +49,7 @@ export default async function handler(req, res) {
     let post = null, reporter = null, author = null;
     try {
       const pr = await fetch(
-        `${SUPABASE_URL}/rest/v1/posts?select=id,user_id,username,caption,image_url,created_at&id=eq.${encodeURIComponent(post_id)}`,
+        `${SUPABASE_URL}/rest/v1/posts?select=*&id=eq.${encodeURIComponent(post_id)}`,
         { headers: H });
       post = (pr.ok ? await pr.json() : [])[0] || null;
       const ids = [me, post && post.user_id].filter(Boolean);
@@ -85,6 +85,9 @@ export default async function handler(req, res) {
             <tr><td style="padding:6px 0;color:#666;">Posted</td><td>${esc(post && post.created_at)}</td></tr>
             <tr><td style="padding:6px 0;color:#666;vertical-align:top;">Reason given</td><td>${esc(reason) || '<i style="color:#999;">none given</i>'}</td></tr>
             <tr><td style="padding:6px 0;color:#666;vertical-align:top;">Caption</td><td>${esc(post && post.caption) || '<i style="color:#999;">no caption</i>'}</td></tr>
+            ${post && post.video_url
+              ? `<tr><td style="padding:6px 0;color:#666;vertical-align:top;">Video</td><td><a href="${esc(post.video_url)}">Watch the reported video</a></td></tr>`
+              : ''}
           </table>
           ${post && post.image_url && /^https?:/i.test(post.image_url)
             ? `<p style="margin-top:16px;"><img src="${esc(post.image_url)}" alt="Reported photo" style="max-width:320px;border-radius:8px;" /></p>`

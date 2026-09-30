@@ -35,3 +35,6 @@ android/local.properties
 # Firebase service account
 firebase-service-account.json
 android/app/google-services.json
+
+# Tabler Icons full sources (scripts/build-icons.py fetches them; only the subset ships)
+vendor/.tabler-src/

@@ -2,53 +2,111 @@
 """Rebuild the bundled icon font from the icons the app actually uses.
 
 The app used to pull Tabler's full webfont from jsdelivr, pinned to @latest:
-203KB of CSS covering 4,962 icons and a 778KB font, fetched over the network
-before a single icon could render — and liable to change without warning.
+~200KB of CSS covering ~5,000 icons and a ~500KB font, fetched over the
+network before a single icon could render — and liable to change without
+warning.
 
-This subsets both down to the ~89 icons that appear in index.html.
+This subsets both down to the icons that appear in index.html.
 
 RUN THIS AFTER ADDING A NEW ICON. If an icon is missing at runtime it will
 render as a blank box, because its glyph was not in the subset.
 
     python3 scripts/build-icons.py
+
+The Tabler version is pinned below. The full source files are downloaded on
+first run into vendor/.tabler-src/ (large, gitignored, never bundled).
+
+Filled icons (ti-heart-filled, ti-alert-triangle-filled, …) live in a separate
+Tabler font since 3.x, where they are named without the "-filled" suffix. They
+get their own small subset font and CSS rules that point at it.
 """
-import os, re, subprocess, sys
+import os, re, subprocess
+
+TABLER_VERSION = '3.48.0'
+CDN = f'https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@{TABLER_VERSION}/dist'
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HTML = os.path.join(ROOT, 'index.html')
-SRC_CSS = os.path.join(ROOT, 'vendor', 'tabler-icons.min.css')
-SRC_FONT = os.path.join(ROOT, 'vendor', 'fonts', 'tabler-icons.woff2')
-OUT_CSS = os.path.join(ROOT, 'vendor', 'tabler-icons.subset.css')
-OUT_FONT = os.path.join(ROOT, 'vendor', 'fonts', 'tabler-icons.subset.woff2')
+VENDOR = os.path.join(ROOT, 'vendor')
+FONTS = os.path.join(VENDOR, 'fonts')
+
+# Full sources live apart from vendor/fonts, whose *.woff2 are all copied into
+# the app bundle by `npm run copy:web`. Gitignored; fetched on demand.
+SRC = os.path.join(VENDOR, '.tabler-src')
+SRC_CSS = os.path.join(SRC, 'tabler-icons.min.css')
+SRC_FONT = os.path.join(SRC, 'tabler-icons.woff2')
+SRC_FILLED_CSS = os.path.join(SRC, 'tabler-icons-filled.min.css')
+SRC_FILLED_FONT = os.path.join(SRC, 'tabler-icons-filled.woff2')
+
+OUT_CSS = os.path.join(VENDOR, 'tabler-icons.subset.css')
+OUT_FONT = os.path.join(FONTS, 'tabler-icons.subset.woff2')
+OUT_FILLED_FONT = os.path.join(FONTS, 'tabler-icons-filled.subset.woff2')
+
+RULE = re.compile(r'\.ti-([a-z0-9-]+):before\{content:"\\([0-9a-fA-F]+)"\}')
 
 
-def main():
-    html = open(HTML, encoding='utf-8').read()
-    css = open(SRC_CSS, encoding='utf-8').read()
+def fetch(path, dest):
+    """curl rather than urllib: this machine's Python has no CA bundle."""
+    if os.path.exists(dest):
+        return
+    os.makedirs(os.path.dirname(dest), exist_ok=True)
+    print(f"  fetching {os.path.basename(dest)} ({TABLER_VERSION})")
+    subprocess.run(['curl', '-sfL', f'{CDN}/{path}', '-o', dest], check=True)
 
-    used = sorted(set(re.findall(r'\bti-([a-z0-9-]+)\b', html)))
-    mapping = dict(re.findall(r'\.ti-([a-z0-9-]+):before\{content:"\\([0-9a-fA-F]+)"\}', css))
-    found = {u: mapping[u] for u in used if u in mapping}
-    missing = [u for u in used if u not in mapping]
 
-    if missing:
-        print(f"  ! {len(missing)} icon name(s) not in the Tabler set: {', '.join(missing[:8])}")
-
-    # Subset the font to just those glyphs.
+def subset_font(src, codes, out):
     from fontTools import subset
     subset.main([
-        SRC_FONT,
-        '--unicodes=' + ','.join('U+' + c.upper() for c in found.values()),
-        '--flavor=woff2', '--output-file=' + OUT_FONT,
+        src,
+        '--unicodes=' + ','.join('U+' + c.upper() for c in codes),
+        '--flavor=woff2', '--output-file=' + out,
         '--no-hinting', '--desubroutinize',
         '--layout-features=', '--name-IDs=', '--notdef-outline',
     ])
 
-    # Rebuild the stylesheet with only what is needed.
-    rules = '\n'.join(f'.ti-{name}:before{{content:"\\{code}"}}'
-                      for name, code in sorted(found.items()))
+
+def main():
+    fetch('tabler-icons.min.css', SRC_CSS)
+    fetch('fonts/tabler-icons.woff2', SRC_FONT)
+    fetch('tabler-icons-filled.min.css', SRC_FILLED_CSS)
+    fetch('fonts/tabler-icons-filled.woff2', SRC_FILLED_FONT)
+
+    html = open(HTML, encoding='utf-8').read()
+    outline_map = dict(RULE.findall(open(SRC_CSS, encoding='utf-8').read()))
+    filled_map = dict(RULE.findall(open(SRC_FILLED_CSS, encoding='utf-8').read()))
+
+    used = sorted(set(re.findall(r'\bti-([a-z0-9-]+)\b', html)))
+    outline, filled, missing = {}, {}, []
+    for u in used:
+        if u in outline_map:
+            outline[u] = outline_map[u]
+        elif u.endswith('-filled') and u[:-len('-filled')] in filled_map:
+            filled[u] = filled_map[u[:-len('-filled')]]
+        else:
+            missing.append(u)
+
+    if missing:
+        print(f"  ! {len(missing)} name(s) not found in Tabler {TABLER_VERSION}: {', '.join(missing[:10])}")
+
+    subset_font(SRC_FONT, outline.values(), OUT_FONT)
+    if filled:
+        subset_font(SRC_FILLED_FONT, filled.values(), OUT_FILLED_FONT)
+
+    rules = '\n'.join(f'.ti-{n}:before{{content:"\\{c}"}}' for n, c in sorted(outline.items()))
+    filled_rules = '\n'.join(
+        f".ti-{n}:before{{content:\"\\{c}\";font-family:'tabler-icons-filled' !important}}"
+        for n, c in sorted(filled.items()))
+    filled_face = """
+@font-face {
+  font-family: 'tabler-icons-filled';
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url('fonts/tabler-icons-filled.subset.woff2') format('woff2');
+}""" if filled else ''
+
     out = f"""/* Generated by scripts/build-icons.py — do not edit by hand.
-   Tabler Icons, subset to the {len(found)} icons this app uses.
+   Tabler Icons {TABLER_VERSION}, subset to the {len(outline) + len(filled)} icons this app uses.
    Re-run the script after adding a new icon or it will render as a blank box. */
 @font-face {{
   font-family: 'tabler-icons';
@@ -56,7 +114,7 @@ def main():
   font-weight: 400;
   font-display: block;
   src: url('fonts/tabler-icons.subset.woff2') format('woff2');
-}}
+}}{filled_face}
 .ti {{
   font-family: 'tabler-icons' !important;
   speak: never;
@@ -69,12 +127,15 @@ def main():
   -moz-osx-font-smoothing: grayscale;
 }}
 {rules}
+{filled_rules}
 """
     open(OUT_CSS, 'w', encoding='utf-8').write(out)
 
-    print(f"  icons used : {len(found)}")
+    print(f"  icons used : {len(outline)} outline + {len(filled)} filled")
     print(f"  css        : {os.path.getsize(SRC_CSS):>9,} → {os.path.getsize(OUT_CSS):>7,} bytes")
     print(f"  font       : {os.path.getsize(SRC_FONT):>9,} → {os.path.getsize(OUT_FONT):>7,} bytes")
+    if filled:
+        print(f"  filled     : {os.path.getsize(SRC_FILLED_FONT):>9,} → {os.path.getsize(OUT_FILLED_FONT):>7,} bytes")
 
 
 if __name__ == '__main__':

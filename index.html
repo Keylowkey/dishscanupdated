@@ -4010,6 +4010,67 @@
   .cw-opt.active .cw-warn { color: #fff; }
   .cook-with-note { margin-top: 10px; font-size: 13.5px; line-height: 1.5; color: var(--text2); }
 
+  /* ── Video posts in the feed ── */
+  .feed-video { position: relative; cursor: pointer; }
+  .feed-video .feed-image { pointer-events: none; }
+  .feed-video-play {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 62px; height: 62px; border-radius: 50%;
+    background: rgba(0,0,0,.55); color: #fff; font-size: 30px;
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid rgba(255,255,255,.85);
+  }
+  .feed-video-tag {
+    position: absolute; top: 12px; left: 12px; padding: 4px 9px; border-radius: 999px;
+    background: rgba(0,0,0,.6); color: #fff; font-size: 12px; font-weight: 700;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .feed-reels-btn {
+    flex-shrink: 0; height: 44px; padding: 0 14px; border-radius: var(--radius);
+    border: 2px solid var(--ink); background: var(--sage); color: #fff;
+    font: inherit; font-weight: 800; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px;
+    box-shadow: 2px 2px 0 var(--ink-shadow);
+  }
+
+  /* ── Reels viewer ── */
+  .reels-overlay {
+    position: fixed; inset: 0; z-index: 9000; background: #000;
+    display: none;
+  }
+  .reels-overlay.open { display: block; }
+  .reels-track {
+    height: 100%; overflow-y: scroll; scroll-snap-type: y mandatory;
+    -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+  }
+  .reel {
+    position: relative; height: 100%; width: 100%;
+    scroll-snap-align: start; scroll-snap-stop: always;
+    display: flex; align-items: center; justify-content: center; background: #000;
+  }
+  .reel video { width: 100%; height: 100%; object-fit: contain; background: #000; }
+  .reel-info {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    padding: 60px 18px calc(22px + env(safe-area-inset-bottom));
+    background: linear-gradient(transparent, rgba(0,0,0,.75));
+    color: #fff; pointer-events: none;
+  }
+  .reel-user { font-weight: 800; font-size: 15px; pointer-events: auto; cursor: pointer; }
+  .reel-caption { margin-top: 6px; font-size: 14px; line-height: 1.45; opacity: .95; }
+  .reel-paused {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    font-size: 64px; color: rgba(255,255,255,.85); pointer-events: none; display: none;
+  }
+  .reel.is-paused .reel-paused { display: block; }
+  .reels-close, .reels-mute {
+    position: absolute; z-index: 2; width: 44px; height: 44px; border-radius: 50%;
+    border: none; background: rgba(0,0,0,.5); color: #fff; font-size: 22px;
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+  }
+  .reels-close { top: calc(14px + env(safe-area-inset-top)); left: 14px; }
+  .reels-mute { top: calc(14px + env(safe-area-inset-top)); right: 14px; }
+  .reels-empty { color: #fff; text-align: center; padding: 40vh 24px 0; opacity: .8; }
+
   /* ── Ingredients: sticker chips ── */
   .ingredient-item {
     background: var(--surface);
@@ -5043,22 +5104,27 @@
     <div class="composer" id="composer">
       <div class="composer-head">
         <div class="composer-title">Share what you made</div>
-        <div class="composer-sub">Share a dish or just say something — photos must be food, and every post is checked 🍽️</div>
+        <div class="composer-sub">Share a dish, a cooking video, or just say something — photos and videos must be about food, and every post is checked 🍽️</div>
       </div>
       <div class="composer-preview-wrap" id="composerPreviewWrap" style="display:none;">
         <img id="composerPreview" class="composer-preview" alt="Your dish" />
+        <video id="composerVideoPreview" class="composer-preview" playsinline muted loop controls style="display:none;"></video>
         <button class="change-btn composer-remove" onclick="clearComposerImage()">Remove</button>
       </div>
       <textarea class="composer-caption" id="composerCaption" placeholder="Share a dish, ask for a recipe, or get recommendations…" maxlength="300" oninput="updateShareBtnState()"></textarea>
       <div class="composer-actions">
         <button class="upload-action-btn" onclick="document.getElementById('postFileInput').click()">
-          <i class="ti ti-photo"></i> Add food photo
+          <i class="ti ti-photo"></i> Photo
+        </button>
+        <button class="upload-action-btn" onclick="document.getElementById('postVideoInput').click()">
+          <i class="ti ti-video"></i> Video
         </button>
         <button class="composer-share-btn" id="shareBtn" onclick="sharePost()" disabled>
           <i class="ti ti-send"></i> Share
         </button>
       </div>
       <input type="file" id="postFileInput" accept="image/*" style="display:none;" />
+      <input type="file" id="postVideoInput" accept="video/*" style="display:none;" />
       <div class="error-banner" id="composerError"></div>
     </div>
 
@@ -5067,6 +5133,9 @@
         <option value="public">Public</option>
         <option value="following">Following</option>
       </select>
+      <button class="feed-reels-btn" id="feedReelsBtn" onclick="openReels()" style="display:none;">
+        <i class="ti ti-player-play"></i> Reels
+      </button>
       <button class="feed-requests-btn" id="feedRequestsBtn" onclick="openFollowRequests()" title="Follow requests">
         <i class="ti ti-user-plus"></i>
         <span class="feed-requests-badge" id="feedRequestsBadge" style="display:none;">0</span>
@@ -5381,6 +5450,7 @@
   <div class="support-card" style="padding:0;overflow:hidden;max-width:440px;">
     <button class="support-close" onclick="closePostViewer()" aria-label="Close" style="z-index:2;background:rgba(0,0,0,0.4);color:#fff;"><i class="ti ti-x"></i></button>
     <div id="postViewerImg" style="width:100%;aspect-ratio:4/5;background-size:cover;background-position:center;background-color:var(--surface2);"></div>
+    <video id="postViewerVideo" playsinline loop controls style="display:none;width:100%;aspect-ratio:4/5;background:#000;object-fit:contain;"></video>
     <div style="padding:14px 16px;">
       <div id="postViewerViews" style="font-size:13px;color:var(--text3);font-weight:600;margin-bottom:6px;"><i class="ti ti-eye" style="vertical-align:-2px;"></i> — views</div>
       <div id="postViewerCaption" style="font-size:14px;color:var(--text);line-height:1.45;"></div>
@@ -5612,6 +5682,15 @@
     </div>
     <div class="allergy-results" id="mkResults"></div>
   </div>
+</div>
+
+<!-- Reels: full-screen, swipe up and down through the feed's videos -->
+<div class="reels-overlay" id="reelsOverlay" aria-hidden="true">
+  <div class="reels-track" id="reelsTrack"></div>
+  <button class="reels-close" onclick="closeReels()" aria-label="Close"><i class="ti ti-x"></i></button>
+  <button class="reels-mute" id="reelsMute" onclick="toggleReelsMute()" aria-label="Sound">
+    <i class="ti ti-volume-off"></i>
+  </button>
 </div>
 
 <!-- Shown before switching to an appliance that changes how the dish turns out -->
@@ -6364,11 +6443,16 @@
           const top = modals[modals.length - 1];
           // The appliance warning is waiting on an answer; back means "keep it".
           if (top.id === 'methodWarnModal' && typeof closeMethodWarn === 'function') { closeMethodWarn(false); return; }
+          top.querySelectorAll('video').forEach(v => v.pause());
           top.classList.remove('open');
           return;
         }
 
-        // 3. The account menu.
+        // 3. Reels is full-screen; back closes it rather than leaving the app.
+        const reels = document.getElementById('reelsOverlay');
+        if (reels && reels.classList.contains('open') && typeof closeReels === 'function') { closeReels(); return; }
+
+        // 4. The account menu.
         const dd = document.getElementById('userDropdown');
         if (dd && dd.classList.contains('open')) { dd.classList.remove('open'); return; }
 
@@ -10888,6 +10972,7 @@
   // ════════════════ COMMUNITY (Social Phase 1) ════════════════
   let myUsername = null;
   let composerImage = null;          // { dataUrl, base64, mediaType }
+  let composerVideo = null;          // { file, url, duration, posterDataUrl, frames }
   let myReactions = {};              // post_id -> type
 
   function escapeText(s) {
@@ -11005,6 +11090,7 @@
   document.getElementById('postFileInput').addEventListener('change', async function (e) {
     const file = e.target.files[0]; if (!file) return;
     hideComposerError();
+    clearComposerImage();                 // one attachment at a time
     try {
       composerImage = await processImage(file);
       document.getElementById('composerPreview').src = composerImage.dataUrl;
@@ -11015,8 +11101,107 @@
     }
   });
 
+  // ── Video posts ──
+  // The file goes to Supabase Storage (bucket post-videos); the post row keeps
+  // its URL plus a still frame in image_url, so builds that predate video show
+  // that frame as a normal photo. Screening samples four frames across the clip.
+  const VIDEO_MAX_BYTES = 50 * 1024 * 1024;   // the storage bucket's own limit
+  const VIDEO_MAX_SECONDS = 60;
+  const VIDEO_TYPES = ['video/mp4', 'video/quicktime', 'video/webm', 'video/x-m4v'];
+
+  function loadVideoForFrames(url) {
+    return new Promise((resolve, reject) => {
+      const v = document.createElement('video');
+      v.muted = true; v.playsInline = true; v.preload = 'auto';
+      v.setAttribute('playsinline', ''); v.setAttribute('muted', '');
+      let settled = false;
+      const ok = () => { if (!settled) { settled = true; clearTimeout(t); resolve(v); } };
+      const fail = (m) => { if (!settled) { settled = true; clearTimeout(t); reject(new Error(m)); } };
+      const t = setTimeout(() => fail('Could not read that video.'), 20000);
+      v.onloadeddata = ok;
+      v.onerror = () => fail('That video format isn’t supported. Try an MP4 or MOV.');
+      v.src = url;
+      v.load();
+      // Some WebViews won't decode a frame until playback starts.
+      setTimeout(() => { if (!settled) v.play().then(() => v.pause()).catch(() => {}); }, 1500);
+    });
+  }
+  function seekVideo(v, time) {
+    return new Promise(resolve => {
+      const done = () => { v.removeEventListener('seeked', done); resolve(); };
+      v.addEventListener('seeked', done);
+      v.currentTime = time;
+      setTimeout(done, 4000);   // a seek near the end sometimes never reports back
+    });
+  }
+  function grabVideoFrame(v, maxW, quality) {
+    const scale = Math.min(1, maxW / v.videoWidth);
+    const c = document.createElement('canvas');
+    c.width = Math.round(v.videoWidth * scale);
+    c.height = Math.round(v.videoHeight * scale);
+    c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
+    return c.toDataURL('image/jpeg', quality);
+  }
+
+  async function prepareVideo(file) {
+    const ext = ((file.name || '').match(/\.([a-z0-9]+)$/i) || [, ''])[1].toLowerCase();
+    const typeOk = file.type ? VIDEO_TYPES.includes(file.type) : ['mp4', 'mov', 'm4v', 'webm'].includes(ext);
+    if (!typeOk) throw new Error('Please choose an MP4 or MOV video.');
+    if (file.size > VIDEO_MAX_BYTES) throw new Error('That video is over 50 MB. Try a shorter clip.');
+
+    const url = URL.createObjectURL(file);
+    try {
+      const v = await loadVideoForFrames(url);
+      const d = v.duration;
+      if (!isFinite(d) || d <= 0 || !v.videoWidth) throw new Error('Could not read that video.');
+      if (d > VIDEO_MAX_SECONDS + 0.5) throw new Error('Videos can be up to 60 seconds long.');
+
+      const frames = [];
+      for (const f of [0.1, 0.35, 0.6, 0.9]) {
+        await seekVideo(v, Math.min(d - 0.05, d * f));
+        frames.push({ data: grabVideoFrame(v, 512, 0.7).split(',')[1], media_type: 'image/jpeg' });
+      }
+      await seekVideo(v, Math.min(d - 0.05, Math.max(0.5, d * 0.1)));
+      const posterDataUrl = grabVideoFrame(v, 720, 0.75);
+      v.removeAttribute('src'); v.load();
+      return { file, url, duration: d, posterDataUrl, frames, ext };
+    } catch (e) {
+      URL.revokeObjectURL(url);
+      throw e;
+    }
+  }
+
+  document.getElementById('postVideoInput').addEventListener('change', async function (e) {
+    const file = e.target.files[0]; if (!file) return;
+    hideComposerError();
+    clearComposerImage();                 // one attachment at a time
+    const shareBtn = document.getElementById('shareBtn');
+    shareBtn.disabled = true;
+    shareBtn.innerHTML = '<i class="ti ti-loader-2"></i> Reading video…';
+    try {
+      composerVideo = await prepareVideo(file);
+      const pv = document.getElementById('composerVideoPreview');
+      pv.src = composerVideo.url;
+      pv.style.display = 'block';
+      document.getElementById('composerPreview').style.display = 'none';
+      document.getElementById('composerPreviewWrap').style.display = 'block';
+    } catch (err) {
+      composerVideo = null;
+      showComposerError(err.message || 'Could not read that video.');
+    } finally {
+      e.target.value = '';
+      shareBtn.innerHTML = '<i class="ti ti-send"></i> Share';
+      updateShareBtnState();
+    }
+  });
+
   function clearComposerImage() {
     composerImage = null;
+    if (composerVideo && composerVideo.url) URL.revokeObjectURL(composerVideo.url);
+    composerVideo = null;
+    const pv = document.getElementById('composerVideoPreview');
+    if (pv) { pv.pause(); pv.removeAttribute('src'); pv.load(); pv.style.display = 'none'; }
+    document.getElementById('composerPreview').style.display = '';
     document.getElementById('composerPreviewWrap').style.display = 'none';
     document.getElementById('postFileInput').value = '';
     updateShareBtnState();
@@ -11033,7 +11218,7 @@
     const captionNow = document.getElementById('composerCaption').value.trim();
     // A post needs a photo, some text, or both — text-only is fine for
     // "anyone have a good recipe for…" style posts.
-    if ((!composerImage && !captionNow) || !myUsername) return;
+    if ((!composerImage && !composerVideo && !captionNow) || !myUsername) return;
     const btn = document.getElementById('shareBtn');
     btn.disabled = true;
     hideComposerError();
@@ -11041,13 +11226,15 @@
       // 1. Content gate. Photos must be food; both words and photos are
       //    screened for sexual, political, criminal, hateful and violent
       //    content. Text-only posts used to skip this entirely.
-      if (composerImage || captionNow) {
-        btn.innerHTML = '<i class="ti ti-loader-2"></i> ' + (composerImage ? 'Checking photo…' : 'Checking…');
+      if (composerImage || composerVideo || captionNow) {
+        btn.innerHTML = '<i class="ti ti-loader-2"></i> ' +
+          (composerVideo ? 'Checking video…' : composerImage ? 'Checking photo…' : 'Checking…');
         const vBody = { text: captionNow || '' };
         if (composerImage) {
           vBody.image_data = composerImage.base64;
           vBody.media_type = composerImage.mediaType;
         }
+        if (composerVideo) vBody.frames = composerVideo.frames;
         const vRes = await fetch('/api/verify-food', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -11055,28 +11242,51 @@
         });
         const verdict = await vRes.json();
         if (!vRes.ok) throw new Error(verdict.error || 'Could not check that post.');
-        const passed = composerImage ? verdict.isFood === true : verdict.ok === true;
+        const passed = (composerImage || composerVideo) ? verdict.isFood === true : verdict.ok === true;
         if (!passed) {
           showComposerError(verdict.reason ||
-            (composerImage ? 'Only food photos can be shared. Please choose a photo of food.'
-                           : "That post can't be shared here."));
+            (composerVideo ? 'Only food and cooking videos can be shared.'
+              : composerImage ? 'Only food photos can be shared. Please choose a photo of food.'
+              : "That post can't be shared here."));
           return;
         }
       }
 
+      // 2a. A video goes to storage first; the post only records its URL.
+      let videoUrl = null, videoPath = null;
+      if (composerVideo) {
+        btn.innerHTML = '<i class="ti ti-loader-2"></i> Uploading video…';
+        const ext = composerVideo.ext === 'mov' ? 'mov' : composerVideo.ext === 'webm' ? 'webm' : 'mp4';
+        const contentType = ext === 'mov' ? 'video/quicktime' : ext === 'webm' ? 'video/webm' : 'video/mp4';
+        videoPath = currentUser.id + '/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
+        const up = await supaClient.storage.from('post-videos')
+          .upload(videoPath, composerVideo.file, { contentType, upsert: false });
+        if (up.error) throw new Error('Could not upload the video. Please try again.');
+        videoUrl = supaClient.storage.from('post-videos').getPublicUrl(videoPath).data.publicUrl;
+      }
+
       // 2. Post it
       btn.innerHTML = '<i class="ti ti-loader-2"></i> Sharing…';
-      const { error } = await supaClient.from('posts').insert({
+      const row = {
         user_id: currentUser.id,
         username: myUsername,
         author_avatar: (currentUser?.user_metadata?.avatar_photo || null),
         // posts.image_url is NOT NULL in the database, so a text-only post
         // stores an empty string. It's falsy everywhere we check for a photo,
         // so the feed and profile grid treat it exactly like "no image".
-        image_url: composerImage ? composerImage.dataUrl : '',
+        image_url: composerImage ? composerImage.dataUrl
+                 : composerVideo ? composerVideo.posterDataUrl : '',
         caption: captionNow || null
-      });
-      if (error) throw error;
+      };
+      // Only name video_url when there is one, so photo and text posts keep
+      // working even before the video migration has been run.
+      if (videoUrl) row.video_url = videoUrl;
+      const { error } = await supaClient.from('posts').insert(row);
+      if (error) {
+        // Don't leave an orphaned file behind when the post itself failed.
+        if (videoPath) supaClient.storage.from('post-videos').remove([videoPath]).catch(() => {});
+        throw error;
+      }
 
       clearComposerImage();
       document.getElementById('composerCaption').value = '';
@@ -11096,7 +11306,7 @@
     const btn = document.getElementById('shareBtn');
     if (!btn) return;
     const hasText = (document.getElementById('composerCaption')?.value || '').trim().length > 0;
-    btn.disabled = !(composerImage || hasText);
+    btn.disabled = !(composerImage || composerVideo || hasText);
   }
 
   // ── Feed ──
@@ -11228,7 +11438,14 @@
               '<div><div class="feed-username" ' + (p.user_id ? 'onclick="openUserProfile(\'' + p.user_id + '\')" style="cursor:pointer;"' : '') + '>@' + escapeText(shownName) + '</div>' +
               '<div class="feed-time">' + when + '</div></div>' + menu +
             '</div>' +
-            (p.image_url
+            (p.video_url
+              ? '<div class="feed-video" onclick="openReels(\'' + p.id + '\')">' +
+                  '<img class="feed-image" src="' + (p.image_url || '') + '" alt="Cooking video" loading="lazy" />' +
+                  '<span class="feed-video-play"><i class="ti ti-player-play"></i></span>' +
+                  '<span class="feed-video-tag"><i class="ti ti-video"></i> Video</span>' +
+                '</div>' +
+                '<div class="feed-views" id="views-' + p.id + '"><i class="ti ti-eye" style="vertical-align:-2px;"></i> <span id="viewCount-' + p.id + '">—</span> views</div>'
+            : p.image_url
               ? '<img class="feed-image" src="' + p.image_url + '" alt="Food photo" loading="lazy" onclick="openFeedPost(\'' + p.id + '\')" style="cursor:pointer;" />' +
                 '<div class="feed-views" id="views-' + p.id + '"><i class="ti ti-eye" style="vertical-align:-2px;"></i> <span id="viewCount-' + p.id + '">—</span> views</div>'
               : '') +
@@ -11249,6 +11466,9 @@
       // Stash feed posts so the full-screen viewer can open them.
       window.__feedPosts = {};
       posts.forEach(p => { window.__feedPosts[p.id] = p; });
+      // Feed order of the video posts, for swiping through them in Reels.
+      window.__feedVideoIds = posts.filter(p => p.video_url).map(p => p.id);
+      updateReelsButton();
       // Load view counts for all visible posts in one call.
       loadFeedViewCounts(posts.map(p => p.id));
     } catch (e) {
@@ -11274,7 +11494,7 @@
   async function openFeedPost(postId) {
     const p = (window.__feedPosts || {})[postId];
     if (!p) return;
-    document.getElementById('postViewerImg').style.background = "center/cover no-repeat url('" + p.image_url + "')";
+    setPostViewerMedia(p);
     document.getElementById('postViewerCaption').textContent = p.caption || '';
     document.getElementById('postViewerViews').innerHTML = '<i class="ti ti-eye" style="vertical-align:-2px;"></i> … views';
     document.getElementById('postViewerModal').classList.add('open');
@@ -11337,6 +11557,115 @@
   // Record that this user has seen a post. Safe to call repeatedly — the
   // server upserts on (post_id, viewer_id), so a view is only ever counted
   // once per person no matter how many times they react or re-react.
+  // ── Reels ──
+  // Full-screen vertical swiping through the feed's video posts. Only the reel
+  // on screen and its two neighbours hold a src, so opening Reels never
+  // downloads every video in the feed at once. A reel counts as a view the
+  // first time it plays, the same as reacting to a post does.
+  let reelsObserver = null;
+  let reelsMuted = true;       // autoplay is only allowed muted
+  let reelsViewed = {};
+
+  function updateReelsButton() {
+    const b = document.getElementById('feedReelsBtn');
+    if (b) b.style.display = (window.__feedVideoIds || []).length ? '' : 'none';
+  }
+
+  function openReels(startId) {
+    const ids = window.__feedVideoIds || [];
+    const posts = window.__feedPosts || {};
+    const track = document.getElementById('reelsTrack');
+    track.innerHTML = ids.length ? ids.map(id => {
+      const p = posts[id] || {};
+      return '<div class="reel" data-id="' + id + '">' +
+          '<video playsinline loop preload="none" data-src="' + escapeText(p.video_url || '') + '"' +
+            (p.image_url ? ' poster="' + p.image_url + '"' : '') + '></video>' +
+          '<i class="ti ti-player-play reel-paused"></i>' +
+          '<div class="reel-info">' +
+            (p.user_id
+              ? '<div class="reel-user" onclick="closeReels(); openUserProfile(\'' + p.user_id + '\')">@' + escapeText(p.username || 'user') + '</div>'
+              : '<div class="reel-user">@' + escapeText(p.username || 'user') + '</div>') +
+            (p.caption ? '<div class="reel-caption">' + escapeText(p.caption) + '</div>' : '') +
+          '</div>' +
+        '</div>';
+    }).join('') : '<div class="reels-empty">No videos yet.</div>';
+
+    // Tap a reel to pause or resume it.
+    track.querySelectorAll('.reel').forEach(r => {
+      r.addEventListener('click', e => {
+        if (e.target.closest('.reel-user')) return;
+        const v = r.querySelector('video');
+        if (!v) return;
+        if (v.paused) { v.play().catch(() => {}); r.classList.remove('is-paused'); }
+        else { v.pause(); r.classList.add('is-paused'); }
+      });
+    });
+
+    const ov = document.getElementById('reelsOverlay');
+    ov.classList.add('open');
+    ov.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    setReelsMuteIcon();
+    if (!ids.length) return;
+
+    const startIdx = Math.max(0, ids.indexOf(startId));
+    track.scrollTop = startIdx * track.clientHeight;
+
+    if (reelsObserver) reelsObserver.disconnect();
+    reelsObserver = new IntersectionObserver(entries => {
+      entries.forEach(en => { if (en.isIntersecting) activateReel(en.target); });
+    }, { root: track, threshold: 0.6 });
+    track.querySelectorAll('.reel').forEach(r => reelsObserver.observe(r));
+    activateReel(track.querySelectorAll('.reel')[startIdx]);
+  }
+
+  function activateReel(reel) {
+    if (!reel) return;
+    const reels = Array.from(document.querySelectorAll('#reelsTrack .reel'));
+    const idx = reels.indexOf(reel);
+    reels.forEach((r, i) => {
+      const v = r.querySelector('video');
+      if (!v) return;
+      if (Math.abs(i - idx) <= 1) {
+        if (!v.getAttribute('src') && v.dataset.src) { v.preload = 'auto'; v.src = v.dataset.src; }
+      } else if (v.getAttribute('src')) {
+        v.pause(); v.removeAttribute('src'); v.load();
+      }
+      if (i !== idx) { v.pause(); r.classList.remove('is-paused'); }
+    });
+    const v = reel.querySelector('video');
+    if (!v) return;
+    v.muted = reelsMuted;
+    try { v.currentTime = 0; } catch (e) {}
+    reel.classList.remove('is-paused');
+    v.play().catch(() => reel.classList.add('is-paused'));
+    const id = reel.dataset.id;
+    if (id && !reelsViewed[id]) { reelsViewed[id] = true; recordPostView(id); }
+  }
+
+  function closeReels() {
+    const ov = document.getElementById('reelsOverlay');
+    if (!ov || !ov.classList.contains('open')) return;
+    if (reelsObserver) { reelsObserver.disconnect(); reelsObserver = null; }
+    document.querySelectorAll('#reelsTrack video').forEach(v => { v.pause(); v.removeAttribute('src'); v.load(); });
+    document.getElementById('reelsTrack').innerHTML = '';
+    ov.classList.remove('open');
+    ov.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+    reelsViewed = {};
+  }
+
+  function toggleReelsMute() {
+    reelsMuted = !reelsMuted;
+    document.querySelectorAll('#reelsTrack video').forEach(v => { v.muted = reelsMuted; });
+    setReelsMuteIcon();
+  }
+  function setReelsMuteIcon() {
+    const b = document.getElementById('reelsMute');
+    // Both class names spelled out in full so scripts/build-icons.py finds them.
+    if (b) b.innerHTML = '<i class="ti ' + (reelsMuted ? 'ti-volume-off' : 'ti-volume') + '"></i>';
+  }
+
   async function recordPostView(postId) {
     try {
       const { data: sess } = await supaClient.auth.getSession();
@@ -11618,8 +11947,12 @@
   async function deletePost(postId) {
     if (!confirm('Delete this post? This cannot be undone.')) return;
     try {
+      const post = (window.__feedPosts || {})[postId];
       const { error } = await supaClient.from('posts').delete().eq('id', postId);
       if (error) throw error;
+      // A video post also has a file in storage; remove it with the post.
+      const m = post && post.video_url && post.video_url.match(/\/post-videos\/(.+)$/);
+      if (m) supaClient.storage.from('post-videos').remove([decodeURIComponent(m[1])]).catch(() => {});
       showToast('Post deleted');
       loadFeed();
     } catch (e) { showToast('Could not delete post.'); }
@@ -11929,7 +12262,9 @@
           '<div class="vp-post-grid">' +
           posts.filter(p => p.image_url).map(p =>
             '<div class="vp-post-cell" onclick="openViewedPost(\'' + p.id + '\')" ' +
-            'style="background:center/cover no-repeat url(\'' + p.image_url + '\');"></div>'
+            'style="position:relative;background:center/cover no-repeat url(\'' + p.image_url + '\');">' +
+            (p.video_url ? '<i class="ti ti-player-play" style="position:absolute;top:6px;right:6px;color:#fff;font-size:18px;text-shadow:0 1px 4px rgba(0,0,0,.6);"></i>' : '') +
+            '</div>'
           ).join('') +
           '</div>';
       }
@@ -12000,7 +12335,7 @@
   async function openViewedPost(postId) {
     const p = (window.__viewedPosts || {})[postId];
     if (!p) { showToast('Could not open that post.'); return; }
-    document.getElementById('postViewerImg').style.background = "center/cover no-repeat url('" + p.image_url + "')";
+    setPostViewerMedia(p);
     document.getElementById('postViewerCaption').textContent = p.caption || '';
     document.getElementById('postViewerViews').textContent = '— views';
     document.getElementById('postViewerModal').classList.add('open');
@@ -12019,7 +12354,26 @@
       }
     } catch (e) { document.getElementById('postViewerViews').textContent = ''; }
   }
+  // The viewer shows either a still photo or a playing video.
+  function setPostViewerMedia(p) {
+    const img = document.getElementById('postViewerImg');
+    const vid = document.getElementById('postViewerVideo');
+    if (p && p.video_url) {
+      img.style.display = 'none';
+      vid.poster = p.image_url || '';
+      vid.src = p.video_url;
+      vid.style.display = 'block';
+      vid.play().catch(() => {});
+    } else {
+      vid.pause(); vid.removeAttribute('src'); vid.load(); vid.style.display = 'none';
+      img.style.display = '';
+      img.style.background = "center/cover no-repeat url('" + (p && p.image_url || '') + "')";
+    }
+  }
+
   function closePostViewer() {
+    const vid = document.getElementById('postViewerVideo');
+    if (vid) { vid.pause(); vid.removeAttribute('src'); vid.load(); }
     document.getElementById('postViewerModal').classList.remove('open');
   }
 
