@@ -25,7 +25,10 @@ const DISALLOWED = `Reject anything that is:
   for wrongdoing, or content promoting any of it
 - Hateful, harassing, or demeaning toward a person or group
 - Violent, gory, or self-harm related
-- Spam, scams, advertising, or links to off-app commerce`;
+- Spam or scams, advertising for anything that is NOT food or drink, or links
+  sending people off the app to buy something
+  (Showing, reviewing or promoting a food or drink product, brand, restaurant,
+  or home food business IS allowed — that is welcome here.)`;
 
 async function ask(key, system, content, maxTokens = 250) {
   const r = await fetch('https://api.anthropic.com/v1/messages', {
@@ -105,8 +108,10 @@ Respond ONLY with raw JSON: {"ok": true} or {"ok": false, "reason": "short frien
 still frames sampled in order across ONE video.
 
 Allow videos about food and cooking: cooking or baking, prepping ingredients,
-plating, tasting, a finished dish, a restaurant meal or food market, and a
-person talking to camera about food. People may be on screen.
+plating, tasting, a finished dish, a restaurant meal or food market, a person
+talking to camera about food, and packaged or branded food and drink, such as
+a snack review, a taste test, an unboxing, or a promotion for a food or drink
+product. People may be on screen.
 
 Reject the whole video if ANY frame shows:
 ${DISALLOWED}
@@ -136,15 +141,19 @@ Respond ONLY with raw JSON: {"isFood": true} or {"isFood": false, "reason": "sho
     if (!media_type) return res.status(400).json({ error: 'Missing image.' });
     const verdict = await ask(ANTHROPIC_KEY,
 `You are a strict content gate for a food-sharing app. The image must be
-primarily a photo of FOOD or DRINK — a dish, meal, ingredients, baked goods,
-or a beverage. People may appear incidentally (a hand holding a plate) but food
-must be the clear subject.
+primarily about FOOD or DRINK — a dish, meal, ingredients, baked goods, or a
+beverage. Packaged and branded food and drink count too: snacks, grocery
+products, bottles and cans, fast-food bags and boxes, and product shots or
+promotional images for a food or drink product. Packaging, labels and logos are
+fine when the product is food or drink. People may appear incidentally (a hand
+holding a plate) but food or drink must be the clear subject.
 
 Also reject, even when food is present:
 ${DISALLOWED}
 
 Not acceptable either: selfies or portraits, people as the subject, pets,
-screenshots, memes, text images, scenery, or unrelated objects.
+screenshots of apps or chats, memes, images that are only text, scenery, or
+unrelated objects.
 
 Respond ONLY with raw JSON: {"isFood": true} or {"isFood": false, "reason": "short friendly reason"}`,
       [
