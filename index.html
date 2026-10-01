@@ -11261,7 +11261,16 @@
         videoPath = currentUser.id + '/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
         const up = await supaClient.storage.from('post-videos')
           .upload(videoPath, composerVideo.file, { contentType, upsert: false });
-        if (up.error) throw new Error('Could not upload the video. Please try again.');
+        if (up.error) {
+          // Say why — a generic "try again" hid a missing bucket during testing.
+          const why = String(up.error.message || up.error.error || '');
+          console.error('Video upload failed:', up.error);
+          throw new Error(
+            /bucket not found/i.test(why) ? 'Video posting isn’t set up yet. Please try again later.'
+            : /exceed|too large|payload/i.test(why) ? 'That video is too large. Try a shorter clip (under 50 MB).'
+            : /row-level security|unauthori|jwt|permission/i.test(why) ? 'Please sign out and back in, then try again.'
+            : 'Could not upload the video' + (why ? ' (' + why + ')' : '') + '. Please try again.');
+        }
         videoUrl = supaClient.storage.from('post-videos').getPublicUrl(videoPath).data.publicUrl;
       }
 
