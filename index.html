@@ -5116,7 +5116,7 @@
         <button class="upload-action-btn" onclick="document.getElementById('postFileInput').click()">
           <i class="ti ti-photo"></i> Photo
         </button>
-        <button class="upload-action-btn" onclick="document.getElementById('postVideoInput').click()">
+        <button class="upload-action-btn" onclick="pickPostVideo()">
           <i class="ti ti-video"></i> Video
         </button>
         <button class="composer-share-btn" id="shareBtn" onclick="sharePost()" disabled>
@@ -11168,6 +11168,54 @@
     } catch (e) {
       URL.revokeObjectURL(url);
       throw e;
+    }
+  }
+
+  // On iOS and Android the video is picked and compressed natively first
+  // (VideoCompressorPlugin), because phone footage runs far past the 50 MB
+  // upload ceiling: a 35-second iPhone clip already does. Elsewhere, fall
+  // back to the plain file input and its size check.
+  function videoCompressor() {
+    const C = window.Capacitor;
+    return C && C.isPluginAvailable && C.isPluginAvailable('VideoCompressor') && C.Plugins
+      ? C.Plugins.VideoCompressor : null;
+  }
+
+  async function pickPostVideo() {
+    const VC = videoCompressor();
+    if (!VC) { document.getElementById('postVideoInput').click(); return; }
+
+    hideComposerError();
+    const shareBtn = document.getElementById('shareBtn');
+    shareBtn.disabled = true;     // no sharing a half-prepared post
+    let progress = null;
+    try {
+      progress = await VC.addListener('progress', ev => {
+        const pct = Math.max(0, Math.min(100, Math.round((ev && ev.progress || 0) * 100)));
+        shareBtn.innerHTML = '<i class="ti ti-loader-2"></i> Preparing video… ' + pct + '%';
+      });
+      const res = await VC.pickAndCompress({ maxSeconds: VIDEO_MAX_SECONDS, maxBytes: VIDEO_MAX_BYTES - 2 * 1024 * 1024 });
+      clearComposerImage();               // one attachment at a time
+      shareBtn.disabled = true;
+      shareBtn.innerHTML = '<i class="ti ti-loader-2"></i> Reading video…';
+      const blob = await (await fetch(window.Capacitor.convertFileSrc(res.path))).blob();
+      const file = new File([blob], 'video.mp4', { type: 'video/mp4' });
+      composerVideo = await prepareVideo(file);
+      const pv = document.getElementById('composerVideoPreview');
+      pv.src = composerVideo.url;
+      pv.style.display = 'block';
+      document.getElementById('composerPreview').style.display = 'none';
+      document.getElementById('composerPreviewWrap').style.display = 'block';
+    } catch (err) {
+      const code = err && err.code;
+      if (code !== 'CANCELLED') {
+        composerVideo = null;
+        showComposerError((err && err.message) || 'Could not prepare that video.');
+      }
+    } finally {
+      if (progress && progress.remove) progress.remove();
+      shareBtn.innerHTML = '<i class="ti ti-send"></i> Share';
+      updateShareBtnState();
     }
   }
 
