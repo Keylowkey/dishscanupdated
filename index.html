@@ -4071,6 +4071,64 @@
   .reels-mute { top: calc(14px + env(safe-area-inset-top)); right: 14px; }
   .reels-empty { color: #fff; text-align: center; padding: 40vh 24px 0; opacity: .8; }
 
+  /* Reels: react and comment rail */
+  .reel-info { padding-right: 84px; }      /* keep captions clear of the rail */
+  .reel-rail {
+    position: absolute; right: 10px; z-index: 2;
+    bottom: calc(110px + env(safe-area-inset-bottom));
+    display: flex; flex-direction: column; align-items: center; gap: 18px;
+  }
+  .reel-act {
+    background: none; border: none; color: #fff; font: inherit; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0;
+  }
+  .reel-act-ico {
+    width: 48px; height: 48px; border-radius: 50%;
+    background: rgba(0,0,0,.45); font-size: 25px; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .reel-act.has-mine .reel-act-ico { background: rgba(255,255,255,.92); }
+  .reel-act-n { font-size: 12.5px; font-weight: 700; text-shadow: 0 1px 3px rgba(0,0,0,.7); }
+  .reel-react-wrap { position: relative; }
+  .reel-react-pop {
+    position: absolute; right: 58px; top: 2px; display: none; gap: 2px;
+    padding: 6px 8px; border-radius: 999px; background: rgba(18,18,18,.94);
+    white-space: nowrap; box-shadow: 0 4px 18px rgba(0,0,0,.4);
+  }
+  .reel-react-pop.open { display: flex; }
+  .reel-react-pop .react-pick {
+    font-size: 26px; line-height: 1; background: none; border: none;
+    padding: 5px; border-radius: 50%; cursor: pointer;
+  }
+  .reel-react-pop .react-pick.mine { background: rgba(255,255,255,.22); }
+
+  /* Reels: comment sheet */
+  .reel-sheet-scrim { position: absolute; inset: 0; z-index: 3; background: rgba(0,0,0,.35); display: none; }
+  .reel-sheet-scrim.open { display: block; }
+  .reel-sheet {
+    position: absolute; left: 0; right: 0; bottom: 0; z-index: 4; height: 70%;
+    display: flex; flex-direction: column;
+    background: var(--surface); color: var(--text);
+    border-radius: 20px 20px 0 0; padding-bottom: env(safe-area-inset-bottom);
+    transform: translateY(100%); transition: transform .25s ease;
+  }
+  .reel-sheet.open { transform: translateY(0); }
+  .reel-sheet-head {
+    position: relative; display: flex; align-items: center; justify-content: center;
+    padding: 14px 16px; border-bottom: 1px solid var(--border); font-weight: 800;
+  }
+  .reel-sheet-close {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+    width: 40px; height: 40px; border: none; background: none;
+    color: var(--text2); font-size: 20px; cursor: pointer;
+  }
+  .reel-sheet-body {
+    flex: 1; overflow-y: auto; padding: 14px 16px;
+    -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+  }
+  .reel-sheet-input { margin: 0; padding: 10px 12px; border-top: 1px solid var(--border); background: var(--surface); }
+  .reel-sheet-loading { color: var(--text3); font-size: 13px; }
+
   /* ── Ingredients: sticker chips ── */
   .ingredient-item {
     background: var(--surface);
@@ -5691,6 +5749,16 @@
   <button class="reels-mute" id="reelsMute" onclick="toggleReelsMute()" aria-label="Sound">
     <i class="ti ti-volume-off"></i>
   </button>
+  <!-- Comments for the reel on screen; filled by openReelComments() -->
+  <div class="reel-sheet-scrim" id="reelSheetScrim" onclick="closeReelComments()"></div>
+  <div class="reel-sheet" id="reelSheet" role="dialog" aria-label="Comments">
+    <div class="reel-sheet-head">
+      <span class="reel-sheet-title">Comments</span>
+      <button class="reel-sheet-close" onclick="closeReelComments()" aria-label="Close comments"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="reel-sheet-body" id="reelSheetBody"></div>
+    <div class="comment-input-row reel-sheet-input" id="reelSheetInput"></div>
+  </div>
 </div>
 
 <!-- Shown before switching to an appliance that changes how the dish turns out -->
@@ -6448,9 +6516,15 @@
           return;
         }
 
-        // 3. Reels is full-screen; back closes it rather than leaving the app.
+        // 3. Reels is full-screen; back closes its comment sheet or reaction
+        //    picker first, then Reels itself, rather than leaving the app.
         const reels = document.getElementById('reelsOverlay');
-        if (reels && reels.classList.contains('open') && typeof closeReels === 'function') { closeReels(); return; }
+        if (reels && reels.classList.contains('open')) {
+          if (typeof reelCommentsOpen === 'function' && reelCommentsOpen()) { closeReelComments(); return; }
+          const rp = document.querySelector('.reel-react-pop.open');
+          if (rp) { rp.classList.remove('open'); return; }
+          if (typeof closeReels === 'function') { closeReels(); return; }
+        }
 
         // 4. The account menu.
         const dd = document.getElementById('userDropdown');
@@ -10974,6 +11048,17 @@
   let composerImage = null;          // { dataUrl, base64, mediaType }
   let composerVideo = null;          // { file, url, duration, posterDataUrl, frames }
   let myReactions = {};              // post_id -> type
+  // Shared by the feed and Reels.
+  const REACTS = [
+    { type:'like',    icon:'👍', label:'Like' },
+    { type:'love',    icon:'❤️', label:'Love' },
+    { type:'support', icon:'🙌', label:'Support' },
+    { type:'yum',     icon:'😋', label:'YUM' },
+    { type:'gross',   icon:'🤮', label:'Gross' },
+  ];
+  const REACT_ICON = { like:'👍', love:'❤️', support:'🙌', yum:'😋', gross:'🤮' };
+  const REACT_LABEL = { like:'Like', love:'Love', support:'Support', yum:'YUM', gross:'Gross' };
+  const emptyCounts = () => ({ like:0, love:0, support:0, yum:0, gross:0 });
 
   function escapeText(s) {
     return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -11431,27 +11516,19 @@
 
       const counts = {}; myReactions = {};
       (reactions || []).forEach(r => {
-        counts[r.post_id] = counts[r.post_id] || { like:0, love:0, support:0, yum:0 };
-        counts[r.post_id][r.type]++;
+        counts[r.post_id] = counts[r.post_id] || emptyCounts();
+        if (r.type in counts[r.post_id]) counts[r.post_id][r.type]++;
         if (currentUser && r.user_id === currentUser.id) myReactions[r.post_id] = r.type;
       });
+      window.__reactCounts = counts;     // Reels reads these too
 
-      const REACTS = [
-        { type:'like',    icon:'👍', label:'Like' },
-        { type:'love',    icon:'❤️', label:'Love' },
-        { type:'support', icon:'🙌', label:'Support' },
-        { type:'yum',     icon:'😋', label:'YUM' },
-        { type:'gross',   icon:'🤮', label:'Gross' },
-      ];
-      const REACT_ICON = { like:'👍', love:'❤️', support:'🙌', yum:'😋', gross:'🤮' };
-      const REACT_LABEL = { like:'Like', love:'Love', support:'Support', yum:'YUM', gross:'Gross' };
 
       // Map author id -> current public profile (avatar/username), if provided.
       const profMap = {};
       (window.__feedProfiles || []).forEach(pr => { profMap[pr.id] = pr; });
 
       container.innerHTML = posts.map(p => {
-        const c = counts[p.id] || { like:0, love:0, support:0, yum:0, gross:0 };
+        const c = counts[p.id] || emptyCounts();
         const mine = myReactions[p.id];
         const when = new Date(p.created_at).toLocaleDateString('en-US', { month:'short', day:'numeric' });
         const isMine = currentUser && p.user_id === currentUser.id;
@@ -11609,6 +11686,9 @@
     if (!e.target.closest('.react-trigger-wrap')) {
       document.querySelectorAll('.react-popover.open').forEach(el => el.classList.remove('open'));
     }
+    if (!e.target.closest('.reel-react-wrap')) {
+      document.querySelectorAll('.reel-react-pop.open').forEach(el => el.classList.remove('open'));
+    }
   });
 
   // Record that this user has seen a post. Safe to call repeatedly — the
@@ -11644,19 +11724,38 @@
               : '<div class="reel-user">@' + escapeText(p.username || 'user') + '</div>') +
             (p.caption ? '<div class="reel-caption">' + escapeText(p.caption) + '</div>' : '') +
           '</div>' +
+          // React and comment, like the feed card. Filled by renderReelRail().
+          '<div class="reel-rail">' +
+            '<div class="reel-react-wrap">' +
+              '<button class="reel-act" onclick="toggleReelReactPicker(event,\'' + id + '\')" aria-label="React">' +
+                '<span class="reel-act-ico" id="rlReactIco-' + id + '"></span>' +
+                '<span class="reel-act-n" id="rlReactN-' + id + '"></span>' +
+              '</button>' +
+              '<div class="reel-react-pop" id="rlReactPop-' + id + '">' +
+                REACTS.map(rx => '<button class="react-pick" title="' + rx.label + '" onclick="pickReelReaction(event,\'' + id + '\',\'' + rx.type + '\')">' + rx.icon + '</button>').join('') +
+              '</div>' +
+            '</div>' +
+            '<button class="reel-act" onclick="openReelComments(event,\'' + id + '\')" aria-label="Comments">' +
+              '<span class="reel-act-ico"><i class="ti ti-message-circle"></i></span>' +
+              '<span class="reel-act-n" id="rlCommentN-' + id + '">Comment</span>' +
+            '</button>' +
+          '</div>' +
         '</div>';
     }).join('') : '<div class="reels-empty">No videos yet.</div>';
 
     // Tap a reel to pause or resume it.
     track.querySelectorAll('.reel').forEach(r => {
       r.addEventListener('click', e => {
-        if (e.target.closest('.reel-user')) return;
+        if (e.target.closest('.reel-user, .reel-rail')) return;
         const v = r.querySelector('video');
         if (!v) return;
         if (v.paused) { v.play().catch(() => {}); r.classList.remove('is-paused'); }
         else { v.pause(); r.classList.add('is-paused'); }
       });
     });
+
+    ids.forEach(renderReelRail);
+    loadReelCommentCounts(ids);
 
     const ov = document.getElementById('reelsOverlay');
     ov.classList.add('open');
@@ -11700,9 +11799,111 @@
     if (id && !reelsViewed[id]) { reelsViewed[id] = true; recordPostView(id); }
   }
 
+  // ── Reels: reacting and commenting ──
+  // Same reactions and comments as the feed card — the same rows, functions
+  // and notifications — so activity in Reels shows on the post and vice versa.
+  function paintReelRail(postId, counts, mine) {
+    const ico = document.getElementById('rlReactIco-' + postId);
+    if (!ico) return;                        // Reels closed, or not a video post
+    const total = REACTS.reduce((n, rx) => n + (counts[rx.type] || 0), 0);
+    ico.innerHTML = mine ? REACT_ICON[mine] : '<i class="ti ti-mood-smile"></i>';
+    ico.parentElement.classList.toggle('has-mine', !!mine);
+    document.getElementById('rlReactN-' + postId).textContent = total ? String(total) : 'React';
+    document.querySelectorAll('#rlReactPop-' + postId + ' .react-pick')
+      .forEach((b, i) => b.classList.toggle('mine', REACTS[i].type === mine));
+  }
+  function renderReelRail(postId) {
+    paintReelRail(postId, (window.__reactCounts || {})[postId] || emptyCounts(), myReactions[postId]);
+  }
+
+  function toggleReelReactPicker(ev, postId) {
+    ev.stopPropagation();
+    const pop = document.getElementById('rlReactPop-' + postId);
+    if (!pop) return;
+    const isOpen = pop.classList.contains('open');
+    document.querySelectorAll('.reel-react-pop.open').forEach(el => el.classList.remove('open'));
+    if (!isOpen) pop.classList.add('open');
+  }
+
+  function pickReelReaction(ev, postId, type) {
+    ev.stopPropagation();
+    const pop = document.getElementById('rlReactPop-' + postId);
+    if (pop) pop.classList.remove('open');
+    // Show the result immediately; toggleReaction reloads the real counts and
+    // repaints. Shared state is left alone here because toggleReaction reads
+    // the current reaction to decide between insert, update and delete — and
+    // the final repaint restores the truth if the save fails.
+    const prev = myReactions[postId];
+    const c = Object.assign(emptyCounts(), (window.__reactCounts || {})[postId] || {});
+    if (prev) c[prev] = Math.max(0, c[prev] - 1);
+    const next = prev === type ? null : type;
+    if (next) c[next]++;
+    paintReelRail(postId, c, next);
+    toggleReaction(postId, type).finally(() => renderReelRail(postId));
+  }
+
+  function setReelCommentCount(postId, n) {
+    const el = document.getElementById('rlCommentN-' + postId);
+    if (el) el.textContent = n ? String(n) : 'Comment';
+  }
+  // Counted the way loadComments shows them: replies included, people you've
+  // blocked (or who blocked you) left out.
+  function countVisibleComments(rows) {
+    const blocked = window.__blockedIds;
+    const n = {};
+    (rows || []).forEach(r => {
+      if (blocked && blocked.has && blocked.has(r.user_id)) return;
+      n[r.post_id] = (n[r.post_id] || 0) + 1;
+    });
+    return n;
+  }
+  async function loadReelCommentCounts(ids) {
+    if (!ids.length) return;
+    try {
+      const { data } = await supaClient.from('post_comments')
+        .select('post_id,user_id').in('post_id', ids).limit(5000);
+      const n = countVisibleComments(data);
+      ids.forEach(id => setReelCommentCount(id, n[id] || 0));
+    } catch (e) { /* counts are decoration; the sheet still loads */ }
+  }
+  async function refreshReelCommentCount(postId) {
+    try {
+      const { data } = await supaClient.from('post_comments')
+        .select('post_id,user_id').eq('post_id', postId).limit(5000);
+      setReelCommentCount(postId, countVisibleComments(data)[postId] || 0);
+    } catch (e) { /* leave the old number */ }
+  }
+
+  function openReelComments(ev, postId) {
+    if (ev) ev.stopPropagation();
+    const q = "'" + postId + "','rl-'";
+    document.getElementById('reelSheetBody').innerHTML =
+      '<div id="rl-commentList-' + postId + '"><div class="reel-sheet-loading">Loading comments…</div></div>';
+    document.getElementById('reelSheetInput').innerHTML =
+      '<input class="comment-input" id="rl-commentInput-' + postId + '" placeholder="Add a comment…" maxlength="500"' +
+        ' onkeydown="if(event.key===\'Enter\'){addComment(' + q + ');}" />' +
+      '<button class="comment-send" onclick="addComment(' + q + ')" aria-label="Send"><i class="ti ti-send" style="font-size:15px;"></i></button>';
+    document.getElementById('reelSheet').classList.add('open');
+    document.getElementById('reelSheetScrim').classList.add('open');
+    loadComments(postId, 'rl-');
+  }
+  function closeReelComments() {
+    const sheet = document.getElementById('reelSheet');
+    if (!sheet) return;
+    sheet.classList.remove('open');
+    document.getElementById('reelSheetScrim').classList.remove('open');
+    const a = document.activeElement;
+    if (a && a.blur) a.blur();               // drop the keyboard with the sheet
+  }
+  function reelCommentsOpen() {
+    const sheet = document.getElementById('reelSheet');
+    return !!(sheet && sheet.classList.contains('open'));
+  }
+
   function closeReels() {
     const ov = document.getElementById('reelsOverlay');
     if (!ov || !ov.classList.contains('open')) return;
+    closeReelComments();
     if (reelsObserver) { reelsObserver.disconnect(); reelsObserver = null; }
     document.querySelectorAll('#reelsTrack video').forEach(v => { v.pause(); v.removeAttribute('src'); v.load(); });
     document.getElementById('reelsTrack').innerHTML = '';
@@ -11756,7 +11957,8 @@
         });
         await notifyReaction(postId, type);
       }
-      loadFeed();
+      await loadFeed();
+      renderReelRail(postId);         // keep Reels in step if it's open
     } catch (e) { showToast('Could not react. Try again.'); }
   }
 
@@ -11801,8 +12003,11 @@
     if (opening) loadComments(postId);
   }
 
-  async function loadComments(postId) {
-    const list = document.getElementById('commentList-' + postId);
+  // P is an id prefix: '' for the feed card, 'rl-' for the Reels comment sheet.
+  // The feed stays mounted under Reels, so the two copies need distinct ids.
+  async function loadComments(postId, P = '') {
+    const list = document.getElementById(P + 'commentList-' + postId);
+    if (!list) return;
     try {
       const { data, error } = await supaClient
         .from('post_comments')
@@ -11829,17 +12034,17 @@
 
       list.innerHTML = tops.map(c => {
         const replies = repliesByParent[c.id] || [];
-        const repliesHtml = replies.map(r => commentRowHtml(r, postId, true)).join('');
+        const repliesHtml = replies.map(r => commentRowHtml(r, postId, true, P)).join('');
         const replyToggle = replies.length
-          ? '<button class="reply-toggle" onclick="toggleReplies(\'' + c.id + '\')"><i class="ti ti-arrow-back-up" style="font-size:13px;vertical-align:-2px;"></i> <span id="replyToggleLabel-' + c.id + '">View ' + replies.length + ' ' + (replies.length === 1 ? 'reply' : 'replies') + '</span></button>'
+          ? '<button class="reply-toggle" onclick="toggleReplies(\'' + c.id + '\',\'' + P + '\')"><i class="ti ti-arrow-back-up" style="font-size:13px;vertical-align:-2px;"></i> <span id="' + P + 'replyToggleLabel-' + c.id + '">View ' + replies.length + ' ' + (replies.length === 1 ? 'reply' : 'replies') + '</span></button>'
           : '';
         return '<div class="comment-thread">' +
-          commentRowHtml(c, postId, false) +
+          commentRowHtml(c, postId, false, P) +
           replyToggle +
-          '<div class="replies-wrap" id="replies-' + c.id + '" style="display:none;">' + repliesHtml +
-            '<div class="reply-input-row" id="replyInputRow-' + c.id + '" style="display:none;">' +
-              '<input class="comment-input" id="replyInput-' + c.id + '" placeholder="Write a reply…" maxlength="500" onkeydown="if(event.key===\'Enter\'){submitReply(\'' + postId + '\',\'' + c.id + '\');}" />' +
-              '<button class="comment-send" onclick="submitReply(\'' + postId + '\',\'' + c.id + '\')"><i class="ti ti-send"></i></button>' +
+          '<div class="replies-wrap" id="' + P + 'replies-' + c.id + '" style="display:none;">' + repliesHtml +
+            '<div class="reply-input-row" id="' + P + 'replyInputRow-' + c.id + '" style="display:none;">' +
+              '<input class="comment-input" id="' + P + 'replyInput-' + c.id + '" placeholder="Write a reply…" maxlength="500" onkeydown="if(event.key===\'Enter\'){submitReply(\'' + postId + '\',\'' + c.id + '\',\'' + P + '\');}" />' +
+              '<button class="comment-send" onclick="submitReply(\'' + postId + '\',\'' + c.id + '\',\'' + P + '\')"><i class="ti ti-send"></i></button>' +
             '</div>' +
           '</div>' +
         '</div>';
@@ -11850,9 +12055,9 @@
   }
 
   // Build a single comment/reply row. `isReply` indents and restyles it.
-  function commentRowHtml(c, postId, isReply) {
+  function commentRowHtml(c, postId, isReply, P = '') {
     const del = c.user_id === currentUser.id
-      ? '<button class="comment-del" title="Delete" onclick="deleteComment(\'' + c.id + '\',\'' + postId + '\')"><i class="ti ti-x"></i></button>'
+      ? '<button class="comment-del" title="Delete" onclick="deleteComment(\'' + c.id + '\',\'' + postId + '\',\'' + P + '\')"><i class="ti ti-x"></i></button>'
       : '';
     const safeText = escapeText(c.content).replace(/@([a-z0-9_]{3,20})/gi, '<span class="mention">@$1</span>');
     const tap = c.user_id ? ' onclick="openUserProfile(\'' + c.user_id + '\')" style="cursor:pointer;"' : '';
@@ -11860,7 +12065,7 @@
       ? '<div class="comment-avatar"' + (c.user_id ? ' onclick="openUserProfile(\'' + c.user_id + '\')" style="cursor:pointer;background:center/cover no-repeat url(\'' + c.author_avatar + '\');"' : ' style="background:center/cover no-repeat url(\'' + c.author_avatar + '\');"') + '></div>'
       : '<div class="comment-avatar"' + tap + ' style="background:#1d9e75;"><i class="ti ti-chef-hat"></i></div>';
     const replyBtn = isReply ? '' :
-      '<button class="comment-reply-btn" onclick="openReplyInput(\'' + c.id + '\')">Reply</button>';
+      '<button class="comment-reply-btn" onclick="openReplyInput(\'' + c.id + '\',\'' + P + '\')">Reply</button>';
     return '<div class="comment-row' + (isReply ? ' is-reply' : '') + '">' +
       avatar +
       '<div class="comment-body">' +
@@ -11871,9 +12076,9 @@
     '</div>';
   }
 
-  function toggleReplies(commentId) {
-    const wrap = document.getElementById('replies-' + commentId);
-    const label = document.getElementById('replyToggleLabel-' + commentId);
+  function toggleReplies(commentId, P = '') {
+    const wrap = document.getElementById(P + 'replies-' + commentId);
+    const label = document.getElementById(P + 'replyToggleLabel-' + commentId);
     const showing = wrap.style.display !== 'none';
     // Keep the reply input row state independent; only toggle the replies list visibility
     if (showing) {
@@ -11885,17 +12090,17 @@
     }
   }
 
-  function openReplyInput(commentId) {
-    const wrap = document.getElementById('replies-' + commentId);
-    const row = document.getElementById('replyInputRow-' + commentId);
+  function openReplyInput(commentId, P = '') {
+    const wrap = document.getElementById(P + 'replies-' + commentId);
+    const row = document.getElementById(P + 'replyInputRow-' + commentId);
     if (wrap) wrap.style.display = 'block';
     if (row) { row.style.display = 'flex'; }
-    const input = document.getElementById('replyInput-' + commentId);
+    const input = document.getElementById(P + 'replyInput-' + commentId);
     if (input) input.focus();
   }
 
-  async function submitReply(postId, parentId) {
-    const input = document.getElementById('replyInput-' + parentId);
+  async function submitReply(postId, parentId, P = '') {
+    const input = document.getElementById(P + 'replyInput-' + parentId);
     const content = input.value.trim();
     if (!content || !myUsername) return;
     if (!(await moderateText(content))) return;
@@ -11907,7 +12112,8 @@
       });
       if (error) throw error;
       input.value = '';
-      loadComments(postId);
+      loadComments(postId, P);
+      if (P) refreshReelCommentCount(postId);
       notifyComment(postId, content);
     } catch (e) { showToast('Could not reply. Try again.'); }
   }
@@ -11933,8 +12139,8 @@
     }
   }
 
-  async function addComment(postId) {
-    const input = document.getElementById('commentInput-' + postId);
+  async function addComment(postId, P = '') {
+    const input = document.getElementById(P + 'commentInput-' + postId);
     const content = input.value.trim();
     if (!content || !myUsername) return;
     if (!(await moderateText(content))) return;
@@ -11946,7 +12152,8 @@
       });
       if (error) throw error;
       input.value = '';
-      loadComments(postId);
+      loadComments(postId, P);
+      if (P) refreshReelCommentCount(postId);
       notifyComment(postId, content);
     } catch (e) { showToast('Could not comment. Try again.'); }
   }
@@ -11993,10 +12200,11 @@
     } catch (e) { console.warn('notifyComment failed:', e); }
   }
 
-  async function deleteComment(commentId, postId) {
+  async function deleteComment(commentId, postId, P = '') {
     try {
       await supaClient.from('post_comments').delete().eq('id', commentId);
-      loadComments(postId);
+      loadComments(postId, P);
+      if (P) refreshReelCommentCount(postId);
     } catch (e) { showToast('Could not delete.'); }
   }
 
