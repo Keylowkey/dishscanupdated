@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <application
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -43,9 +44,7 @@
 
     <!-- Permissions.
          Capacitor only declares INTERNET by default; everything the app
-         actually does had to be added. maxSdkVersion on the legacy storage
-         permission keeps Play from flagging it on Android 13+, where
-         READ_MEDIA_IMAGES replaced it. -->
+         actually does had to be added. -->
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -53,9 +52,16 @@
     <!-- Photographing a dish -->
     <uses-permission android:name="android.permission.CAMERA" />
 
-    <!-- Choosing an existing food photo -->
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <!-- Choosing a photo or video needs NO storage permission. Photos go
+         through the WebView's file chooser (a system picker) and videos
+         through the Android photo picker (VideoCompressorPlugin); both hand
+         the app only the item the user chose. Google Play rejects apps that
+         ask for broad media access when a picker would do, so these are
+         removed outright, including if a library ever tries to add them. -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" tools:node="remove" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" tools:node="remove" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" tools:node="remove" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" tools:node="remove" />
 
     <!-- Finding nearby grocery stores -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
