@@ -3066,6 +3066,54 @@
   /* View-profile post grid */
   .vp-post-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-bottom: 8px; }
   .vp-post-cell { aspect-ratio: 1 / 1; border-radius: 8px; background-size: cover; background-position: center; cursor: pointer; background-color: var(--surface2); }
+
+  /* ── Profile page: full screen, slides in from the right ──
+     Above the app and Bites (9000), below popups (9998), so a post, a
+     follower list or a report opened from a profile sits on top of it. */
+  .profile-page {
+    position: fixed; inset: 0; z-index: 9500;
+    background: var(--bg); color: var(--text);
+    display: flex; flex-direction: column;
+    transform: translateX(100%); visibility: hidden;
+    transition: transform .26s ease, visibility 0s linear .26s;
+  }
+  .profile-page.open {
+    transform: translateX(0); visibility: visible;
+    transition: transform .26s ease, visibility 0s;
+  }
+  .pp-bar {
+    display: flex; align-items: center; gap: 6px;
+    padding: calc(8px + env(safe-area-inset-top)) 10px 8px;
+    border-bottom: 1px solid var(--border); background: var(--bg);
+  }
+  .pp-back {
+    width: 44px; height: 44px; border: none; background: none; color: var(--text);
+    font-size: 24px; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; border-radius: 50%;
+  }
+  .pp-title { font-weight: 800; font-size: 17px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pp-scroll {
+    flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+    padding: 18px 16px calc(32px + env(safe-area-inset-bottom));
+  }
+  .pp-head { display: flex; align-items: center; gap: 18px; }
+  .pp-avatar { width: 86px !important; height: 86px !important; font-size: 34px; flex-shrink: 0; }
+  .pp-stats { flex: 1; display: flex; justify-content: space-around; }
+  .pp-stat {
+    background: none; border: none; font: inherit; color: inherit; padding: 4px 6px;
+    text-align: center; cursor: pointer;
+  }
+  div.pp-stat { cursor: default; }
+  .pp-stat-n { font-size: 19px; font-weight: 800; }
+  .pp-stat-l { font-size: 12.5px; color: var(--text3); }
+  .pp-name-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+  .pp-username { font-size: 17px; font-weight: 800; }
+  .pp-badge { font-size: 12px; font-weight: 700; color: var(--brand); }
+  .pp-follow { margin-top: 14px; }
+  .pp-follow .follow-btn { width: 100%; justify-content: center; }
+  .pp-section { margin-top: 18px; }
+  .profile-page .vp-post-grid { gap: 3px; }
+  .profile-page .vp-post-cell { border-radius: 4px; }
   .vp-post-cell:active { opacity: 0.85; }
 
   /* Feed toolbar: view dropdown + requests button */
@@ -5442,31 +5490,38 @@
 </div>
 
 <!-- View another user's profile + public favorites -->
-<div class="support-modal" id="userProfileModal">
-  <div class="support-card">
-    <button class="support-close" onclick="closeUserProfile()" aria-label="Close"><i class="ti ti-x"></i></button>
-    <div style="text-align:center;padding-top:4px;">
-      <div id="upAvatar" class="feed-avatar" style="width:72px;height:72px;font-size:28px;margin:0 auto 12px;"></div>
-      <div id="upUsername" style="font-size:18px;font-weight:700;">@user</div>
-      <div id="upFollowingBadge" style="display:none;font-size:12px;font-weight:600;color:var(--brand);margin-top:4px;"><i class="ti ti-check" style="vertical-align:-1px;"></i> Following</div>
-      <div id="upStats" style="display:flex;justify-content:center;gap:28px;margin-top:14px;">
-        <div style="text-align:center;">
-          <div id="upPostCount" style="font-size:17px;font-weight:700;">0</div>
-          <div style="font-size:12px;color:var(--text3);">Posts</div>
+<!-- A user's profile: a full page, not a popup. Opening another profile from
+     here stacks on top; back returns to the previous one. -->
+<div class="profile-page" id="userProfileModal" aria-hidden="true">
+  <div class="pp-bar">
+    <button class="pp-back" onclick="profileBack()" aria-label="Back"><i class="ti ti-arrow-left"></i></button>
+    <div class="pp-title" id="ppTitle">Profile</div>
+  </div>
+  <div class="pp-scroll" id="ppScroll">
+    <div class="pp-head">
+      <div id="upAvatar" class="feed-avatar pp-avatar"></div>
+      <div class="pp-stats" id="upStats">
+        <div class="pp-stat">
+          <div class="pp-stat-n" id="upPostCount">0</div>
+          <div class="pp-stat-l">Posts</div>
         </div>
-        <div style="text-align:center;cursor:pointer;" onclick="openFollowList('followers')">
-          <div id="upFollowerCount" style="font-size:17px;font-weight:700;">0</div>
-          <div style="font-size:12px;color:var(--text3);">Followers</div>
-        </div>
-        <div style="text-align:center;cursor:pointer;" onclick="openFollowList('following')">
-          <div id="upFollowingCount" style="font-size:17px;font-weight:700;">0</div>
-          <div style="font-size:12px;color:var(--text3);">Following</div>
-        </div>
+        <button class="pp-stat" onclick="openFollowList('followers')">
+          <div class="pp-stat-n" id="upFollowerCount">0</div>
+          <div class="pp-stat-l">Followers</div>
+        </button>
+        <button class="pp-stat" onclick="openFollowList('following')">
+          <div class="pp-stat-n" id="upFollowingCount">0</div>
+          <div class="pp-stat-l">Following</div>
+        </button>
       </div>
-      <div id="upFollowWrap" style="margin-top:14px;"></div>
     </div>
-    <div id="upNutrition" style="margin-top:16px;"></div>
-    <div id="upBody" style="margin-top:16px;">
+    <div class="pp-name-row">
+      <div id="upUsername" class="pp-username">@user</div>
+      <div id="upFollowingBadge" class="pp-badge" style="display:none;"><i class="ti ti-check"></i> Following</div>
+    </div>
+    <div id="upFollowWrap" class="pp-follow"></div>
+    <div id="upNutrition" class="pp-section"></div>
+    <div id="upBody" class="pp-section">
       <div class="empty-state"><div class="empty-icon"><i class="ti ti-loader-2"></i></div>Loading…</div>
     </div>
   </div>
@@ -6521,7 +6576,11 @@
           return;
         }
 
-        // 3. Reels is full-screen; back closes its comment sheet or reaction
+        // 3. A profile page (it sits above Bites): back to the previous
+        //    profile, or out of the page.
+        if (typeof profilePageOpen === 'function' && profilePageOpen()) { profileBack(); return; }
+
+        // 3b. Reels is full-screen; back closes its comment sheet or reaction
         //    picker first, then Reels itself, rather than leaving the app.
         const reels = document.getElementById('reelsOverlay');
         if (reels && reels.classList.contains('open')) {
@@ -12605,8 +12664,25 @@
     }
   }
 
-  async function openUserProfile(userId) {
+  // ── Profile page navigation ──
+  // Profiles open as a full page. Opening one from another profile (say, from
+  // its followers list) stacks; back returns to the previous profile, and
+  // closes the page once the stack is empty.
+  let profileStack = [];
+  let profileReq = 0;   // newest request wins if responses arrive out of order
+
+  function profilePageOpen() {
+    const el = document.getElementById('userProfileModal');
+    return !!(el && el.classList.contains('open'));
+  }
+
+  async function openUserProfile(userId, fromBack) {
     if (!userId) return;
+    if (!fromBack && profileStack[profileStack.length - 1] !== userId) profileStack.push(userId);
+    const req = ++profileReq;
+    window.__viewedUserId = userId;     // follower lists read this; set before any await
+    // A Bites video underneath shouldn't keep playing with sound.
+    document.querySelectorAll('#reelsTrack video').forEach(v => v.pause());
     const modal = document.getElementById('userProfileModal');
     const body = document.getElementById('upBody');
     const avEl = document.getElementById('upAvatar');
@@ -12618,7 +12694,12 @@
     document.getElementById('upFollowingCount').textContent = '0';
     document.getElementById('upFollowWrap').innerHTML = '';
     body.innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="ti ti-loader-2"></i></div>Loading…</div>';
+    document.getElementById('upNutrition').innerHTML = '';
+    document.getElementById('ppTitle').textContent = 'Profile';
+    document.getElementById('upFollowingBadge').style.display = 'none';
+    document.getElementById('ppScroll').scrollTop = 0;
     modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
     try {
       const { data: sess } = await supaClient.auth.getSession();
       const token = sess && sess.session && sess.session.access_token;
@@ -12629,6 +12710,7 @@
       });
       if (!res.ok) throw new Error('not ok');
       const { profile, favorites, followerCount, followingCount, posts } = await res.json();
+      if (req !== profileReq) return;   // a newer profile was opened meanwhile
 
       // Am I looking at my own profile?
       const myId = (currentUser && currentUser.id) || null;
@@ -12636,11 +12718,16 @@
 
       // Render the follow button FIRST, before any property access that could
       // throw — guarantees the button shows even if profile data is odd.
-      window.__viewedUserId = userId;
       renderFollowButton(userId);
       renderProfileNutrition(userId);   // no-op unless they've opted in
+      if (isMe) {
+        document.getElementById('upFollowWrap').innerHTML =
+          '<button class="follow-btn following" onclick="closeUserProfile(); openProfileModal();">' +
+          '<i class="ti ti-pencil"></i> Edit profile</button>';
+      }
 
       nameEl.textContent = '@' + ((profile && profile.username) || 'user');
+      document.getElementById('ppTitle').textContent = '@' + ((profile && profile.username) || 'user');
 
       // Stats row.
       document.getElementById('upPostCount').textContent = (posts && posts.length) || 0;
@@ -12666,6 +12753,7 @@
           const st = await followAction('follow_status', { target_id: userId });
           amFollowing = st && st.state === 'following';
         } catch (e) { /* treat as not following */ }
+        if (req !== profileReq) return;
         if (!amFollowing) {
           body.innerHTML = '<div class="empty-state" style="padding:30px 0;">' +
             '<div class="empty-icon"><i class="ti ti-lock"></i></div>' +
@@ -12722,11 +12810,11 @@
             const isMutual = !isMe && myFavNames.has((name + '').trim().toLowerCase());
             const img = f.image_url;
             const thumb = img ? '<div class="history-thumb" style="background:center/cover no-repeat url(\'' + img + '\');"></div>'
-              : '<div class="history-thumb"><i class="ti ti-tools-kitchen-2"></i></div>';
+              : '<div class="history-thumb" style="display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--text3);"><i class="ti ti-tools-kitchen-2"></i></div>';
             const sub = isMutual
               ? '<div class="history-sub" style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--sage-dark);background:var(--sage-50);padding:2px 9px;border-radius:999px;margin-top:3px;"><i class="ti ti-heart-filled"></i> You both love this</div>'
               : '<div class="history-sub" style="font-size:12px;color:var(--text3);">Tap to view recipe</div>';
-            return '<div class="history-row" style="cursor:pointer;" onclick="openViewedFavorite(\'' + f.id + '\')">' + thumb +
+            return '<div class="history-card" onclick="openViewedFavorite(\'' + f.id + '\')">' + thumb +
               '<div class="history-info"><div class="history-name">' + escapeText(name) + '</div>' +
               sub + '</div>' +
               '<i class="ti ti-chevron-right" style="color:var(--text3);align-self:center;"></i></div>';
@@ -12735,6 +12823,7 @@
 
       body.innerHTML = html;
     } catch (e) {
+      if (req !== profileReq) return;
       body.innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="ti ti-alert-circle"></i></div>Could not load this profile.</div>';
     }
   }
@@ -12743,13 +12832,8 @@
   async function openMyProfile() {
     document.getElementById('userDropdown').classList.remove('open');
     if (!currentUser || !currentUser.id) { showToast('Please sign in.'); return; }
+    // openUserProfile shows "Edit profile" in place of Follow on your own page.
     await openUserProfile(currentUser.id);
-    // Swap the follow button slot for an "Edit profile" shortcut.
-    const wrap = document.getElementById('upFollowWrap');
-    if (wrap) {
-      wrap.innerHTML = '<button class="follow-btn following" onclick="closeUserProfile(); openProfileModal();">' +
-        '<i class="ti ti-pencil"></i> Edit profile</button>';
-    }
   }
 
   // Open one of the user's posts (jump to it in the feed if possible).
@@ -12897,8 +12981,20 @@
       showToast('Could not save to favorites.');
     }
   }
+  // Back: the previous profile if there is one, otherwise leave the page.
+  function profileBack() {
+    profileStack.pop();
+    const prev = profileStack[profileStack.length - 1];
+    if (prev) openUserProfile(prev, true);
+    else closeUserProfile();
+  }
+  // Leave the profile page entirely (e.g. to open a recipe or edit profile).
   function closeUserProfile() {
-    document.getElementById('userProfileModal').classList.remove('open');
+    profileStack = [];
+    profileReq++;                       // ignore any response still in flight
+    const el = document.getElementById('userProfileModal');
+    el.classList.remove('open');
+    el.setAttribute('aria-hidden', 'true');
   }
 
   // ── Delete account ──
