@@ -31,6 +31,15 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="com.captureandcook.app" />
             </intent-filter>
+
+            <!-- Appear in other apps' share sheets (Instagram, TikTok, YouTube,
+                 browsers). They share a link as text; ShareIntakePlugin reads it
+                 and the app imports the recipe. -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
         </activity>
 
         <provider

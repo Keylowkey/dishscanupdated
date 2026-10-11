@@ -7,5 +7,11 @@
 	     development entitlement to the store means every push is rejected. -->
 	<key>aps-environment</key>
 	<string>production</string>
+	<!-- Shared with the share extension, which leaves links here when it
+	     can't open the app directly. -->
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.com.captureandcook.app</string>
+	</array>
 </dict>
 </plist>

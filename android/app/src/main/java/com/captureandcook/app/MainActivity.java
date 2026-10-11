@@ -10,6 +10,7 @@ public class MainActivity extends BridgeActivity {
         // Plugins that live in this app rather than an npm package must be
         // registered before the bridge starts.
         registerPlugin(VideoCompressorPlugin.class);
+        registerPlugin(ShareIntakePlugin.class);
         super.onCreate(savedInstanceState);
     }
 }

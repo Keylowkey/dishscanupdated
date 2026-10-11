@@ -1418,6 +1418,11 @@
     line-height: 1.6;
   }
   .error-banner.visible { display: block; }
+  .error-action {
+    display: inline-flex; align-items: center; gap: 6px; margin-top: 10px;
+    padding: 8px 14px; border-radius: 10px; border: 1px solid currentColor;
+    background: transparent; color: inherit; font: inherit; font-weight: 700; cursor: pointer;
+  }
 
   /* ── Results ── */
   .results-section { display: none; }
@@ -6310,7 +6315,12 @@
       try {
         const iu = new URL(url);
         const link = iu.searchParams.get('url') || iu.searchParams.get('link');
-        if (link) { importFromLink(decodeURIComponent(link)); return; }
+        if (link) {
+          receiveSharedLink(link);
+          const SI = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.ShareIntake;
+          if (SI && SI.getPending) SI.getPending().catch(() => {});   // consume the backup copy
+          return;
+        }
       } catch (e) { /* fall through */ }
     }
     if (!supaClient) return;
@@ -6414,6 +6424,7 @@
   }
 
   function showApp() {
+    setTimeout(() => { try { checkSharedLinks(); } catch (e) {} }, 400);
     document.getElementById('authScreen').classList.add('hidden');
     document.getElementById('appPage').classList.remove('hidden');
     document.body.classList.add('in-app');
@@ -7424,7 +7435,10 @@
     url = url.trim();
     hideError();
     try { if (typeof switchMode === 'function') switchMode('cook'); } catch (e) { /* ignore */ }
-    const upm = document.getElementById('userProfileModal'); if (upm) upm.classList.remove('open');
+    // Clear the way: a shared link can arrive while anything is open.
+    try { if (ccSheetOpen()) closeCcSheet(null); } catch (e) {}
+    try { closeReels(); } catch (e) {}
+    try { if (profilePageOpen()) closeUserProfile(); } catch (e) {}
     const goBtn = document.getElementById('linkImportGo');
     if (goBtn) { goBtn.disabled = true; goBtn.textContent = 'Importing…'; }
     const opts = document.getElementById('cookOptions'); if (opts) opts.classList.remove('visible');
@@ -7444,7 +7458,11 @@
       });
       if (!response.ok) {
         const err = await response.json().catch(() => ({}));
-        throw new Error(err.error || 'Could not import that link (' + response.status + ').');
+        const e = new Error(err.error || 'Could not import that link (' + response.status + ').');
+        // Instagram often refuses to let servers read a reel. The reliable way
+        // round it is a screenshot of the dish, so offer exactly that.
+        e.needsScreenshot = response.status === 422 && /instagram\.com|instagr\.am/i.test(url);
+        throw e;
       }
       const recipe = await response.json();
       if (recipe && recipe.error) throw new Error(recipe.error);
@@ -7470,11 +7488,58 @@
       }, 500);
     } catch (err) {
       document.getElementById('loadingSection').classList.remove('visible');
-      showError(err.message || 'Could not import that link.');
+      if (err && err.needsScreenshot) {
+        showError('<strong>Instagram didn\u2019t let us read this reel.</strong><br>' +
+          'Take a screenshot of the dish in the reel, then choose it here and we\u2019ll get the recipe.' +
+          '<br><button class="error-action" onclick="hideError(); document.getElementById(\'fileInput\').click()">' +
+          '<i class="ti ti-photo"></i> Choose screenshot</button>');
+        document.getElementById('errorBanner').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } else {
+        showError(err.message || 'Could not import that link.');
+      }
     } finally {
       if (goBtn) { goBtn.disabled = false; goBtn.textContent = 'Import'; }
     }
   }
+
+  // ── Links shared from other apps (Instagram, TikTok, YouTube, Safari…) ──
+  // Android hands them over through the ShareIntake plugin; iOS through the
+  // share extension's com.captureandcook.app://import link, with the
+  // plugin as a fallback. Either way they land in receiveSharedLink().
+  let pendingSharedUrl = null;
+  let lastSharedUrl = null, lastSharedAt = 0;
+
+  function firstWebUrl(text) {
+    const m = String(text || '').match(/https?:\/\/[^\s<>"']+/i);
+    return m ? m[0].replace(/[).,!?\]]+$/, '') : null;
+  }
+  function receiveSharedLink(text) {
+    const url = firstWebUrl(text);
+    if (!url) { showToast('That share didn\u2019t include a link.'); return; }
+    // The deep link and the fallback can both deliver the same share.
+    if (url === lastSharedUrl && Date.now() - lastSharedAt < 15000) return;
+    lastSharedUrl = url; lastSharedAt = Date.now();
+    if (!currentUser) { pendingSharedUrl = url; return; }   // after sign-in
+    const el = document.getElementById('linkImportInput'); if (el) el.value = url;
+    importFromLink(url);
+  }
+  // Called once the app is showing (signed in) and whenever it comes back to
+  // the foreground: a share saved while the app couldn't be opened, or one
+  // that arrived before sign-in.
+  async function checkSharedLinks() {
+    if (!currentUser) return;
+    if (pendingSharedUrl) { const u = pendingSharedUrl; pendingSharedUrl = null; lastSharedUrl = null; receiveSharedLink(u); return; }
+    const SI = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.ShareIntake;
+    if (!SI || !SI.getPending) return;
+    try { const r = await SI.getPending(); if (r && r.text) receiveSharedLink(r.text); } catch (e) { /* nothing waiting */ }
+  }
+  (function listenForShares() {
+    const C = window.Capacitor;
+    const SI = C && C.Plugins && C.Plugins.ShareIntake;
+    if (SI && SI.addListener) SI.addListener('shared', d => { if (d && d.text) receiveSharedLink(d.text); });
+    const App = C && C.Plugins && C.Plugins.App;
+    if (App && App.addListener) App.addListener('appStateChange', st => { if (st && st.isActive) checkSharedLinks(); });
+  })();
 
   // ── Text search: Cook tab (home recipes only) ──
   // ── Cook text search: step 1 — fetch recipe variations ──
