@@ -4637,7 +4637,7 @@
   <div class="recipe-search">
     <div class="recipe-search-bar">
       <i class="ti ti-link"></i>
-      <input type="text" id="linkImportInput" placeholder="Paste a Reel / TikTok / YouTube link"
+      <input type="text" id="linkImportInput" placeholder="Paste an Instagram / TikTok / YouTube link"
         autocomplete="off" autocapitalize="off" inputmode="url" onkeydown="if(event.key==='Enter'){importFromLinkInput();}" />
       <button class="recipe-search-go" id="linkImportClear" onclick="var i=document.getElementById('linkImportInput'); i.value=''; i.focus();" style="background:var(--surface2);color:var(--text2);margin-right:6px;" aria-label="Clear link">✕</button>
       <button class="recipe-search-go link-go" id="linkImportGo" onclick="importFromLinkInput()">Import</button>
@@ -5192,7 +5192,7 @@
         <option value="following">Following</option>
       </select>
       <button class="feed-reels-btn" id="feedReelsBtn" onclick="openReels()" style="display:none;">
-        <i class="ti ti-player-play"></i> Reels
+        <i class="ti ti-player-play"></i> Bites
       </button>
       <button class="feed-requests-btn" id="feedRequestsBtn" onclick="openFollowRequests()" title="Follow requests">
         <i class="ti ti-user-plus"></i>
@@ -5742,8 +5742,10 @@
   </div>
 </div>
 
-<!-- Reels: full-screen, swipe up and down through the feed's videos -->
-<div class="reels-overlay" id="reelsOverlay" aria-hidden="true">
+<!-- Bites (internally still "reels"): full-screen, swipe up and down
+     through the feed's videos. Renamed from "Reels", which Meta claims as a
+     trademark for this kind of feature. -->
+<div class="reels-overlay" id="reelsOverlay" aria-hidden="true" aria-label="Bites">
   <div class="reels-track" id="reelsTrack"></div>
   <button class="reels-close" onclick="closeReels()" aria-label="Close"><i class="ti ti-x"></i></button>
   <button class="reels-mute" id="reelsMute" onclick="toggleReelsMute()" aria-label="Sound">
@@ -11741,7 +11743,7 @@
             '</button>' +
           '</div>' +
         '</div>';
-    }).join('') : '<div class="reels-empty">No videos yet.</div>';
+    }).join('') : '<div class="reels-empty">No Bites yet.</div>';
 
     // Tap a reel to pause or resume it.
     track.querySelectorAll('.reel').forEach(r => {
