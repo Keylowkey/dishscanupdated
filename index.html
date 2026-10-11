@@ -3274,7 +3274,8 @@
   .support-modal.open { display: flex; }
   /* Password / recovery modals must sit above ALL other UI so confirmations
      and the reset form are never hidden behind the page. */
-  #forgotModal, #newPasswordModal, #userProfileModal, #deleteAccountModal, #followRequestsModal { z-index: 100001; }
+  #forgotModal, #newPasswordModal, #deleteAccountModal, #followRequestsModal { z-index: 100001; }
+  /* #userProfileModal is a full page now, layered by .profile-page (9500). */
   #emailSentModal { z-index: 100002; }
   #followListModal, #postViewerModal { z-index: 100001; }
   .support-card {
@@ -4100,6 +4101,9 @@
     display: flex; align-items: center; justify-content: center; background: #000;
   }
   .reel video { width: 100%; height: 100%; object-fit: contain; background: #000; }
+  .reel .reel-photo { width: 100%; height: 100%; object-fit: contain; background: #000; display: block; }
+  /* Opened from a profile page (9500): above it, still below popups (9998). */
+  .reels-overlay.above-profile { z-index: 9600; }
   .reel-info {
     position: absolute; left: 0; right: 0; bottom: 0;
     padding: 60px 18px calc(22px + env(safe-area-inset-bottom));
@@ -6576,19 +6580,20 @@
           return;
         }
 
-        // 3. A profile page (it sits above Bites): back to the previous
-        //    profile, or out of the page.
-        if (typeof profilePageOpen === 'function' && profilePageOpen()) { profileBack(); return; }
-
-        // 3b. Reels is full-screen; back closes its comment sheet or reaction
-        //    picker first, then Reels itself, rather than leaving the app.
+        // 3. The full-screen viewer and the profile page. Whichever is on
+        //    top goes first: the viewer when it was opened from a profile,
+        //    otherwise the profile (which sits above Bites).
         const reels = document.getElementById('reelsOverlay');
-        if (reels && reels.classList.contains('open')) {
+        const reelsOpen = reels && reels.classList.contains('open');
+        const reelsBack = () => {
           if (typeof reelCommentsOpen === 'function' && reelCommentsOpen()) { closeReelComments(); return; }
           const rp = document.querySelector('.reel-react-pop.open');
           if (rp) { rp.classList.remove('open'); return; }
-          if (typeof closeReels === 'function') { closeReels(); return; }
-        }
+          if (typeof closeReels === 'function') closeReels();
+        };
+        if (reelsOpen && reels.classList.contains('above-profile')) { reelsBack(); return; }
+        if (typeof profilePageOpen === 'function' && profilePageOpen()) { profileBack(); return; }
+        if (reelsOpen) { reelsBack(); return; }
 
         // 4. The account menu.
         const dd = document.getElementById('userDropdown');
@@ -11780,7 +11785,7 @@
       }
 
       // A full reload starts the shared state over.
-      window.__reactCounts = {}; myReactions = {}; feedProfMap = {}; window.__feedPosts = {};
+      feedProfMap = {}; window.__feedPosts = {};
       absorbFeedPage(posts, reactions, out && out.profiles);
       feedPosts = posts.slice();
       feedHasMore = !!(out && out.hasMore);
@@ -11916,16 +11921,22 @@
     if (b) b.style.display = (window.__feedVideoIds || []).length ? '' : 'none';
   }
 
-  function openReels(startId) {
-    const ids = window.__feedVideoIds || [];
-    const posts = window.__feedPosts || {};
+  // Full-screen vertical viewer. With no options it shows the feed's videos
+  // (Bites). A profile passes { ids, posts, aboveProfile, loadReactions } to
+  // swipe through that user's posts, photos included.
+  function openReels(startId, opts) {
+    opts = opts || {};
+    const ids = opts.ids || window.__feedVideoIds || [];
+    const posts = opts.posts || window.__feedPosts || {};
     const track = document.getElementById('reelsTrack');
     track.innerHTML = ids.length ? ids.map(id => {
       const p = posts[id] || {};
-      return '<div class="reel" data-id="' + id + '">' +
-          '<video playsinline loop preload="none" data-src="' + escapeText(p.video_url || '') + '"' +
-            (p.image_url ? ' poster="' + p.image_url + '"' : '') + '></video>' +
-          '<i class="ti ti-player-play reel-paused"></i>' +
+      const media = p.video_url
+        ? '<video playsinline loop preload="none" data-src="' + escapeText(p.video_url) + '"' +
+            (p.image_url ? ' poster="' + escapeText(p.image_url) + '"' : '') + '></video>' +
+          '<i class="ti ti-player-play reel-paused"></i>'
+        : '<img class="reel-photo" alt="" data-src="' + escapeText(p.image_url || '') + '">';
+      return '<div class="reel" data-id="' + id + '">' + media +
           '<div class="reel-info">' +
             (p.user_id
               ? '<div class="reel-user" onclick="closeReels(); openUserProfile(\'' + p.user_id + '\')">@' + escapeText(p.username || 'user') + '</div>'
@@ -11949,7 +11960,7 @@
             '</button>' +
           '</div>' +
         '</div>';
-    }).join('') : '<div class="reels-empty">No Bites yet.</div>';
+    }).join('') : '<div class="reels-empty">' + (opts.ids ? 'No posts yet.' : 'No Bites yet.') + '</div>';
 
     // Tap a reel to pause or resume it.
     track.querySelectorAll('.reel').forEach(r => {
@@ -11964,8 +11975,13 @@
 
     ids.forEach(renderReelRail);
     loadReelCommentCounts(ids);
+    // Posts from a profile aren't in the feed, so their reactions aren't
+    // loaded yet; fetch them, then repaint the rails.
+    if (opts.loadReactions && ids.length) loadReactionsFor(ids).then(() => ids.forEach(renderReelRail));
 
     const ov = document.getElementById('reelsOverlay');
+    // Opened from a profile page, the viewer must sit above that page.
+    ov.classList.toggle('above-profile', !!opts.aboveProfile);
     ov.classList.add('open');
     ov.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
@@ -11988,6 +12004,8 @@
     const reels = Array.from(document.querySelectorAll('#reelsTrack .reel'));
     const idx = reels.indexOf(reel);
     reels.forEach((r, i) => {
+      const img = r.querySelector('img.reel-photo');
+      if (img && !img.getAttribute('src') && img.dataset.src && Math.abs(i - idx) <= 1) img.src = img.dataset.src;
       const v = r.querySelector('video');
       if (!v) return;
       if (Math.abs(i - idx) <= 1) {
@@ -11997,14 +12015,32 @@
       }
       if (i !== idx) { v.pause(); r.classList.remove('is-paused'); }
     });
+    const id = reel.dataset.id;
+    if (id && !reelsViewed[id]) { reelsViewed[id] = true; recordPostView(id); }
     const v = reel.querySelector('video');
+    const mute = document.getElementById('reelsMute');
+    if (mute) mute.style.display = v ? '' : 'none';     // nothing to mute on a photo
     if (!v) return;
     v.muted = reelsMuted;
     try { v.currentTime = 0; } catch (e) {}
     reel.classList.remove('is-paused');
     v.play().catch(() => reel.classList.add('is-paused'));
-    const id = reel.dataset.id;
-    if (id && !reelsViewed[id]) { reelsViewed[id] = true; recordPostView(id); }
+  }
+
+  // Reaction tallies for posts outside the feed (a profile's posts).
+  async function loadReactionsFor(ids) {
+    if (!ids || !ids.length) return;
+    try {
+      const { data } = await supaClient.from('post_reactions')
+        .select('post_id, user_id, type').in('post_id', ids);
+      const counts = window.__reactCounts || (window.__reactCounts = {});
+      ids.forEach(id => { counts[id] = emptyCounts(); delete myReactions[id]; });
+      (data || []).forEach(r => {
+        if (!counts[r.post_id]) return;
+        if (r.type in counts[r.post_id]) counts[r.post_id][r.type]++;
+        if (currentUser && r.user_id === currentUser.id) myReactions[r.post_id] = r.type;
+      });
+    } catch (e) { /* rails keep whatever they show */ }
   }
 
   // ── Reels: reacting and commenting ──
@@ -12115,9 +12151,11 @@
     if (reelsObserver) { reelsObserver.disconnect(); reelsObserver = null; }
     document.querySelectorAll('#reelsTrack video').forEach(v => { v.pause(); v.removeAttribute('src'); v.load(); });
     document.getElementById('reelsTrack').innerHTML = '';
-    ov.classList.remove('open');
+    ov.classList.remove('open', 'above-profile');
     ov.setAttribute('aria-hidden', 'true');
     document.body.style.overflow = '';
+    const mute = document.getElementById('reelsMute');
+    if (mute) mute.style.display = '';
     reelsViewed = {};
   }
 
@@ -12166,7 +12204,9 @@
         await notifyReaction(postId, type);
       }
       await loadFeed();
-      renderReelRail(postId);         // keep Reels in step if it's open
+      // A profile post isn't in the feed, so loadFeed didn't recount it.
+      if (!(window.__feedPosts || {})[postId]) await loadReactionsFor([postId]);
+      renderReelRail(postId);         // keep the viewer in step if it's open
     } catch (e) { showToast('Could not react. Try again.'); }
   }
 
@@ -12681,7 +12721,10 @@
     if (!fromBack && profileStack[profileStack.length - 1] !== userId) profileStack.push(userId);
     const req = ++profileReq;
     window.__viewedUserId = userId;     // follower lists read this; set before any await
-    // A Bites video underneath shouldn't keep playing with sound.
+    // A Bites video underneath shouldn't keep playing with sound. A viewer
+    // opened from a profile sits above the page, so it closes instead.
+    const rov = document.getElementById('reelsOverlay');
+    if (rov && rov.classList.contains('above-profile') && typeof closeReels === 'function') closeReels();
     document.querySelectorAll('#reelsTrack video').forEach(v => v.pause());
     const modal = document.getElementById('userProfileModal');
     const body = document.getElementById('upBody');
@@ -12767,11 +12810,13 @@
       if (posts && posts.length) {
         window.__viewedPosts = {};
         posts.forEach(p => { window.__viewedPosts[p.id] = p; });
+        // Grid order, for swiping through them in the viewer.
+        window.__viewedPostIds = posts.filter(p => p.image_url).map(p => p.id);
         html += '<div style="font-weight:600;margin:4px 0 10px;font-size:14px;">' +
           '<i class="ti ti-photo" style="vertical-align:-2px;"></i> Posts</div>' +
           '<div class="vp-post-grid">' +
           posts.filter(p => p.image_url).map(p =>
-            '<div class="vp-post-cell" onclick="openViewedPost(\'' + p.id + '\')" ' +
+            '<div class="vp-post-cell" onclick="openProfilePosts(\'' + p.id + '\')" ' +
             'style="position:relative;background:center/cover no-repeat url(\'' + postThumb(p) + '\');">' +
             (p.video_url ? '<i class="ti ti-player-play" style="position:absolute;top:6px;right:6px;color:#fff;font-size:18px;text-shadow:0 1px 4px rgba(0,0,0,.6);"></i>' : '') +
             '</div>'
@@ -12981,6 +13026,14 @@
       showToast('Could not save to favorites.');
     }
   }
+  // Tap a post on a profile: open the full-screen viewer on it and swipe
+  // through that user's posts, with reactions and comments.
+  function openProfilePosts(postId) {
+    const ids = window.__viewedPostIds || [];
+    if (!ids.includes(postId)) { openViewedPost(postId); return; }
+    openReels(postId, { ids, posts: window.__viewedPosts || {}, aboveProfile: true, loadReactions: true });
+  }
+
   // Back: the previous profile if there is one, otherwise leave the page.
   function profileBack() {
     profileStack.pop();
