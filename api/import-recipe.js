@@ -7,6 +7,8 @@
 
 import { languageInstruction } from '../lib/i18n-data.js';
 import { guard } from '../lib/guard.js';
+import { store as storeDishImage } from '../lib/dish-images.js';
+import crypto from 'node:crypto';
 import { MAKEABLE_EXAMPLE, COOKING_EQUIPMENT_EXAMPLE, EXTRA_RULES, normalizeRecipeExtras } from '../lib/recipe-extras.js';
 
 const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15';
@@ -48,6 +50,7 @@ export default async function handler(req, res) {
 
     let content;
     let sourceTitle = '';
+    let cover = null;   // the video's cover image, kept as the dish's picture
 
     if (platform === 'youtube') {
       const info = await youtubeInfo(url);
@@ -66,6 +69,7 @@ export default async function handler(req, res) {
       }
       const img = await fetchImageAsBase64(thumb);
       if (!img) return res.status(422).json({ error: "Couldn't load the video's thumbnail." });
+      cover = img;
       content = [
         { type: 'image', source: { type: 'base64', media_type: img.media_type, data: img.data } },
         { type: 'text', text: imagePrompt() }
@@ -83,6 +87,18 @@ export default async function handler(req, res) {
       return res.status(422).json({ error: "Couldn't read a dish from that link. Try sharing a screenshot of the dish instead." });
     }
     if (sourceTitle && recipe) recipe.sourceTitle = sourceTitle;
+    // Keep the cover as the dish image. Instagram and TikTok image URLs expire
+    // within days, so it's copied into our own storage. Best-effort: without
+    // it the app falls back to a generated image.
+    if (recipe && cover && process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY) {
+      try {
+        const ext = /png/.test(cover.media_type) ? 'png' : /webp/.test(cover.media_type) ? 'webp' : 'jpg';
+        const name = crypto.createHash('sha1').update(url).digest('hex').slice(0, 20);
+        const stored = await storeDishImage(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY,
+          `imports/${name}.${ext}`, Buffer.from(cover.data, 'base64'), cover.media_type || 'image/jpeg');
+        if (stored) { recipe.image_url = stored; recipe.image_source = 'video'; }
+      } catch (e) { /* no cover; the app generates one */ }
+    }
     return res.status(200).json(normalizeRecipeExtras(recipe));
   } catch (err) {
     return res.status(500).json({ error: 'Server error: ' + (err && err.message || err) });

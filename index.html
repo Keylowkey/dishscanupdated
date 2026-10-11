@@ -4112,6 +4112,30 @@
   .cw-opt.active .cw-warn { color: #fff; }
   .cook-with-note { margin-top: 10px; font-size: 13.5px; line-height: 1.5; color: var(--text2); }
 
+  /* ── Dish picture at the top of a recipe ── */
+  .dish-hero {
+    position: relative; margin: 0 0 16px; border-radius: 18px; overflow: hidden;
+    aspect-ratio: 4 / 3; background: var(--surface2);
+  }
+  .dish-hero img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+    opacity: 0; transition: opacity .45s ease;
+  }
+  .dish-hero.ready img { opacity: 1; }
+  /* While a picture is being made: a soft moving sheen, not a spinner. */
+  .dish-hero.loading::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(100deg, transparent 20%, rgba(255,255,255,.10) 50%, transparent 80%);
+    background-size: 200% 100%; animation: dishSheen 1.4s linear infinite;
+  }
+  @keyframes dishSheen { from { background-position: 150% 0; } to { background-position: -50% 0; } }
+  @media (prefers-reduced-motion: reduce) { .dish-hero.loading::after { animation: none; } }
+  .dish-hero-tag {
+    position: absolute; left: 10px; bottom: 10px; padding: 4px 9px; border-radius: 999px;
+    background: rgba(0,0,0,.55); color: #fff; font-size: 11.5px; font-weight: 700;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+
   /* Feed: next page loads as this comes into view */
   .feed-more { padding: 22px 0 30px; }
 
@@ -4849,6 +4873,12 @@
     </div>
 
     <div class="tab-panel active" id="panel-recipe">
+      <!-- The dish's picture: your photo, the shared video's cover, or a
+           generated image (labelled). See showDishImage(). -->
+      <div class="dish-hero" id="recipeHero" hidden>
+        <img id="recipeHeroImg" alt="" />
+        <span class="dish-hero-tag" id="recipeHeroTag" hidden><i class="ti ti-sparkles"></i> AI image</span>
+      </div>
       <div class="recipe-name" id="recipeName"></div>
       <div class="recipe-meta" id="recipeMeta"></div>
 
@@ -5171,7 +5201,11 @@
       </div>
 
       <div class="copycat-result" id="copycatResult">
-        <div class="copycat-name" id="copycatName"></div>
+        <div class="dish-hero" id="copycatHero" hidden>
+        <img id="copycatHeroImg" alt="" />
+        <span class="dish-hero-tag" id="copycatHeroTag" hidden><i class="ti ti-sparkles"></i> AI image</span>
+      </div>
+      <div class="copycat-name" id="copycatName"></div>
         <div class="copycat-inspired" id="copycatInspired"></div>
 
         <div class="cal-compare" id="calCompare">
@@ -7024,7 +7058,7 @@
         ? '<span class="status-pill cooked"><i class="ti ti-check" style="font-size:10px;"></i> Cooked</span>'
         : '<span class="status-pill uncooked" onclick="event.stopPropagation(); toggleHistoryItem(\'' + h.id + '\')">Mark cooked</span>';
       const dishName = h.dish_name || h.dish;
-      const thumb = h.image_url || h.thumb;
+      const thumb = h.image_url || h.thumb || (h.recipe_data && h.recipe_data.image_url);
       html += '<div class="history-card" onclick="openSavedRecipe(\'' + h.id + '\')">';
       html += thumb
         ? '<img class="history-thumb" src="' + thumb + '" alt="" />'
@@ -7348,11 +7382,12 @@
 
       // Save to cloud history with thumbnail
       const thumbBase64 = 'data:' + uploadedMediaType + ';base64,' + uploadedBase64;
+      window.__recipePhoto = { for: recipe, src: thumbBase64 };
       // Saving to history is best-effort. Awaiting it here meant a slow or
       // failing save held back the recipe the user was already waiting for.
       currentRecipeId = null;
       addToHistory(recipe, thumbBase64)
-        .then(id => { currentRecipeId = id; })
+        .then(id => { currentRecipeId = id; applyPendingDishImage(id); })
         .catch(() => {});
 
       // Reset cooked button
@@ -7420,7 +7455,7 @@
       // failing save held back the recipe the user was already waiting for.
       currentRecipeId = null;
       addToHistory(recipe, null)
-        .then(id => { currentRecipeId = id; })
+        .then(id => { currentRecipeId = id; applyPendingDishImage(id); })
         .catch(() => {});
       const btn = document.getElementById('cookedBtn');
       if (btn) { btn.classList.remove('cooked'); btn.innerHTML = '<i class="ti ti-checks"></i> I cooked this dish'; }
@@ -7657,7 +7692,7 @@
       // failing save held back the recipe the user was already waiting for.
       currentRecipeId = null;
       addToHistory(recipe, null)
-        .then(id => { currentRecipeId = id; })
+        .then(id => { currentRecipeId = id; applyPendingDishImage(id); })
         .catch(() => {});
       const btn = document.getElementById('cookedBtn');
       btn.classList.remove('cooked');
@@ -7838,6 +7873,98 @@
     return found;
   }
 
+  // ── Dish picture ──
+  // Every recipe shows a picture, in this order of preference:
+  //   1. the user's own photo of it (analysed photo, or a saved dish's photo)
+  //   2. recipe.image_url: a shared video's cover, or an image made earlier
+  //   3. a new generated image from /api/dish-image, which then becomes #2
+  //      for this recipe and is saved to the user's history row.
+  // A generated image is labelled "AI image". `which` is 'recipe' or 'copycat'.
+  // window.__recipePhoto = { for: recipe, src } marks #1 for the next render.
+  const dishImageReq = { recipe: 0, copycat: 0 };
+
+  function photoFor(recipe) {
+    const p = window.__recipePhoto;
+    return p && p.for === recipe && p.src ? p.src : null;
+  }
+
+  async function showDishImage(which, recipe, photoSrc) {
+    const wrap = document.getElementById(which + 'Hero');
+    const img = document.getElementById(which + 'HeroImg');
+    const tag = document.getElementById(which + 'HeroTag');
+    if (!wrap || !img || !recipe) return;
+    const req = ++dishImageReq[which];
+    const show = (src, ai) => {
+      wrap.hidden = false;
+      wrap.classList.remove('ready');
+      tag.hidden = !ai;
+      img.onload = () => { if (req === dishImageReq[which]) { wrap.classList.remove('loading'); wrap.classList.add('ready'); } };
+      img.onerror = () => { if (req === dishImageReq[which]) { wrap.hidden = true; wrap.classList.remove('loading'); } };
+      img.alt = recipe.dish || '';
+      img.src = src;
+    };
+
+    if (photoSrc) { show(photoSrc, photoSrc === recipe.image_url && recipe.image_source === 'ai'); return; }
+    if (recipe.image_url) { show(recipe.image_url, recipe.image_source === 'ai'); return; }
+    if (!recipe.dish) { wrap.hidden = true; return; }
+
+    // Make one. The sheen shows while it's on its way (a few seconds).
+    wrap.hidden = false;
+    wrap.classList.remove('ready');
+    wrap.classList.add('loading');
+    tag.hidden = true;
+    img.removeAttribute('src');
+    try {
+      const res = await fetch('/api/dish-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dish: recipe.dish, ingredients: recipe.ingredients || [] })
+      });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok || !out.url) throw new Error(out.error || 'no image');
+      // Remember it on the recipe even if the user has moved on, so History
+      // and favourites keep it.
+      recipe.image_url = out.url;
+      recipe.image_source = 'ai';
+      persistDishImage(recipe);
+      if (req !== dishImageReq[which]) return;
+      show(out.url, true);
+    } catch (e) {
+      if (req !== dishImageReq[which]) return;
+      wrap.hidden = true;                    // no image beats a broken one
+      wrap.classList.remove('loading');
+    }
+  }
+
+  // Save a recipe's new picture to its history row (and the in-memory copy).
+  // The row may not exist yet, since saving to history runs in parallel, so a
+  // pending image is applied when the row's id arrives.
+  let pendingDishImage = null;
+  function persistDishImage(recipe) {
+    if (currentRecipeId && (baseRecipe === recipe || (baseRecipe && baseRecipe.__methodBase === recipe))) {
+      writeDishImage(currentRecipeId, recipe);
+    } else {
+      pendingDishImage = recipe;
+    }
+  }
+  function applyPendingDishImage(id) {
+    if (!id || !pendingDishImage) return;
+    if (baseRecipe === pendingDishImage || (baseRecipe && baseRecipe.__methodBase === pendingDishImage)) {
+      writeDishImage(id, pendingDishImage);
+    }
+    pendingDishImage = null;
+  }
+  async function writeDishImage(id, recipe) {
+    try {
+      // Never replace a real photo already on the row.
+      await supaClient.from('dishes')
+        .update({ image_url: recipe.image_url, recipe_data: recipe })
+        .eq('id', id).is('image_url', null);
+      const h = getHistory().find(x => x.id === id);
+      if (h && !h.image_url) { h.image_url = recipe.image_url; h.recipe_data = recipe; }
+    } catch (e) { /* the picture still shows; History gets it on a later save */ }
+  }
+
   // ── Cook it with: switch the main appliance and rewrite the method ──
   // The recipe as first generated is kept as methodBase; each appliance the
   // cook switches to is rewritten once by /api/adapt-method and cached, so
@@ -8004,6 +8131,10 @@
     }
     // The popup never opens on its own — the button above flags detected
     // allergens and the user taps it if they want the safe-swap details.
+
+    // The dish's picture (photo, video cover, or a generated one).
+    const imgRecipe = r.__methodBase || r;
+    showDishImage('recipe', imgRecipe, photoFor(imgRecipe));
 
     // LAST: the section renderers above un-hide their own wrappers, so collapse
     // everything back to the tile grid only after they've all run.
@@ -8923,6 +9054,7 @@
     document.getElementById('dishDetectedLabel').textContent =
       (item.dish_name || 'Shared recipe') + ' · from @' + (item.sender_username || 'someone');
 
+    window.__recipePhoto = { for: item.recipe_data, src: item.image_url || null };
     renderRecipe(item.recipe_data);
     document.getElementById('resultsSection').classList.add('visible');
     document.getElementById('newAnalysisBtn').classList.add('visible');
@@ -9304,7 +9436,7 @@
     method:      { title: 'Method',      section: 'methodSection',      servings: false }
   };
   // Things that belong to the grid view and hide when a page is open.
-  const RP_MAIN_IDS = ['recipeMeta', 'allergyBtn', 'rpGrid', 'swapPanel', 'cookItBtn', 'cookedBtn', 'recipeFavBtn', 'shareRecipeBtn'];
+  const RP_MAIN_IDS = ['recipeHero', 'recipeMeta', 'allergyBtn', 'rpGrid', 'swapPanel', 'cookItBtn', 'cookedBtn', 'recipeFavBtn', 'shareRecipeBtn'];
 
   function rpSectionEl(key) {
     // Equipment/method have no wrapper div, so fall back to the body's parent.
@@ -9826,7 +9958,7 @@
       const date = new Date(h.created_at || h.timestamp);
       const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       const dishName = h.dish_name || h.dish;
-      const thumb = h.image_url || h.thumb;
+      const thumb = h.image_url || h.thumb || (h.recipe_data && h.recipe_data.image_url);
       html += '<div class="history-card" onclick="openSavedRecipe(\'' + h.id + '\')">';
       html += thumb
         ? '<img class="history-thumb" src="' + thumb + '" alt="" />'
@@ -9862,7 +9994,7 @@
     currentRecipeId = id;
 
     // Restore the saved thumbnail into the preview area
-    const thumb = entry.image_url || entry.thumb;
+    const thumb = entry.image_url || entry.thumb || (entry.recipe_data && entry.recipe_data.image_url);
     if (thumb) {
       const preview = document.getElementById('dishPreview');
       preview.src = thumb;
@@ -9885,6 +10017,7 @@
     }
 
     // Render the full recipe and reveal the results section
+    window.__recipePhoto = { for: recipe, src: thumb || null };
     renderRecipe(recipe);
     document.getElementById('resultsSection').classList.add('visible');
     document.getElementById('newAnalysisBtn').classList.add('visible');
@@ -11046,6 +11179,8 @@
 
   function renderCopycat(r) {
     document.getElementById('copycatName').textContent = r.dish || 'Homemade version';
+    // A homemade, lighter take on the restaurant dish: its own picture.
+    showDishImage('copycat', r, null);
     const inspired = document.getElementById('copycatInspired');
     if (r.inspiredBy) {
       inspired.innerHTML = '<i class="ti ti-arrow-back-up" style="font-size:13px;"></i> Inspired by ' + r.inspiredBy;
@@ -13201,6 +13336,7 @@
       document.getElementById('uploadZone').classList.add('has-image');
       document.getElementById('dishDetectedLabel').textContent = (recipe.dish || 'Saved dish');
     }
+    window.__recipePhoto = { for: recipe, src: thumb || null };
     renderRecipe(recipe);
     // Stash so "save to my favorites" knows what to copy.
     window.__pendingSaveRecipe = { recipe, thumb };
