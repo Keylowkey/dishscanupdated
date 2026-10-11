@@ -75,7 +75,7 @@
   </nav>
   <div class="legal-body" id="legalPrivacy">
       <h1>Privacy Policy</h1>
-      <div class="legal-dates">Effective date: June 16, 2026 · Last updated: June 16, 2026</div>
+      <div class="legal-dates">Effective date: June 16, 2026 · Last updated: October 12, 2026</div>
 
       <p>This Privacy Policy explains what information Capture &amp; Cook LLC ("we," "us") collects, how we use it, and your choices. It applies to captureandcook.com.</p>
 
@@ -85,7 +85,7 @@
       <div class="legal-callout">
         <p><strong>About allergy &amp; dietary preferences.</strong> If you choose to save allergies or dietary preferences, this may be considered sensitive health-related information. Providing it is entirely optional. We use it only to flag ingredients and suggest substitutions for you inside the app. We do not sell it, and it is not shown to other users.</p>
       </div>
-      <p><strong>Photos you upload.</strong> Food photos you submit for dish analysis, takeout scanning, or community sharing. Photos are compressed on your device before upload.</p>
+      <p><strong>Photos and videos you upload.</strong> Food photos you submit for dish analysis, takeout scanning, or community sharing, and cooking videos you post to the community (up to 60 seconds). Photos and videos are compressed on your device before upload.</p>
       <p><strong>Content you create.</strong> Recipes saved to your history, favorites, ratings, community posts, captions, comments, reactions, and reports you submit.</p>
       <p><strong>Support messages.</strong> If you contact support, we receive your name, email, and message.</p>
       <p><strong>Technical information.</strong> Like most web services, our hosting providers automatically log basic technical data (such as IP address and browser type) for security and operations.</p>
@@ -101,7 +101,7 @@
       </ul>
 
       <h2>3. AI Processing</h2>
-      <p>Photos you submit for analysis, takeout scanning, or community-feed screening are processed by our AI provider (Anthropic) to generate results. When you run an allergy check, the dish name, its ingredient list, and the allergens being checked are sent to the AI provider to generate substitution suggestions. Saved addresses and store searches are processed by Google's mapping services to return nearby results. We send only what is needed for the feature to work.</p>
+      <p>Photos you submit for analysis, takeout scanning, or community-feed screening are processed by our AI provider (Anthropic) to generate results. Videos you post are screened the same way, using a few still frames taken from the video. To show a picture for recipes that don't come with a photo, the dish name and its main ingredients are sent to OpenAI to create an image, which is stored and reused for that dish; your photos and account details are never sent to OpenAI. When you run an allergy check, the dish name, its ingredient list, and the allergens being checked are sent to the AI provider to generate substitution suggestions. Saved addresses and store searches are processed by Google's mapping services to return nearby results. We send only what is needed for the feature to work.</p>
 
       <h2>4. Who Can See Your Information</h2>
       <ul>
@@ -115,7 +115,9 @@
       <table class="legal-table">
         <tr><td>Supabase</td><td>Database, authentication, storage</td></tr>
         <tr><td>Vercel</td><td>Hosting and serverless functions</td></tr>
-        <tr><td>Anthropic</td><td>AI analysis of food photos, recipe generation, and allergy substitutions</td></tr>
+        <tr><td>Anthropic</td><td>AI analysis of food photos and videos, recipe generation, and allergy substitutions</td></tr>
+        <tr><td>OpenAI</td><td>Creating dish images from a dish name and its ingredients</td></tr>
+        <tr><td>Google (Firebase)</td><td>Delivering notifications on Android devices</td></tr>
         <tr><td>Google (Places)</td><td>Store search and geolocation</td></tr>
         <tr><td>Resend</td><td>Transactional email (support, confirmations)</td></tr>
         <tr><td>Cloudflare</td><td>Domain and email routing</td></tr>
