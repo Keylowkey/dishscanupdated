@@ -45,6 +45,24 @@ export default async function handler(req, res) {
       if (frows.length) canSeeContent = true;
     }
 
+    // A block in either direction hides posts and favorites, as it already
+    // does in the feed. The app says "You blocked @x" for the blocker, and
+    // only "not available" for the person blocked, so a block isn't revealed.
+    let blocked = null;
+    if (viewerId && viewerId !== user_id) {
+      try {
+        const v = encodeURIComponent(viewerId), u = encodeURIComponent(user_id);
+        const br = await fetch(
+          `${SUPABASE_URL}/rest/v1/blocks?select=blocker_id&or=(and(blocker_id.eq.${v},blocked_id.eq.${u}),and(blocker_id.eq.${u},blocked_id.eq.${v}))`,
+          { headers }
+        );
+        const brows = br.ok ? await br.json() : [];
+        if (brows.some(b => b.blocker_id === viewerId)) blocked = 'by_me';
+        else if (brows.length) blocked = 'by_them';
+      } catch (e) { /* no blocks table or error: treat as none */ }
+      if (blocked) canSeeContent = false;
+    }
+
     let favorites = [];
     if (canSeeContent && profile.favorites_public) {
       const favRes = await fetch(
@@ -96,7 +114,8 @@ export default async function handler(req, res) {
       favorites,
       followerCount,
       followingCount,
-      posts
+      posts,
+      blocked
     });
   } catch (e) {
     return res.status(500).json({ error: 'Server error.', detail: String(e && e.message || e).slice(0, 200) });

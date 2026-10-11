@@ -62,6 +62,7 @@
     --text: #f4f4f4;
     --text2: #b1b1b1;
     --text3: #7f7f7f;
+    --danger: #ff6b61;        /* destructive actions: block, delete, unfollow */
     --ink: #5f5f5f;
     --ink-shadow: rgba(0,0,0,0.55);
     /* Aliases kept for older markup that still references these names. They
@@ -101,6 +102,7 @@
       --text: #1e2b22;
       --text2: #5f6e64;
       --text3: #93a198;
+      --danger: #c62828;
       --ink: #1e2b22;
       --ink-shadow: rgba(30,43,34,0.14);
       --shadow-sm: 3px 3px 0 var(--ink-shadow);
@@ -2417,7 +2419,9 @@
 
   .toast {
     position: fixed;
-    bottom: 2rem;
+    /* --toast-lift moves it above an open action sheet instead of over it. */
+    bottom: calc(2rem + var(--toast-lift, 0px));
+    transition: opacity 0.3s, bottom .24s ease;
     left: 50%;
     transform: translateX(-50%);
     background: var(--text);
@@ -2428,7 +2432,6 @@
     font-weight: 500;
     z-index: 100010; /* above modals (100001-100002) so toasts never hide behind a popup */
     opacity: 0;
-    transition: opacity 0.3s;
     pointer-events: none;
     white-space: nowrap;
     box-shadow: var(--shadow);
@@ -3110,7 +3113,55 @@
   .pp-username { font-size: 17px; font-weight: 800; }
   .pp-badge { font-size: 12px; font-weight: 700; color: var(--brand); }
   .pp-follow { margin-top: 14px; }
-  .pp-follow .follow-btn { width: 100%; justify-content: center; }
+  .pp-follow .follow-btn {
+    width: 100%; justify-content: center;
+    padding: 11px 18px; border-radius: 12px; font-size: 15px; font-weight: 700;
+  }
+  .pp-title { flex: 1; min-width: 0; }
+  .pp-more {
+    width: 44px; height: 44px; border: none; background: none; color: var(--text);
+    font-size: 24px; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; border-radius: 50%; flex-shrink: 0;
+  }
+  .pp-notice { text-align: center; padding: 36px 12px 12px; }
+  .pp-notice-icon { font-size: 34px; color: var(--text3); margin-bottom: 10px; }
+  .pp-notice-title { font-weight: 800; font-size: 16px; margin-bottom: 4px; }
+  .pp-notice-text { font-size: 13.5px; color: var(--text3); line-height: 1.45; }
+
+  /* ── Action sheet (menus and confirmations) ──
+     Above every popup (100001-100002), below toasts (100010). */
+  .cc-sheet-scrim {
+    position: fixed; inset: 0; z-index: 100004; background: rgba(0,0,0,.45);
+    opacity: 0; pointer-events: none; transition: opacity .2s ease;
+  }
+  .cc-sheet-scrim.open { opacity: 1; pointer-events: auto; }
+  .cc-sheet {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 100005;
+    padding: 0 10px calc(10px + env(safe-area-inset-bottom));
+    max-width: 520px; margin: 0 auto;
+    transform: translateY(110%); transition: transform .24s cubic-bezier(.2,.8,.2,1);
+    visibility: hidden;
+  }
+  .cc-sheet.open { transform: translateY(0); visibility: visible; }
+  .cc-sheet-card { background: var(--surface); border-radius: 16px; overflow: hidden; }
+  .cc-sheet-head { padding: 16px 18px 14px; text-align: center; border-bottom: 1px solid var(--border); }
+  .cc-sheet-head:empty, .cc-sheet-head.empty { display: none; }
+  .cc-sheet-title { font-weight: 800; font-size: 15px; color: var(--text); }
+  .cc-sheet-msg { font-size: 13.5px; color: var(--text3); line-height: 1.45; margin-top: 4px; }
+  .cc-sheet-msg:empty { display: none; }
+  .cc-sheet-act {
+    width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 15px 18px; border: none; background: none; cursor: pointer;
+    font: inherit; font-size: 16px; font-weight: 600; color: var(--text);
+  }
+  .cc-sheet-act + .cc-sheet-act { border-top: 1px solid var(--border); }
+  .cc-sheet-act.danger { color: var(--danger); }
+  .cc-sheet-act:active, .cc-sheet-cancel:active { background: var(--surface2); }
+  .cc-sheet-cancel {
+    width: 100%; margin-top: 8px; padding: 15px 18px; border: none; border-radius: 16px;
+    background: var(--surface); color: var(--text); font: inherit; font-size: 16px; font-weight: 800;
+    cursor: pointer;
+  }
   .pp-section { margin-top: 18px; }
   .profile-page .vp-post-grid { gap: 3px; }
   .profile-page .vp-post-cell { border-radius: 4px; }
@@ -3146,8 +3197,11 @@
   .follow-btn:hover { filter: brightness(1.05); }
   .follow-btn.following { background: var(--surface2); color: var(--text2); border: 0.5px solid var(--border); }
   .follow-btn.pending { background: var(--surface2); color: var(--text3); border: 0.5px solid var(--border); cursor: default; }
-  .follow-btn.blockbtn { background: #b3261e; color: #fff; border: 0.5px solid #b3261e; margin-left: 8px; }
-  .follow-btn.blockbtn.subtle { background: var(--surface2); color: #b3261e; border: 0.5px solid var(--border); }
+  /* Secondary state: Following, Requested, Unblock, Edit profile. */
+  .follow-btn.secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .follow-btn.secondary:disabled { color: var(--text3); cursor: default; }
+  .follow-btn.secondary.danger-text { color: var(--danger); }
+  .follow-btn .fb-caret { font-size: 15px; opacity: .6; margin-left: -1px; }
   .req-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 0.5px solid var(--border); }
   .req-actions { margin-left: auto; display: flex; gap: 6px; }
   .req-approve, .req-decline {
@@ -3917,7 +3971,6 @@
   .cc-rtl .rp-back i, .cc-rtl .rp-tile-arrow,
   .cc-rtl .swap-arrow i, .cc-rtl .legal-back i { transform: scaleX(-1); }
   .cc-rtl .dh-chip { margin-left: 0; margin-right: 8px; }
-  .cc-rtl .follow-btn.blockbtn { margin-left: 0; margin-right: 8px; }
   .cc-rtl .nutri-sources, .cc-rtl .nutri-disclaimer { direction: rtl; }
   /* Anchored panels are pinned to the right edge, which throws them off-screen
      once the layout mirrors — flip them and stop the page scrolling sideways. */
@@ -5500,6 +5553,7 @@
   <div class="pp-bar">
     <button class="pp-back" onclick="profileBack()" aria-label="Back"><i class="ti ti-arrow-left"></i></button>
     <div class="pp-title" id="ppTitle">Profile</div>
+    <button class="pp-more" id="ppMore" onclick="profileMoreMenu()" aria-label="More options" hidden><i class="ti ti-dots"></i></button>
   </div>
   <div class="pp-scroll" id="ppScroll">
     <div class="pp-head">
@@ -5521,7 +5575,6 @@
     </div>
     <div class="pp-name-row">
       <div id="upUsername" class="pp-username">@user</div>
-      <div id="upFollowingBadge" class="pp-badge" style="display:none;"><i class="ti ti-check"></i> Following</div>
     </div>
     <div id="upFollowWrap" class="pp-follow"></div>
     <div id="upNutrition" class="pp-section"></div>
@@ -5823,6 +5876,20 @@
     <div class="reel-sheet-body" id="reelSheetBody"></div>
     <div class="comment-input-row reel-sheet-input" id="reelSheetInput"></div>
   </div>
+</div>
+
+<!-- Shared action sheet: menus and confirmations (ccSheet / ccConfirm).
+     Replaces the browser's confirm()/prompt(), which looked like system alerts. -->
+<div class="cc-sheet-scrim" id="ccSheetScrim" onclick="closeCcSheet(null)"></div>
+<div class="cc-sheet" id="ccSheet" role="dialog" aria-modal="true" aria-labelledby="ccSheetTitle" aria-hidden="true">
+  <div class="cc-sheet-card">
+    <div class="cc-sheet-head" id="ccSheetHead">
+      <div class="cc-sheet-title" id="ccSheetTitle"></div>
+      <div class="cc-sheet-msg" id="ccSheetMsg"></div>
+    </div>
+    <div class="cc-sheet-actions" id="ccSheetActions"></div>
+  </div>
+  <button class="cc-sheet-cancel" id="ccSheetCancel" onclick="closeCcSheet(null)">Cancel</button>
 </div>
 
 <!-- Shown before switching to an appliance that changes how the dish turns out -->
@@ -6565,6 +6632,9 @@
     if (!CC_App || !CC_App.addListener) return;
     CC_App.addListener('backButton', function () {
       try {
+        // 0. An action sheet sits above everything; back cancels it.
+        if (typeof ccSheetOpen === 'function' && ccSheetOpen()) { closeCcSheet(null); return; }
+
         // 1. A reaction popover is the lightest thing on screen.
         const pop = document.querySelector('.react-popover.open');
         if (pop) { pop.classList.remove('open'); return; }
@@ -6813,7 +6883,12 @@
   }
 
   async function clearCloudHistory() {
-    if (!confirm('Clear all scan history? This cannot be undone.')) return;
+    const ok = await ccConfirm({
+      title: 'Clear all history?',
+      message: 'Every dish in your scan history will be removed. This can\u2019t be undone.',
+      confirmLabel: 'Clear history', icon: 'ti-trash'
+    });
+    if (!ok) return;
     if (!currentUser) return;
     try {
       const { error } = await supaClient
@@ -12458,7 +12533,12 @@
 
   // ── Post management & safety ──
   async function deletePost(postId) {
-    if (!confirm('Delete this post? This cannot be undone.')) return;
+    const ok = await ccConfirm({
+      title: 'Delete this post?',
+      message: 'It will be removed from the feed and your profile. This can\u2019t be undone.',
+      confirmLabel: 'Delete', icon: 'ti-trash'
+    });
+    if (!ok) return;
     try {
       const post = (window.__feedPosts || {})[postId];
       const { error } = await supaClient.from('posts').delete().eq('id', postId);
@@ -12480,7 +12560,18 @@
   }
 
   async function reportPost(postId) {
-    const reason = prompt('Why are you reporting this post? (optional)') || null;
+    const reason = await ccSheet({
+      title: 'Report this post',
+      message: 'Why are you reporting it? Our team reviews every report.',
+      actions: [
+        { key: 'Not food or cooking', label: 'Not about food or cooking' },
+        { key: 'Spam or advertising', label: 'Spam or advertising' },
+        { key: 'Sexual or inappropriate', label: 'Sexual or inappropriate' },
+        { key: 'Hate, harassment or violence', label: 'Hate, harassment or violence' },
+        { key: 'Something else', label: 'Something else' }
+      ]
+    });
+    if (!reason) return;            // cancelled: don't file a report
     try {
       const { data: sess } = await supaClient.auth.getSession();
       const token = sess && sess.session && sess.session.access_token;
@@ -12516,77 +12607,132 @@
     return await res.json();
   }
 
-  async function renderFollowButton(userId) {
-    const wrap = document.getElementById('upFollowWrap');
-    if (!wrap) return;
-    const badge = document.getElementById('upFollowingBadge');
-    if (badge) badge.style.display = 'none';
-    const myId = (currentUser && currentUser.id) || (window.currentUser && window.currentUser.id) || null;
-    if (myId && userId === myId) { wrap.innerHTML = ''; return; }
-
-    // Show a Follow button IMMEDIATELY so it always appears, then refine its
-    // state once we know the relationship. (Never leave the user with no button.)
-    wrap.innerHTML = '<button class="follow-btn" onclick="doFollow(\'' + userId + '\')"><i class="ti ti-user-plus"></i> Follow</button>';
-
-    // Determine relationship via the API (works in Chrome; no direct Supabase).
-    let state = 'none', iBlocked = false;
-    try {
-      const out = await followAction('follow_status', { target_id: userId });
-      if (out && out.state) state = out.state;
-      const bs = await followAction('block_status', { target_id: userId });
-      iBlocked = !!(bs && bs.blocked);
-    } catch (e) { /* keep default Follow button */ }
-
-    const blockBtn = iBlocked
-      ? '<button class="follow-btn blockbtn" onclick="doUnblock(\'' + userId + '\')"><i class="ti ti-ban"></i> Unblock</button>'
-      : '<button class="follow-btn blockbtn subtle" onclick="doBlock(\'' + userId + '\')"><i class="ti ti-ban"></i> Block</button>';
-
-    if (iBlocked) {
-      // Blocked users can't be followed; only offer Unblock.
-      wrap.innerHTML = blockBtn;
-    } else if (state === 'following') {
-      // "Following" shows as a label next to the username; button says Unfollow.
-      if (badge) badge.style.display = 'block';
-      wrap.innerHTML = '<button class="follow-btn following" onclick="doUnfollow(\'' + userId + '\')"><i class="ti ti-user-minus"></i> Unfollow</button>' + blockBtn;
-    } else if (state === 'pending') {
-      wrap.innerHTML = '<button class="follow-btn pending" disabled><i class="ti ti-clock"></i> Requested</button>' + blockBtn;
-    } else {
-      wrap.innerHTML = '<button class="follow-btn" onclick="doFollow(\'' + userId + '\')"><i class="ti ti-user-plus"></i> Follow</button>' + blockBtn;
+  // The follow button on a profile. One button whose state says where you
+  // stand; tapping it does the obvious next thing. Blocking lives in the ⋯
+  // menu in the top bar, not on the page.
+  function followBtnHtml(state, userId) {
+    const q = "'" + userId + "'";
+    switch (state) {
+      case 'blocked':   return '<button class="follow-btn secondary danger-text" onclick="doUnblock(' + q + ')"><i class="ti ti-ban"></i> Unblock</button>';
+      case 'following': return '<button class="follow-btn secondary" onclick="followingMenu(' + q + ')" aria-haspopup="dialog"><i class="ti ti-check"></i> Following <i class="ti ti-chevron-down fb-caret"></i></button>';
+      case 'pending':   return '<button class="follow-btn secondary" onclick="requestedMenu(' + q + ')" aria-haspopup="dialog"><i class="ti ti-clock"></i> Requested</button>';
+      case 'busy':      return '<button class="follow-btn secondary" disabled><i class="ti ti-loader-2"></i> Just a moment…</button>';
+      default:          return '<button class="follow-btn" onclick="doFollow(' + q + ')"><i class="ti ti-user-plus"></i> Follow</button>';
     }
   }
 
+  async function renderFollowButton(userId) {
+    const wrap = document.getElementById('upFollowWrap');
+    if (!wrap) return;
+    const myId = (currentUser && currentUser.id) || null;
+    if (myId && userId === myId) { wrap.innerHTML = ''; return; }
+
+    // Show Follow straight away so there's never an empty slot, then settle
+    // on the real state.
+    wrap.innerHTML = followBtnHtml('none', userId);
+    let state = 'none', iBlocked = false;
+    try {
+      const [fs, bs] = await Promise.all([
+        followAction('follow_status', { target_id: userId }),
+        followAction('block_status', { target_id: userId })
+      ]);
+      if (fs && fs.state) state = fs.state;
+      iBlocked = !!(bs && bs.blocked);
+    } catch (e) { /* keep Follow */ }
+    if (window.__viewedUserId !== userId) return;     // a different profile opened meanwhile
+    window.__viewedRel = { userId, state, iBlocked };
+    wrap.innerHTML = followBtnHtml(iBlocked ? 'blocked' : state, userId);
+  }
+
+  function viewedName() {
+    const t = (document.getElementById('upUsername') || {}).textContent || '';
+    return t.startsWith('@') ? t : '@' + (t || 'user');
+  }
+
+  async function followingMenu(userId) {
+    const pick = await ccSheet({
+      title: viewedName(),
+      actions: [{ key: 'unfollow', label: 'Unfollow', icon: 'ti-user-minus', danger: true }]
+    });
+    if (pick === 'unfollow') doUnfollow(userId);
+  }
+  async function requestedMenu(userId) {
+    const ok = await ccConfirm({
+      title: 'Cancel follow request?',
+      message: viewedName() + ' won\u2019t see your request anymore.',
+      confirmLabel: 'Cancel request'
+    });
+    if (ok) doUnfollow(userId);
+  }
+
+  // ⋯ in the profile's top bar.
+  async function profileMoreMenu() {
+    const userId = window.__viewedUserId;
+    if (!userId || (currentUser && userId === currentUser.id)) return;
+    const blocked = !!(window.__viewedRel && window.__viewedRel.iBlocked) || window.__viewedBlocked === 'by_me';
+    const pick = await ccSheet({
+      title: viewedName(),
+      actions: [blocked
+        ? { key: 'unblock', label: 'Unblock', icon: 'ti-ban' }
+        : { key: 'block', label: 'Block', icon: 'ti-ban', danger: true }]
+    });
+    if (pick === 'block') doBlock(userId);
+    if (pick === 'unblock') doUnblock(userId);
+  }
+
+  // After blocking or unblocking, reload the profile page from the server so
+  // its posts, counts and button all reflect the new relationship.
+  function refreshViewedProfile(userId) {
+    if (profilePageOpen() && window.__viewedUserId === userId) openUserProfile(userId, true);
+  }
   async function doBlock(userId) {
-    if (!confirm('Block this user? You won\'t see each other\'s posts or comments, and any follows between you are removed.')) return;
+    const name = window.__viewedUserId === userId ? viewedName() : 'this user';
+    const ok = await ccConfirm({
+      title: 'Block ' + name + '?',
+      message: 'You won\u2019t see each other\u2019s posts or comments, and any follows between you are removed. They won\u2019t be told.',
+      confirmLabel: 'Block',
+      icon: 'ti-ban'
+    });
+    if (!ok) return;
     const out = await followAction('block', { target_id: userId });
     if (!out) { showToast('Could not block. Try again.'); return; }
     if (!window.__blockedIds) window.__blockedIds = new Set();
     window.__blockedIds.add(userId);
-    showToast('User blocked');
-    renderFollowButton(userId);
+    showToast(name.startsWith('@') ? name + ' blocked' : 'User blocked');
+    refreshViewedProfile(userId);
     try { loadFeed(); } catch (e) { /* feed refreshes next open */ }
   }
   async function doUnblock(userId) {
     const out = await followAction('unblock', { target_id: userId });
     if (!out) { showToast('Could not unblock. Try again.'); return; }
     if (window.__blockedIds) window.__blockedIds.delete(userId);
-    showToast('User unblocked');
-    renderFollowButton(userId);
+    showToast('Unblocked');
+    refreshViewedProfile(userId);
     try { loadFeed(); } catch (e) { /* feed refreshes next open */ }
   }
 
   async function doFollow(userId) {
     const wrap = document.getElementById('upFollowWrap');
-    if (wrap) wrap.innerHTML = '<button class="follow-btn pending" disabled><i class="ti ti-loader-2"></i> …</button>';
+    if (wrap) wrap.innerHTML = followBtnHtml('busy', userId);
     const out = await followAction('follow', { target_id: userId });
     if (!out) { showToast(window.__lastFollowError ? ('Follow failed: ' + window.__lastFollowError) : 'Could not follow. Try again.'); renderFollowButton(userId); return; }
     if (out.status === 'pending') { showToast('Follow request sent'); }
     else { showToast('Following'); bumpFollowerCount(userId, +1); }
     renderFollowButton(userId);
   }
+  // Unfollow, or cancel a pending request (the API removes either).
   async function doUnfollow(userId) {
-    const wasFollowing = document.querySelector('#upFollowWrap .follow-btn.following') !== null;
+    const rel = window.__viewedRel && window.__viewedRel.userId === userId ? window.__viewedRel : null;
+    const wasPending = !!(rel && rel.state === 'pending');
+    const wrap = document.getElementById('upFollowWrap');
+    if (wrap && window.__viewedUserId === userId) wrap.innerHTML = followBtnHtml('busy', userId);
     const out = await followAction('unfollow', { target_id: userId });
-    if (out) { showToast('Unfollowed'); if (wasFollowing) bumpFollowerCount(userId, -1); }
+    if (out) {
+      showToast(wasPending ? 'Request cancelled' : 'Unfollowed');
+      if (!wasPending) bumpFollowerCount(userId, -1);
+    } else {
+      showToast('Could not update. Try again.');
+    }
     renderFollowButton(userId);
   }
   // Update the visible follower count immediately instead of waiting for a reopen.
@@ -12704,6 +12850,58 @@
     }
   }
 
+  // ── Action sheet ──
+  // ccSheet({ title, message, actions: [{ key, label, icon, danger }] })
+  // resolves to the chosen action's key, or null if cancelled. ccConfirm
+  // wraps it for yes/no questions. Both replace confirm()/prompt().
+  let ccSheetResolve = null;
+  let ccSheetReturnFocus = null;
+
+  function ccSheet({ title = '', message = '', actions = [], cancelLabel = 'Cancel' } = {}) {
+    if (ccSheetResolve) closeCcSheet(null);          // one sheet at a time
+    document.getElementById('ccSheetTitle').textContent = title;
+    document.getElementById('ccSheetMsg').textContent = message;
+    document.getElementById('ccSheetHead').classList.toggle('empty', !title && !message);
+    document.getElementById('ccSheetCancel').textContent = cancelLabel;
+    const list = document.getElementById('ccSheetActions');
+    list.innerHTML = '';
+    actions.forEach(a => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'cc-sheet-act' + (a.danger ? ' danger' : '');
+      // icon is a full class name ('ti-ban'), so scripts/build-icons.py can find it.
+      b.innerHTML = (a.icon ? '<i class="ti ' + a.icon + '"></i>' : '') + '<span></span>';
+      b.querySelector('span').textContent = a.label;   // labels may contain usernames
+      b.onclick = () => closeCcSheet(a.key);
+      list.appendChild(b);
+    });
+    ccSheetReturnFocus = document.activeElement;
+    document.getElementById('ccSheetScrim').classList.add('open');
+    const sheet = document.getElementById('ccSheet');
+    sheet.classList.add('open');
+    sheet.setAttribute('aria-hidden', 'false');
+    const first = list.querySelector('button');
+    if (first) setTimeout(() => first.focus({ preventScroll: true }), 50);
+    document.documentElement.style.setProperty('--toast-lift', sheet.offsetHeight + 'px');
+    return new Promise(resolve => { ccSheetResolve = resolve; });
+  }
+  function closeCcSheet(result) {
+    document.getElementById('ccSheetScrim').classList.remove('open');
+    const sheet = document.getElementById('ccSheet');
+    sheet.classList.remove('open');
+    sheet.setAttribute('aria-hidden', 'true');
+    document.documentElement.style.removeProperty('--toast-lift');
+    const done = ccSheetResolve;
+    ccSheetResolve = null;
+    if (ccSheetReturnFocus && ccSheetReturnFocus.focus) ccSheetReturnFocus.focus({ preventScroll: true });
+    if (done) done(result === undefined ? null : result);
+  }
+  function ccSheetOpen() { return !!ccSheetResolve; }
+  async function ccConfirm({ title, message, confirmLabel = 'OK', danger = true, icon } = {}) {
+    return (await ccSheet({ title, message, actions: [{ key: 'ok', label: confirmLabel, danger, icon }] })) === 'ok';
+  }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && ccSheetOpen()) closeCcSheet(null); });
+
   // ── Profile page navigation ──
   // Profiles open as a full page. Opening one from another profile (say, from
   // its followers list) stacks; back returns to the previous profile, and
@@ -12739,7 +12937,8 @@
     body.innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="ti ti-loader-2"></i></div>Loading…</div>';
     document.getElementById('upNutrition').innerHTML = '';
     document.getElementById('ppTitle').textContent = 'Profile';
-    document.getElementById('upFollowingBadge').style.display = 'none';
+    document.getElementById('ppMore').hidden = true;
+    window.__viewedRel = null;
     document.getElementById('ppScroll').scrollTop = 0;
     modal.classList.add('open');
     modal.setAttribute('aria-hidden', 'false');
@@ -12752,8 +12951,9 @@
         body: JSON.stringify({ user_id: userId, access_token: token || null })
       });
       if (!res.ok) throw new Error('not ok');
-      const { profile, favorites, followerCount, followingCount, posts } = await res.json();
+      const { profile, favorites, followerCount, followingCount, posts, blocked } = await res.json();
       if (req !== profileReq) return;   // a newer profile was opened meanwhile
+      window.__viewedBlocked = blocked || null;
 
       // Am I looking at my own profile?
       const myId = (currentUser && currentUser.id) || null;
@@ -12761,13 +12961,17 @@
 
       // Render the follow button FIRST, before any property access that could
       // throw — guarantees the button shows even if profile data is odd.
-      renderFollowButton(userId);
-      renderProfileNutrition(userId);   // no-op unless they've opted in
+      document.getElementById('ppMore').hidden = !!isMe;
       if (isMe) {
         document.getElementById('upFollowWrap').innerHTML =
-          '<button class="follow-btn following" onclick="closeUserProfile(); openProfileModal();">' +
+          '<button class="follow-btn secondary" onclick="closeUserProfile(); openProfileModal();">' +
           '<i class="ti ti-pencil"></i> Edit profile</button>';
+      } else if (blocked === 'by_them') {
+        document.getElementById('upFollowWrap').innerHTML = '';   // nothing to follow
+      } else {
+        renderFollowButton(userId);
       }
+      if (!blocked) renderProfileNutrition(userId);   // no-op unless they've opted in
 
       nameEl.textContent = '@' + ((profile && profile.username) || 'user');
       document.getElementById('ppTitle').textContent = '@' + ((profile && profile.username) || 'user');
@@ -12787,6 +12991,20 @@
 
       // Build the body: posts section, then favorites section.
       let html = '';
+
+      // Blocked, either way round: no posts or favorites. Someone you blocked
+      // is named; someone who blocked you just isn't available.
+      if (blocked) {
+        const who = '@' + escapeText((profile && profile.username) || 'user');
+        body.innerHTML = blocked === 'by_me'
+          ? '<div class="pp-notice"><div class="pp-notice-icon"><i class="ti ti-ban"></i></div>' +
+            '<div class="pp-notice-title">You blocked ' + who + '</div>' +
+            '<div class="pp-notice-text">Unblock to see their posts and favorites again.</div></div>'
+          : '<div class="pp-notice"><div class="pp-notice-icon"><i class="ti ti-user-off"></i></div>' +
+            '<div class="pp-notice-title">This account isn\u2019t available</div>' +
+            '<div class="pp-notice-text">Its posts and favorites can\u2019t be shown.</div></div>';
+        return;
+      }
 
       // PRIVATE ACCOUNT gate: if this user is private, isn't me, and I'm not an
       // accepted follower, show only a "Private User" notice.
