@@ -4,6 +4,7 @@
 // Chrome (no direct third-party request to supabase.co).
 
 import { verifyToken } from '../lib/auth.js';
+import { moveInlinePhotos } from '../lib/post-photos.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -78,6 +79,7 @@ export default async function handler(req, res) {
           { headers }
         );
         posts = postsRes.ok ? await postsRes.json() : [];
+        await moveInlinePhotos(posts, SUPABASE_URL, SERVICE_KEY);
       } catch (e) { /* posts default empty */ }
     }
 

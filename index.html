@@ -4010,6 +4010,9 @@
   .cw-opt.active .cw-warn { color: #fff; }
   .cook-with-note { margin-top: 10px; font-size: 13.5px; line-height: 1.5; color: var(--text2); }
 
+  /* Feed: next page loads as this comes into view */
+  .feed-more { padding: 22px 0 30px; }
+
   /* ── Video posts in the feed ── */
   .feed-video { position: relative; cursor: pointer; }
   .feed-video .feed-image { pointer-events: none; }
@@ -11409,6 +11412,18 @@
         videoUrl = supaClient.storage.from('post-videos').getPublicUrl(videoPath).data.publicUrl;
       }
 
+      // 2b. The photo (or the video's still frame) goes to storage too, with a
+      //     720 px feed copy. If that fails — say the photo migration hasn't
+      //     been run — post it inline the old way; the feed API moves inline
+      //     photos into storage the first time it serves them.
+      const stillDataUrl = composerImage ? composerImage.dataUrl
+                         : composerVideo ? composerVideo.posterDataUrl : '';
+      let photo = null;
+      if (stillDataUrl) {
+        btn.innerHTML = '<i class="ti ti-loader-2"></i> Uploading photo…';
+        photo = await uploadPostPhoto(stillDataUrl, !!composerImage);
+      }
+
       // 2. Post it
       btn.innerHTML = '<i class="ti ti-loader-2"></i> Sharing…';
       const row = {
@@ -11418,17 +11433,22 @@
         // posts.image_url is NOT NULL in the database, so a text-only post
         // stores an empty string. It's falsy everywhere we check for a photo,
         // so the feed and profile grid treat it exactly like "no image".
-        image_url: composerImage ? composerImage.dataUrl
-                 : composerVideo ? composerVideo.posterDataUrl : '',
+        image_url: photo ? photo.url : stillDataUrl,
         caption: captionNow || null
       };
-      // Only name video_url when there is one, so photo and text posts keep
-      // working even before the video migration has been run.
+      // Only name a column when there is a value for it, so posting keeps
+      // working before the migration that adds it has been run.
       if (videoUrl) row.video_url = videoUrl;
-      const { error } = await supaClient.from('posts').insert(row);
+      if (photo && photo.thumbUrl) row.thumb_url = photo.thumbUrl;
+      let { error } = await supaClient.from('posts').insert(row);
+      if (error && row.thumb_url && /thumb_url/i.test(error.message || '')) {
+        delete row.thumb_url;               // column not there yet
+        ({ error } = await supaClient.from('posts').insert(row));
+      }
       if (error) {
-        // Don't leave an orphaned file behind when the post itself failed.
+        // Don't leave orphaned files behind when the post itself failed.
         if (videoPath) supaClient.storage.from('post-videos').remove([videoPath]).catch(() => {});
+        if (photo) supaClient.storage.from('post-photos').remove(photo.paths).catch(() => {});
         throw error;
       }
 
@@ -11445,6 +11465,59 @@
     }
   }
 
+  // ── Post photos in storage ──
+  // Upload a post's still image to the post-photos bucket and return
+  // { url, thumbUrl, paths }, or null if it couldn't be stored (the caller
+  // then falls back to posting it inline). With makeThumb, a 720 px copy is
+  // stored for the feed and profile grid; the full photo opens on tap. A
+  // video's still frame is already 720 px, so it needs no second copy.
+  function dataUrlToBlob(dataUrl) {
+    const [head, b64] = dataUrl.split(',');
+    const type = (/data:([^;]+)/.exec(head) || [])[1] || 'image/jpeg';
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new Blob([bytes], { type });
+  }
+  function shrinkDataUrl(dataUrl, maxDim, quality) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+        const c = document.createElement('canvas');
+        c.width = Math.round(img.width * scale);
+        c.height = Math.round(img.height * scale);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        c.toBlob(b => b ? resolve(b) : reject(new Error('resize failed')), 'image/jpeg', quality);
+      };
+      img.onerror = () => reject(new Error('resize failed'));
+      img.src = dataUrl;
+    });
+  }
+  async function uploadPostPhoto(dataUrl, makeThumb) {
+    try {
+      const store = supaClient.storage.from('post-photos');
+      const base = currentUser.id + '/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+      const opts = { contentType: 'image/jpeg', upsert: false, cacheControl: '31536000' };
+      const full = await store.upload(base + '.jpg', dataUrlToBlob(dataUrl), opts);
+      if (full.error) throw full.error;
+      const paths = [base + '.jpg'];
+      let thumbUrl = null;
+      if (makeThumb) {
+        try {
+          const t = await store.upload(base + '-feed.jpg', await shrinkDataUrl(dataUrl, 720, 0.75), opts);
+          if (!t.error) { paths.push(base + '-feed.jpg'); thumbUrl = store.getPublicUrl(base + '-feed.jpg').data.publicUrl; }
+        } catch (e) { /* the full photo still works in the feed */ }
+      }
+      return { url: store.getPublicUrl(base + '.jpg').data.publicUrl, thumbUrl, paths };
+    } catch (e) {
+      console.warn('Photo upload failed, posting inline:', e);
+      return null;
+    }
+  }
+  // The image to show in the feed and grids: the feed copy when there is one.
+  function postThumb(p) { return (p && (p.thumb_url || p.image_url)) || ''; }
+
   // Share is allowed with a photo, a caption, or both.
   function updateShareBtnState() {
     const btn = document.getElementById('shareBtn');
@@ -11457,156 +11530,205 @@
   let feedView = 'public';
   function onFeedViewChange() {
     feedView = document.getElementById('feedViewSelect').value;
+    feedPosts = []; feedHasMore = false; feedNextBefore = null;   // new view, first page
     document.getElementById('feedContent').innerHTML = '<div class="empty-state"><div class="spinner" style="margin:0 auto 1rem;"></div>Loading…</div>';
     loadFeed();
+  }
+
+  // ── Feed paging ──
+  // The feed loads a page at a time and more as you scroll, instead of every
+  // post at once. A refresh (after posting, reacting, deleting) reloads as many
+  // posts as are already on screen, so it doesn't snap the list back to page 1.
+  const FEED_PAGE = 12;
+  let feedPosts = [];                 // in feed order
+  let feedNextBefore = null;
+  let feedHasMore = false;
+  let feedLoadingMore = false;
+  let feedProfMap = {};
+  let feedMoreObserver = null;
+
+  async function fetchFeedPage(limit, before) {
+    try {
+      const { data: sess } = await supaClient.auth.getSession();
+      const token = sess && sess.session && sess.session.access_token;
+      const res = await fetch('/api/community-feed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ access_token: token || null, mode: feedView, limit, before: before || undefined })
+      });
+      if (res.ok) return await res.json();
+    } catch (e) { /* fall through */ }
+    return null;
+  }
+
+  // Fold a page's reactions and author profiles into the shared tallies.
+  function absorbFeedPage(posts, reactions, profiles) {
+    const counts = window.__reactCounts || {};
+    const ids = new Set(posts.map(p => p.id));
+    ids.forEach(id => { counts[id] = emptyCounts(); delete myReactions[id]; });
+    (reactions || []).forEach(r => {
+      if (!ids.has(r.post_id)) return;
+      if (r.type in counts[r.post_id]) counts[r.post_id][r.type]++;
+      if (currentUser && r.user_id === currentUser.id) myReactions[r.post_id] = r.type;
+    });
+    window.__reactCounts = counts;     // Bites reads these too
+    (profiles || []).forEach(pr => { feedProfMap[pr.id] = pr; });
+    window.__feedPosts = window.__feedPosts || {};
+    posts.forEach(p => { window.__feedPosts[p.id] = p; });
+  }
+
+  function renderFeedCard(p) {
+    const counts = window.__reactCounts || {};
+    const profMap = feedProfMap;
+    const c = counts[p.id] || emptyCounts();
+    const mine = myReactions[p.id];
+    const when = new Date(p.created_at).toLocaleDateString('en-US', { month:'short', day:'numeric' });
+    const isMine = currentUser && p.user_id === currentUser.id;
+    // Prefer the author's CURRENT avatar from their profile; fall back to the
+    // snapshot saved on the post.
+    const prof = profMap[p.user_id] || {};
+    const avatarPhoto = prof.avatar_photo || p.author_avatar || null;
+    const shownName = prof.username || p.username || 'user';
+    const menu = isMine
+      ? '<button class="feed-menu-btn" title="Delete post" onclick="deletePost(\'' + p.id + '\')"><i class="ti ti-trash"></i></button>'
+      : '<button class="feed-menu-btn" title="Report post" onclick="reportPost(\'' + p.id + '\')"><i class="ti ti-flag"></i></button>';
+
+    // The pop-up picker (hidden until the trigger is tapped).
+    const picker = REACTS.map(rx =>
+      '<button class="react-pick' + (mine === rx.type ? ' mine' : '') + '" title="' + rx.label + '" onclick="pickReaction(event,\'' + p.id + '\',\'' + rx.type + '\')">' + rx.icon + '</button>'
+    ).join('');
+
+    // The single trigger button: shows your reaction if you have one, else a clean modern icon.
+    const triggerInner = mine
+      ? REACT_ICON[mine] + ' <span class="react-trigger-label">' + REACT_LABEL[mine] + '</span>'
+      : '<i class="ti ti-mood-smile react-trigger-icon"></i><span class="react-trigger-label">React</span>';
+
+    // Summary of total reactions across all types.
+    const total = c.like + c.love + c.support + c.yum + (c.gross || 0);
+    const summaryIcons = REACTS.filter(rx => c[rx.type] > 0).map(rx => REACT_ICON[rx.type]).join('');
+    const summary = total > 0
+      ? '<div class="react-summary">' + summaryIcons + ' <span>' + total + '</span></div>'
+      : '';
+
+    const reactBar =
+      '<div class="react-trigger-wrap">' +
+        '<button class="react-trigger' + (mine ? ' has-mine' : '') + '" onclick="toggleReactionPicker(event,\'' + p.id + '\')">' + triggerInner + '</button>' +
+        '<div class="react-popover" id="reactPop-' + p.id + '">' + picker + '</div>' +
+      '</div>' + summary;
+
+    const avatarTap = p.user_id ? ' onclick="openUserProfile(\'' + p.user_id + '\')" style="cursor:pointer;' : ' style="';
+    return (
+      '<div class="feed-card" id="post-' + p.id + '">' +
+        '<div class="feed-head">' +
+          '<div class="feed-avatar"' + avatarTap + (avatarPhoto ? 'background:center/cover no-repeat url(\'' + avatarPhoto + '\');"' : '"') + '>' + (avatarPhoto ? '' : '<i class="ti ti-chef-hat"></i>') + '</div>' +
+          '<div><div class="feed-username" ' + (p.user_id ? 'onclick="openUserProfile(\'' + p.user_id + '\')" style="cursor:pointer;"' : '') + '>@' + escapeText(shownName) + '</div>' +
+          '<div class="feed-time">' + when + '</div></div>' + menu +
+        '</div>' +
+        (p.video_url
+          ? '<div class="feed-video" onclick="openReels(\'' + p.id + '\')">' +
+              '<img class="feed-image" src="' + postThumb(p) + '" alt="Cooking video" loading="lazy" />' +
+              '<span class="feed-video-play"><i class="ti ti-player-play"></i></span>' +
+              '<span class="feed-video-tag"><i class="ti ti-video"></i> Video</span>' +
+            '</div>' +
+            '<div class="feed-views" id="views-' + p.id + '"><i class="ti ti-eye" style="vertical-align:-2px;"></i> <span id="viewCount-' + p.id + '">—</span> views</div>'
+        : p.image_url
+          ? '<img class="feed-image" src="' + postThumb(p) + '" alt="Food photo" loading="lazy" onclick="openFeedPost(\'' + p.id + '\')" style="cursor:pointer;" />' +
+            '<div class="feed-views" id="views-' + p.id + '"><i class="ti ti-eye" style="vertical-align:-2px;"></i> <span id="viewCount-' + p.id + '">—</span> views</div>'
+          : '') +
+        (p.caption ? '<div class="feed-caption">' + escapeText(p.caption) + '</div>' : '') +
+        '<div class="reaction-bar">' + reactBar + '</div>' +
+        '<button class="comments-toggle" onclick="toggleComments(\'' + p.id + '\')"><i class="ti ti-message-circle" style="font-size:14px;vertical-align:-2px;"></i> Comments</button>' +
+        '<div class="comments-wrap" id="comments-' + p.id + '">' +
+          '<div id="commentList-' + p.id + '"></div>' +
+          '<div class="comment-input-row">' +
+            '<input class="comment-input" id="commentInput-' + p.id + '" placeholder="Add a comment…" maxlength="500" />' +
+            '<button class="comment-send" onclick="addComment(\'' + p.id + '\')"><i class="ti ti-send" style="font-size:15px;"></i></button>' +
+          '</div>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  function feedMoreFooter() {
+    return feedHasMore
+      ? '<div class="feed-more" id="feedMore"><div class="spinner" style="margin:0 auto;"></div></div>'
+      : '';
+  }
+  function watchFeedMore() {
+    if (feedMoreObserver) { feedMoreObserver.disconnect(); feedMoreObserver = null; }
+    const el = document.getElementById('feedMore');
+    if (!el) return;
+    feedMoreObserver = new IntersectionObserver(es => {
+      if (es.some(e => e.isIntersecting)) loadMoreFeed();
+    }, { rootMargin: '600px 0px' });   // start fetching well before the end
+    feedMoreObserver.observe(el);
+  }
+  function afterFeedRender(newPosts) {
+    window.__feedVideoIds = feedPosts.filter(p => p.video_url).map(p => p.id);
+    updateReelsButton();
+    loadFeedViewCounts(newPosts.map(p => p.id));
+    watchFeedMore();
   }
 
   async function loadFeed() {
     const container = document.getElementById('feedContent');
     try {
-      let posts = null, reactions = null;
+      const limit = Math.min(50, Math.max(FEED_PAGE, feedPosts.length));
+      let posts = null, reactions = null, out = null;
 
       // PRIMARY: read the feed through our own API (same-origin — avoids Chrome
       // blocking the direct third-party request to supabase.co).
-      try {
-        const { data: sess } = await supaClient.auth.getSession();
-        const token = sess && sess.session && sess.session.access_token;
-        const res = await fetch('/api/community-feed', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ access_token: token || null, mode: feedView })
-        });
-        if (res.ok) {
-          const out = await res.json();
-          posts = out.posts;
-          reactions = out.reactions;
-          window.__feedProfiles = out.profiles || [];
-          window.__blockedIds = new Set(out.blockedIds || []);
-        }
-      } catch (e) { /* fall back to direct read below */ }
+      out = await fetchFeedPage(limit, null);
+      if (out) {
+        posts = out.posts;
+        reactions = out.reactions;
+        window.__feedProfiles = out.profiles || [];
+        window.__blockedIds = new Set(out.blockedIds || []);
+      }
 
-      // FALLBACK: direct Supabase read (only for public view).
+      // FALLBACK: direct Supabase read (only for public view). No paging here.
       if (posts === null && feedView === 'public') {
         const { data: dp, error } = await supaClient
           .from('posts')
           .select('*')
           .order('created_at', { ascending: false })
-          .limit(50);
+          .limit(limit);
         if (error) throw error;
         posts = dp;
       }
       if (posts === null) posts = [];
 
       if (!posts || !posts.length) {
+        feedPosts = []; feedHasMore = false; feedNextBefore = null;
+        if (feedMoreObserver) { feedMoreObserver.disconnect(); feedMoreObserver = null; }
         if (feedView === 'following') {
           container.innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="ti ti-users-group"></i></div>No posts from people you follow yet.<br>Tap someone\'s avatar to follow them!</div>';
         } else {
           container.innerHTML = '<div class="empty-state"><div class="empty-icon"><i class="ti ti-users-group"></i></div>No posts yet.<br>Be the first to share a dish!</div>';
         }
+        window.__feedVideoIds = [];
+        updateReelsButton();
         return;
       }
 
       // Reactions: use what the API returned, or fetch directly if needed.
-      const ids = posts.map(p => p.id);
       if (reactions === null) {
         const { data: dr } = await supaClient
           .from('post_reactions')
           .select('post_id, user_id, type')
-          .in('post_id', ids);
+          .in('post_id', posts.map(p => p.id));
         reactions = dr;
       }
 
-      const counts = {}; myReactions = {};
-      (reactions || []).forEach(r => {
-        counts[r.post_id] = counts[r.post_id] || emptyCounts();
-        if (r.type in counts[r.post_id]) counts[r.post_id][r.type]++;
-        if (currentUser && r.user_id === currentUser.id) myReactions[r.post_id] = r.type;
-      });
-      window.__reactCounts = counts;     // Reels reads these too
+      // A full reload starts the shared state over.
+      window.__reactCounts = {}; myReactions = {}; feedProfMap = {}; window.__feedPosts = {};
+      absorbFeedPage(posts, reactions, out && out.profiles);
+      feedPosts = posts.slice();
+      feedHasMore = !!(out && out.hasMore);
+      feedNextBefore = out ? out.nextBefore : null;
 
-
-      // Map author id -> current public profile (avatar/username), if provided.
-      const profMap = {};
-      (window.__feedProfiles || []).forEach(pr => { profMap[pr.id] = pr; });
-
-      container.innerHTML = posts.map(p => {
-        const c = counts[p.id] || emptyCounts();
-        const mine = myReactions[p.id];
-        const when = new Date(p.created_at).toLocaleDateString('en-US', { month:'short', day:'numeric' });
-        const isMine = currentUser && p.user_id === currentUser.id;
-        // Prefer the author's CURRENT avatar from their profile; fall back to the
-        // snapshot saved on the post.
-        const prof = profMap[p.user_id] || {};
-        const avatarPhoto = prof.avatar_photo || p.author_avatar || null;
-        const shownName = prof.username || p.username || 'user';
-        const menu = isMine
-          ? '<button class="feed-menu-btn" title="Delete post" onclick="deletePost(\'' + p.id + '\')"><i class="ti ti-trash"></i></button>'
-          : '<button class="feed-menu-btn" title="Report post" onclick="reportPost(\'' + p.id + '\')"><i class="ti ti-flag"></i></button>';
-
-        // The pop-up picker (hidden until the trigger is tapped).
-        const picker = REACTS.map(rx =>
-          '<button class="react-pick' + (mine === rx.type ? ' mine' : '') + '" title="' + rx.label + '" onclick="pickReaction(event,\'' + p.id + '\',\'' + rx.type + '\')">' + rx.icon + '</button>'
-        ).join('');
-
-        // The single trigger button: shows your reaction if you have one, else a clean modern icon.
-        const triggerInner = mine
-          ? REACT_ICON[mine] + ' <span class="react-trigger-label">' + REACT_LABEL[mine] + '</span>'
-          : '<i class="ti ti-mood-smile react-trigger-icon"></i><span class="react-trigger-label">React</span>';
-
-        // Summary of total reactions across all types.
-        const total = c.like + c.love + c.support + c.yum + (c.gross || 0);
-        const summaryIcons = REACTS.filter(rx => c[rx.type] > 0).map(rx => REACT_ICON[rx.type]).join('');
-        const summary = total > 0
-          ? '<div class="react-summary">' + summaryIcons + ' <span>' + total + '</span></div>'
-          : '';
-
-        const reactBar =
-          '<div class="react-trigger-wrap">' +
-            '<button class="react-trigger' + (mine ? ' has-mine' : '') + '" onclick="toggleReactionPicker(event,\'' + p.id + '\')">' + triggerInner + '</button>' +
-            '<div class="react-popover" id="reactPop-' + p.id + '">' + picker + '</div>' +
-          '</div>' + summary;
-
-        const avatarTap = p.user_id ? ' onclick="openUserProfile(\'' + p.user_id + '\')" style="cursor:pointer;' : ' style="';
-        return (
-          '<div class="feed-card" id="post-' + p.id + '">' +
-            '<div class="feed-head">' +
-              '<div class="feed-avatar"' + avatarTap + (avatarPhoto ? 'background:center/cover no-repeat url(\'' + avatarPhoto + '\');"' : '"') + '>' + (avatarPhoto ? '' : '<i class="ti ti-chef-hat"></i>') + '</div>' +
-              '<div><div class="feed-username" ' + (p.user_id ? 'onclick="openUserProfile(\'' + p.user_id + '\')" style="cursor:pointer;"' : '') + '>@' + escapeText(shownName) + '</div>' +
-              '<div class="feed-time">' + when + '</div></div>' + menu +
-            '</div>' +
-            (p.video_url
-              ? '<div class="feed-video" onclick="openReels(\'' + p.id + '\')">' +
-                  '<img class="feed-image" src="' + (p.image_url || '') + '" alt="Cooking video" loading="lazy" />' +
-                  '<span class="feed-video-play"><i class="ti ti-player-play"></i></span>' +
-                  '<span class="feed-video-tag"><i class="ti ti-video"></i> Video</span>' +
-                '</div>' +
-                '<div class="feed-views" id="views-' + p.id + '"><i class="ti ti-eye" style="vertical-align:-2px;"></i> <span id="viewCount-' + p.id + '">—</span> views</div>'
-            : p.image_url
-              ? '<img class="feed-image" src="' + p.image_url + '" alt="Food photo" loading="lazy" onclick="openFeedPost(\'' + p.id + '\')" style="cursor:pointer;" />' +
-                '<div class="feed-views" id="views-' + p.id + '"><i class="ti ti-eye" style="vertical-align:-2px;"></i> <span id="viewCount-' + p.id + '">—</span> views</div>'
-              : '') +
-            (p.caption ? '<div class="feed-caption">' + escapeText(p.caption) + '</div>' : '') +
-            '<div class="reaction-bar">' + reactBar + '</div>' +
-            '<button class="comments-toggle" onclick="toggleComments(\'' + p.id + '\')"><i class="ti ti-message-circle" style="font-size:14px;vertical-align:-2px;"></i> Comments</button>' +
-            '<div class="comments-wrap" id="comments-' + p.id + '">' +
-              '<div id="commentList-' + p.id + '"></div>' +
-              '<div class="comment-input-row">' +
-                '<input class="comment-input" id="commentInput-' + p.id + '" placeholder="Add a comment…" maxlength="500" />' +
-                '<button class="comment-send" onclick="addComment(\'' + p.id + '\')"><i class="ti ti-send" style="font-size:15px;"></i></button>' +
-              '</div>' +
-            '</div>' +
-          '</div>'
-        );
-      }).join('');
-
-      // Stash feed posts so the full-screen viewer can open them.
-      window.__feedPosts = {};
-      posts.forEach(p => { window.__feedPosts[p.id] = p; });
-      // Feed order of the video posts, for swiping through them in Reels.
-      window.__feedVideoIds = posts.filter(p => p.video_url).map(p => p.id);
-      updateReelsButton();
-      // Load view counts for all visible posts in one call.
-      loadFeedViewCounts(posts.map(p => p.id));
+      container.innerHTML = feedPosts.map(renderFeedCard).join('') + feedMoreFooter();
+      afterFeedRender(feedPosts);
     } catch (e) {
       console.warn('Feed load failed:', e);
       const msg = e.message || '';
@@ -11621,6 +11743,31 @@
           '<div style="font-weight:700;margin-bottom:4px;">Couldn\'t load the feed</div>' +
           '<div style="font-size:13px;color:var(--text3);">Please try again in a moment.</div>' +
           '<button class="cooked-btn" style="margin-top:14px;" onclick="loadFeed()">Try again</button></div>';
+    }
+  }
+
+  async function loadMoreFeed() {
+    if (feedLoadingMore || !feedHasMore || !feedNextBefore) return;
+    feedLoadingMore = true;
+    const view = feedView;
+    try {
+      const out = await fetchFeedPage(FEED_PAGE, feedNextBefore);
+      if (!out || view !== feedView) return;      // failed, or the view changed meanwhile
+      window.__blockedIds = new Set(out.blockedIds || []);
+      const seen = new Set(feedPosts.map(p => p.id));
+      const fresh = (out.posts || []).filter(p => !seen.has(p.id));
+      absorbFeedPage(fresh, out.reactions, out.profiles);
+      feedPosts = feedPosts.concat(fresh);
+      feedHasMore = !!out.hasMore;
+      feedNextBefore = out.nextBefore || null;
+
+      const more = document.getElementById('feedMore');
+      if (more) more.remove();
+      document.getElementById('feedContent')
+        .insertAdjacentHTML('beforeend', fresh.map(renderFeedCard).join('') + feedMoreFooter());
+      afterFeedRender(fresh);
+    } finally {
+      feedLoadingMore = false;
     }
   }
 
@@ -12217,9 +12364,17 @@
       const post = (window.__feedPosts || {})[postId];
       const { error } = await supaClient.from('posts').delete().eq('id', postId);
       if (error) throw error;
-      // A video post also has a file in storage; remove it with the post.
+      // Remove the post's files from storage with it. Only paths in the
+      // user's own folder; migrated/ photos belong to the server.
       const m = post && post.video_url && post.video_url.match(/\/post-videos\/(.+)$/);
       if (m) supaClient.storage.from('post-videos').remove([decodeURIComponent(m[1])]).catch(() => {});
+      const own = (u) => {
+        const x = (u || '').match(/\/post-photos\/(.+)$/);
+        const path = x && decodeURIComponent(x[1]);
+        return path && currentUser && path.startsWith(currentUser.id + '/') ? path : null;
+      };
+      const photoPaths = [own(post && post.image_url), own(post && post.thumb_url)].filter(Boolean);
+      if (photoPaths.length) supaClient.storage.from('post-photos').remove(photoPaths).catch(() => {});
       showToast('Post deleted');
       loadFeed();
     } catch (e) { showToast('Could not delete post.'); }
@@ -12529,7 +12684,7 @@
           '<div class="vp-post-grid">' +
           posts.filter(p => p.image_url).map(p =>
             '<div class="vp-post-cell" onclick="openViewedPost(\'' + p.id + '\')" ' +
-            'style="position:relative;background:center/cover no-repeat url(\'' + p.image_url + '\');">' +
+            'style="position:relative;background:center/cover no-repeat url(\'' + postThumb(p) + '\');">' +
             (p.video_url ? '<i class="ti ti-player-play" style="position:absolute;top:6px;right:6px;color:#fff;font-size:18px;text-shadow:0 1px 4px rgba(0,0,0,.6);"></i>' : '') +
             '</div>'
           ).join('') +

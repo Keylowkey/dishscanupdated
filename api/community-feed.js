@@ -5,6 +5,7 @@
 // already talk to Supabase from the server.
 
 import { verifyToken } from '../lib/auth.js';
+import { moveInlinePhotos } from '../lib/post-photos.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -29,6 +30,15 @@ export default async function handler(req, res) {
     // Identify the caller (optional) so we can mark which reactions are theirs.
     let callerId = null;
     const { access_token, mode } = req.body || {};
+    // Paging. Builds that predate it send neither and get the old behaviour:
+    // up to 50 posts, newest first. `before` is the created_at of the last
+    // post the client already has.
+    const body = req.body || {};
+    const limit = Math.min(50, Math.max(1, parseInt(body.limit, 10) || 50));
+    const before = typeof body.before === 'string' && !isNaN(Date.parse(body.before))
+      ? new Date(body.before).toISOString() : null;
+    const page = `&order=created_at.desc&limit=${limit}` +
+      (before ? `&created_at=lt.${encodeURIComponent(before)}` : '');
     if (access_token) callerId = await verifyToken(access_token); // invalid/forged → treated as anonymous
 
     // Blocks (both directions): users the caller blocked, and users who blocked
@@ -62,11 +72,11 @@ export default async function handler(req, res) {
       }
     }
 
-    // 1) Posts (newest first, limit 50) — filtered to followed users in "following" mode.
-    let postsUrl = `${SUPABASE_URL}/rest/v1/posts?select=*&order=created_at.desc&limit=50`;
+    // 1) Posts (newest first, one page) — filtered to followed users in "following" mode.
+    let postsUrl = `${SUPABASE_URL}/rest/v1/posts?select=*${page}`;
     if (followingIds) {
       const inList = encodeURIComponent('(' + followingIds.join(',') + ')');
-      postsUrl = `${SUPABASE_URL}/rest/v1/posts?select=*&user_id=in.${inList}&order=created_at.desc&limit=50`;
+      postsUrl = `${SUPABASE_URL}/rest/v1/posts?select=*&user_id=in.${inList}${page}`;
     }
     const postsRes = await fetch(postsUrl, { headers });
     if (!postsRes.ok) {
@@ -74,6 +84,11 @@ export default async function handler(req, res) {
       return res.status(502).json({ error: 'Could not read posts.', detail: t.slice(0, 200) });
     }
     let posts = await postsRes.json();
+    // Cursor for the next page, taken before blocked/private posts are dropped,
+    // so a page that filters down to nothing still advances.
+    const fetched = Array.isArray(posts) ? posts.length : 0;
+    const hasMore = fetched === limit;
+    const nextBefore = fetched ? posts[fetched - 1].created_at : null;
     if (Array.isArray(posts) && blockedSet.size) {
       posts = posts.filter(p => !blockedSet.has(p.user_id));
     }
@@ -104,8 +119,12 @@ export default async function handler(req, res) {
     }
 
     if (!Array.isArray(posts) || posts.length === 0) {
-      return res.status(200).json({ posts: [], reactions: [], profiles: [], callerId, mode, blockedIds });
+      return res.status(200).json({ posts: [], reactions: [], profiles: [], callerId, mode, blockedIds, hasMore, nextBefore });
     }
+
+    // Photos still stored inline move to Storage now, so this response — and
+    // every later one — carries a URL instead of the image itself.
+    await moveInlinePhotos(posts, SUPABASE_URL, SERVICE_KEY);
 
     // 2) Reactions for those posts
     const ids = posts.map(p => p.id);
@@ -129,7 +148,7 @@ export default async function handler(req, res) {
       profiles = profRes.ok ? await profRes.json() : [];
     }
 
-    return res.status(200).json({ posts, reactions, profiles, callerId, blockedIds });
+    return res.status(200).json({ posts, reactions, profiles, callerId, blockedIds, hasMore, nextBefore });
   } catch (e) {
     return res.status(500).json({ error: 'Server error reading feed.', detail: String(e && e.message || e).slice(0, 200) });
   }
