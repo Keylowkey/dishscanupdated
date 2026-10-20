@@ -185,6 +185,7 @@ function cleanMeal(m, slot, household) {
   const sum = k => ings.reduce((s, i) => s + i[k], 0);
   const fromIngs = sum('kcal') > 0;
   const per = (k, own) => Math.round(fromIngs ? sum(k) / people : num(own));
+  const nutrition = { calories: per('kcal', m.calories), protein_g: per('p', m.protein_g), carbs_g: per('c', m.carbs_g), fat_g: per('f', m.fat_g) };
   ings.forEach(i => { delete i.kcal; delete i.p; delete i.c; delete i.f; });
   return {
     slot: MEAL_SLOTS.includes(m.slot) ? m.slot : slot,
@@ -192,10 +193,7 @@ function cleanMeal(m, slot, household) {
     description: clip(m.description, 160).trim(),
     prepMinutes: Math.round(num(m.prepMinutes, 30)),
     difficulty: clip(m.difficulty, 16),
-    calories: per('kcal', m.calories),
-    protein_g: per('p', m.protein_g),
-    carbs_g: per('c', m.carbs_g),
-    fat_g: per('f', m.fat_g),
+    ...nutrition,
     cost: Math.round(ings.reduce((s, i) => s + i.cost, 0) * 100) / 100,
     ingredients: ings
   };
