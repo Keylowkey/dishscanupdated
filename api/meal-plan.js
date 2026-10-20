@@ -163,7 +163,7 @@ function canonKey(k) {
 }
 
 // Coerce one meal into the shape the app relies on.
-function cleanMeal(m, slot, household) {
+function cleanMeal(m, slot, household, kcalTarget) {
   m = m || {};
   const num = (v, d = 0) => (Number.isFinite(Number(v)) ? Math.max(0, Number(v)) : d);
   const ings = (Array.isArray(m.ingredients) ? m.ingredients : []).slice(0, 18).map(i => {
@@ -184,6 +184,20 @@ function cleanMeal(m, slot, household) {
   const people = Math.max(1, household || 1);
   const sum = k => ings.reduce((s, i) => s + i[k], 0);
   const fromIngs = sum('kcal') > 0;
+  // Portions the AI sized well off target (a whole can of beans for one)
+  // are scaled to it: amounts, prices and nutrition together, so the meal
+  // stays consistent and the grocery list buys what's actually cooked.
+  if (fromIngs && kcalTarget) {
+    const ratio = kcalTarget / (sum('kcal') / people);
+    if (ratio < 0.8 || ratio > 1.25) {
+      const f = Math.max(0.5, Math.min(1.6, ratio));
+      ings.forEach(i => {
+        i.qty = Math.round(i.qty * f * 100) / 100;
+        i.cost = Math.round(i.cost * f * 100) / 100;
+        ['kcal', 'p', 'c', 'f'].forEach(k => { i[k] *= f; });
+      });
+    }
+  }
   const per = (k, own) => Math.round(fromIngs ? sum(k) / people : num(own));
   const nutrition = { calories: per('kcal', m.calories), protein_g: per('p', m.protein_g), carbs_g: per('c', m.carbs_g), fat_g: per('f', m.fat_g) };
   ings.forEach(i => { delete i.kcal; delete i.p; delete i.c; delete i.f; });
@@ -225,7 +239,8 @@ const MEAL_RULES = `Rules:
 
 function targetLine(p, t, slot) {
   const x = t.slots[slot];
-  return `Targets for this ${slot}: ${Math.round(x.kcal * 0.9)}–${Math.round(x.kcal * 1.1)} kcal per serving, and ingredients for all ${p.household} costing about $${x.cost.toFixed(2)} in total (never more than $${(x.cost * 1.1).toFixed(2)}). Choose the dish's ingredients and amounts to hit both.`;
+  return `Targets for this ${slot}: ${Math.round(x.kcal * 0.9)}–${Math.round(x.kcal * 1.1)} kcal per serving, and ingredients for all ${p.household} costing about $${(x.cost * 0.9).toFixed(2)} in total (never more than $${x.cost.toFixed(2)}).
+Amounts are for exactly ${p.household} serving${p.household === 1 ? '' : 's'}: size each portion to the calorie range, and use part of a pack when a whole one is too much (0.5 can, 0.25 lb).`;
 }
 
 // Step 1: every dish name for the period, plus staples to buy once.
@@ -261,7 +276,7 @@ Staples bought for the whole plan; use them where they fit: ${staples.slice(0, 2
 ${MEAL_RULES}
 
 Respond ONLY with JSON, no markdown: ${MEAL_SHAPE.replace('"dinner"', '"' + slot + '"')}` + languageInstruction(lang);
-  return cleanMeal(await ask(key, prompt, 1800, 0.3), slot, p.household);
+  return cleanMeal(await ask(key, prompt, 1800, 0.3), slot, p.household, t.slots[slot].kcal);
 }
 
 // A new dish for one slot (swaps, and replacing one that broke an allergy).
@@ -276,7 +291,7 @@ Must be different from: ${avoid.slice(0, 80).join('; ') || 'nothing'}.
 ${MEAL_RULES}
 
 Respond ONLY with JSON, no markdown: ${MEAL_SHAPE.replace('"dinner"', '"' + slot + '"')}` + languageInstruction(lang);
-  return cleanMeal(await ask(key, prompt, 1800, 0.9), slot, p.household);
+  return cleanMeal(await ask(key, prompt, 1800, 0.9), slot, p.household, t.slots[slot].kcal);
 }
 
 async function savePrefs(uid, prefs) {
