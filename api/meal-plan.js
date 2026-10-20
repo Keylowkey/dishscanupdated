@@ -163,7 +163,7 @@ function canonKey(k) {
 }
 
 // Coerce one meal into the shape the app relies on.
-function cleanMeal(m, slot) {
+function cleanMeal(m, slot, household) {
   m = m || {};
   const num = (v, d = 0) => (Number.isFinite(Number(v)) ? Math.max(0, Number(v)) : d);
   const ings = (Array.isArray(m.ingredients) ? m.ingredients : []).slice(0, 18).map(i => {
@@ -175,19 +175,27 @@ function cleanMeal(m, slot) {
       qty: num(i.qty, 1),
       unit: clip(i.unit, 16).toLowerCase().trim(),
       section: SECTIONS.includes(i.section) ? i.section : 'other',
-      cost: Math.round(num(i.cost) * 100) / 100
+      cost: Math.round(num(i.cost) * 100) / 100,
+      kcal: num(i.kcal), p: num(i.p), c: num(i.c), f: num(i.f)
     };
   }).filter(i => i.name);
+  // Nutrition per serving is added up from the ingredients when they carry
+  // it (new meals always do); otherwise the meal's own figures stand.
+  const people = Math.max(1, household || 1);
+  const sum = k => ings.reduce((s, i) => s + i[k], 0);
+  const fromIngs = sum('kcal') > 0;
+  const per = (k, own) => Math.round(fromIngs ? sum(k) / people : num(own));
+  ings.forEach(i => { delete i.kcal; delete i.p; delete i.c; delete i.f; });
   return {
     slot: MEAL_SLOTS.includes(m.slot) ? m.slot : slot,
     name: clip(m.name, 80).trim() || 'Meal',
     description: clip(m.description, 160).trim(),
     prepMinutes: Math.round(num(m.prepMinutes, 30)),
     difficulty: clip(m.difficulty, 16),
-    calories: Math.round(num(m.calories)),
-    protein_g: Math.round(num(m.protein_g)),
-    carbs_g: Math.round(num(m.carbs_g)),
-    fat_g: Math.round(num(m.fat_g)),
+    calories: per('kcal', m.calories),
+    protein_g: per('p', m.protein_g),
+    carbs_g: per('c', m.carbs_g),
+    fat_g: per('f', m.fat_g),
     cost: Math.round(ings.reduce((s, i) => s + i.cost, 0) * 100) / 100,
     ingredients: ings
   };
@@ -209,17 +217,17 @@ function allergyHit(meal, allergies) {
   return null;
 }
 
-const MEAL_SHAPE = `{"slot":"dinner","name":"Dish name","description":"One appetising line.","prepMinutes":30,"difficulty":"Easy","calories":550,"protein_g":35,"carbs_g":50,"fat_g":18,"ingredients":[{"key":"chicken thigh","name":"Boneless chicken thighs","qty":1.5,"unit":"lb","section":"meat-seafood","cost":5.25}]}`;
+const MEAL_SHAPE = `{"slot":"dinner","name":"Dish name","description":"One appetising line.","prepMinutes":30,"difficulty":"Easy","ingredients":[{"key":"chicken thigh","name":"Boneless chicken thighs","qty":1.5,"unit":"lb","section":"meat-seafood","cost":5.25,"kcal":1430,"p":136,"c":0,"f":95}]}`;
 
 const MEAL_RULES = `Rules:
-- calories, protein_g, carbs_g, fat_g are PER SERVING (one person), and must be realistic for the amounts listed.
 - ingredients: 4-12 items with quantities for the WHOLE household. "key" is the plain singular grocery item in lower case ("onion", "chicken thigh", "olive oil") so the same item matches across meals. unit is one of: each, lb, oz, g, kg, cup, tbsp, tsp, ml, l, clove, can, bunch, slice, pinch. section is one of: ${SECTIONS.join(', ')}.
-- cost of each ingredient: a realistic average US supermarket price for the amount used (a share of the pack for oils, spices and staples), in USD.
+- cost of each ingredient: a realistic average US supermarket price for the amount used (a share of the pack for oils, spices and staples), in USD. Every ingredient has its own cost, including staples used in other meals too; nothing is free.
+- kcal, p, c, f of each ingredient: calories and grams of protein, carbs and fat in the amount listed (for the whole household), from standard nutrition data. Choose amounts so a serving lands near the calorie target.
 - Skip water, and assume salt and pepper are already at home.`;
 
 function targetLine(p, t, slot) {
   const x = t.slots[slot];
-  return `Targets for this ${slot}: about ${x.kcal} kcal per serving, and ingredients for all ${p.household} costing about $${x.cost.toFixed(2)} in total (never more than $${(x.cost * 1.1).toFixed(2)}). Choose the dish's ingredients and amounts to hit both.`;
+  return `Targets for this ${slot}: ${Math.round(x.kcal * 0.9)}–${Math.round(x.kcal * 1.1)} kcal per serving, and ingredients for all ${p.household} costing about $${x.cost.toFixed(2)} in total (never more than $${(x.cost * 1.1).toFixed(2)}). Choose the dish's ingredients and amounts to hit both.`;
 }
 
 // Step 1: every dish name for the period, plus staples to buy once.
@@ -255,7 +263,7 @@ Staples bought for the whole plan; use them where they fit: ${staples.slice(0, 2
 ${MEAL_RULES}
 
 Respond ONLY with JSON, no markdown: ${MEAL_SHAPE.replace('"dinner"', '"' + slot + '"')}` + languageInstruction(lang);
-  return cleanMeal(await ask(key, prompt, 1400, 0.3), slot);
+  return cleanMeal(await ask(key, prompt, 1800, 0.3), slot, p.household);
 }
 
 // A new dish for one slot (swaps, and replacing one that broke an allergy).
@@ -270,7 +278,7 @@ Must be different from: ${avoid.slice(0, 80).join('; ') || 'nothing'}.
 ${MEAL_RULES}
 
 Respond ONLY with JSON, no markdown: ${MEAL_SHAPE.replace('"dinner"', '"' + slot + '"')}` + languageInstruction(lang);
-  return cleanMeal(await ask(key, prompt, 1400, 0.9), slot);
+  return cleanMeal(await ask(key, prompt, 1800, 0.9), slot, p.household);
 }
 
 async function savePrefs(uid, prefs) {
@@ -353,7 +361,7 @@ export default async function handler(req, res) {
     const locked = (Array.isArray(body.locked) ? body.locked : [])
       .filter(l => l && l.meal && Number.isInteger(l.day) && l.day >= 0 && l.day < dayCount && MEAL_SLOTS.includes(l.slot))
       .slice(0, 28)
-      .map(l => ({ day: l.day, slot: l.slot, name: clip(l.meal.name, 80), meal: cleanMeal(l.meal, l.slot) }));
+      .map(l => ({ day: l.day, slot: l.slot, name: clip(l.meal.name, 80), meal: cleanMeal(l.meal, l.slot, prefs.household) }));
 
     const outline = await outlineWeek(KEY, prefs, t, labels, locked, avoid, lang);
     const staples = list(outline.staples, 30, 40);
