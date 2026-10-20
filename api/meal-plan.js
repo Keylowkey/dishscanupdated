@@ -9,9 +9,10 @@
 //
 // A week is made in two steps so it fits in one request and still shares
 // ingredients across days: first an outline (every dish name for the week,
-// plus the staples worth buying once), then each day's full details in
-// parallel, each told the week's staples to reuse. Monthly plans are four
-// week requests. The budget is re-checked here, not just in the app.
+// plus the staples worth buying once), then every meal's card and priced
+// ingredients at the same time, each told the staples to reuse. A meal's
+// cost is the sum of its ingredient prices. Monthly plans are four week
+// requests. The budget is re-checked here, not just in the app.
 //
 // Meal = { slot, name, description, prepMinutes, difficulty, calories,
 //          protein_g, carbs_g, fat_g, cost, ingredients: [Ingredient] }
@@ -90,7 +91,7 @@ const DIETS = {
 };
 const TIMES = { quick: 'quick meals: under 20 minutes total', balanced: 'most meals under 45 minutes', any: 'any cooking time' };
 
-function brief(p, costs) {
+function brief(p) {
   const lines = [];
   lines.push(`Household: ${p.household} ${p.household === 1 ? 'person' : 'people'}. Every quantity and cost is for the whole household.`);
   if (GOALS[p.goal]) lines.push(`Goal: ${GOALS[p.goal]}.`);
@@ -101,35 +102,64 @@ function brief(p, costs) {
   if (TIMES[p.time]) lines.push(`Cooking time: ${TIMES[p.time]}.`);
   if (p.skill) lines.push(`Cooking skill: ${p.skill}.`);
   if (p.cuisines.length) lines.push(`Favourite cuisines (lean towards these, with variety): ${p.cuisines.join(', ')}.`);
-  if (costs) lines.push(`Budget: about $${costs.perDay.toFixed(2)} a day for the household. Aim for roughly ` +
-    Object.entries(costs.perSlot).map(([s, c]) => `$${c.toFixed(2)} per ${s}`).join(', ') +
-    `. Use realistic US grocery prices.`);
   return lines.join('\n');
 }
 
-function budgetShares(p, dayCount) {
-  const totalDays = PLAN_CONFIG.periods[p.period];
-  const weights = PLAN_CONFIG.mealWeights;
-  const wsum = p.meals.reduce((s, m) => s + weights[m], 0) || 1;
-  const perDay = p.budget / totalDays;
-  const perSlot = {};
-  p.meals.forEach(m => { perSlot[m] = perDay * weights[m] / wsum; });
-  return { perDay, perSlot, week: perDay * dayCount };
+// Per-meal targets. The AI is told what each meal may cost and how many
+// calories it should have, then prices each ingredient; a meal's cost is
+// always the sum of those prices, never a number the AI picked to look right.
+const KCAL_PER_DAY = { 'weight-loss': 1650, 'muscle-gain': 2600, 'maintenance': 2200, 'eat-healthier': 2000, 'save-money': 2100, 'family-friendly': 2000 };
+function mealTargets(p) {
+  const w = PLAN_CONFIG.mealWeights;
+  const daily = KCAL_PER_DAY[p.goal] || 2100;
+  // Calories are a share of a whole day, so planning only dinner still
+  // gives a dinner-sized dinner. Money is spread over the meals planned.
+  const kcalBase = (w.breakfast + w.lunch + w.dinner) + (p.meals.includes('snack') ? w.snack : 0);
+  const costBase = p.meals.reduce((s, m) => s + w[m], 0) || 1;
+  const perDay = p.budget / PLAN_CONFIG.periods[p.period];
+  const t = {};
+  p.meals.forEach(m => {
+    t[m] = { kcal: Math.round(daily * w[m] / kcalBase / 10) * 10, cost: Math.round(perDay * w[m] / costBase * 100) / 100 };
+  });
+  return { perDay, slots: t };
 }
 
 async function ask(key, prompt, maxTokens, temperature) {
-  const r = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
-    body: JSON.stringify({ model: MODEL, max_tokens: maxTokens, temperature, messages: [{ role: 'user', content: prompt }] })
-  });
-  if (!r.ok) throw new Error('AI ' + r.status + ': ' + (await r.text()).slice(0, 160));
-  const data = await r.json();
-  let text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
-  text = text.replace(/```json|```/g, '').trim();
-  const a = text.indexOf('{'), b = text.lastIndexOf('}');
-  if (a === -1 || b === -1) throw new Error('No JSON in AI response');
-  return JSON.parse(text.slice(a, b + 1));
+  for (let attempt = 0; ; attempt++) {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model: MODEL, max_tokens: maxTokens, temperature, messages: [{ role: 'user', content: prompt }] })
+    });
+    // Busy or rate-limited: one short wait, then give up (the app retries too).
+    if ((r.status === 429 || r.status === 529 || r.status >= 500) && attempt < 1) {
+      await new Promise(res => setTimeout(res, 1500));
+      continue;
+    }
+    if (!r.ok) throw new Error('AI ' + r.status + ': ' + (await r.text()).slice(0, 160));
+    const data = await r.json();
+    let text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
+    text = text.replace(/```json|```/g, '').trim();
+    const a = text.indexOf('{'), b = text.lastIndexOf('}');
+    if (a === -1 || b === -1) throw new Error('No JSON in AI response');
+    return JSON.parse(text.slice(a, b + 1));
+  }
+}
+
+// One spelling per grocery item, so "tomatoes" and "tomato" are one line.
+// Keys are only for matching; the shopper sees the ingredient's name.
+function singular(w) {
+  if (w.length <= 3 || /(ss|us|is)$/.test(w)) return w;
+  if (/ies$/.test(w)) return w.slice(0, -3) + 'y';
+  if (/(ch|sh|x|zz|o)es$/.test(w)) return w.slice(0, -2);
+  if (/s$/.test(w)) return w.slice(0, -1);
+  return w;
+}
+function canonKey(k) {
+  const words = String(k || '').toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').trim().split(/\s+/).filter(Boolean);
+  if (!words.length) return '';
+  words[words.length - 1] = singular(words[words.length - 1]);
+  return words.join(' ').slice(0, 40);
 }
 
 // Coerce one meal into the shape the app relies on.
@@ -140,7 +170,7 @@ function cleanMeal(m, slot) {
     i = i || {};
     const name = clip(i.name, 60).trim();
     return {
-      key: clip(i.key || name, 40).toLowerCase().trim() || name.toLowerCase(),
+      key: canonKey(i.key || name) || canonKey(name),
       name,
       qty: num(i.qty, 1),
       unit: clip(i.unit, 16).toLowerCase().trim(),
@@ -158,7 +188,7 @@ function cleanMeal(m, slot) {
     protein_g: Math.round(num(m.protein_g)),
     carbs_g: Math.round(num(m.carbs_g)),
     fat_g: Math.round(num(m.fat_g)),
-    cost: Math.round(num(m.cost, ings.reduce((s, i) => s + i.cost, 0)) * 100) / 100,
+    cost: Math.round(ings.reduce((s, i) => s + i.cost, 0) * 100) / 100,
     ingredients: ings
   };
 }
@@ -179,64 +209,68 @@ function allergyHit(meal, allergies) {
   return null;
 }
 
-const MEAL_SHAPE = `{"slot":"dinner","name":"Dish name","description":"One appetising line.","prepMinutes":30,"difficulty":"Easy","calories":550,"protein_g":35,"carbs_g":50,"fat_g":18,"cost":9.40,"ingredients":[{"key":"chicken thigh","name":"Boneless chicken thighs","qty":1.5,"unit":"lb","section":"meat-seafood","cost":5.25}]}`;
+const MEAL_SHAPE = `{"slot":"dinner","name":"Dish name","description":"One appetising line.","prepMinutes":30,"difficulty":"Easy","calories":550,"protein_g":35,"carbs_g":50,"fat_g":18,"ingredients":[{"key":"chicken thigh","name":"Boneless chicken thighs","qty":1.5,"unit":"lb","section":"meat-seafood","cost":5.25}]}`;
 
-const MEAL_RULES = `Rules for each meal:
-- calories, protein_g, carbs_g, fat_g are PER SERVING (one person).
-- cost is the estimated grocery cost of the ingredients used, for the WHOLE household, in USD.
-- ingredients: 4-12 items with quantities for the WHOLE household. "key" is the plain singular grocery item in lower case ("onion", "chicken thigh", "olive oil") so the same item matches across meals. unit is one of: each, lb, oz, g, kg, cup, tbsp, tsp, ml, l, clove, can, bunch, slice, pinch. section is one of: ${SECTIONS.join(', ')}. cost is the cost of the amount used.
+const MEAL_RULES = `Rules:
+- calories, protein_g, carbs_g, fat_g are PER SERVING (one person), and must be realistic for the amounts listed.
+- ingredients: 4-12 items with quantities for the WHOLE household. "key" is the plain singular grocery item in lower case ("onion", "chicken thigh", "olive oil") so the same item matches across meals. unit is one of: each, lb, oz, g, kg, cup, tbsp, tsp, ml, l, clove, can, bunch, slice, pinch. section is one of: ${SECTIONS.join(', ')}.
+- cost of each ingredient: a realistic average US supermarket price for the amount used (a share of the pack for oils, spices and staples), in USD.
 - Skip water, and assume salt and pepper are already at home.`;
 
-async function outlineWeek(key, p, costs, labels, locked, avoid, lang) {
+function targetLine(p, t, slot) {
+  const x = t.slots[slot];
+  return `Targets for this ${slot}: about ${x.kcal} kcal per serving, and ingredients for all ${p.household} costing about $${x.cost.toFixed(2)} in total (never more than $${(x.cost * 1.1).toFixed(2)}). Choose the dish's ingredients and amounts to hit both.`;
+}
+
+// Step 1: every dish name for the period, plus staples to buy once.
+async function outlineWeek(key, p, t, labels, locked, avoid, lang) {
   const lockedText = locked.length
-    ? '\nThese meals are already chosen and must stay exactly as they are (plan the others around them):\n' +
+    ? '\nThese meals are already chosen and stay as they are (plan the others around them):\n' +
       locked.map(l => `- day ${l.day} ${l.slot}: ${l.name}`).join('\n')
     : '';
   const prompt = `You are a meal planner for a home-cooking app. Plan ${labels.length} day(s): ${labels.map((l, i) => `day ${i} = ${l}`).join(', ')}.
 Meals each day: ${p.meals.join(', ')}.
 
-${brief(p, costs)}
+${brief(p)}
+Budget: $${t.perDay.toFixed(2)} a day for the whole household (${p.meals.map(m => `about $${t.slots[m].cost.toFixed(2)} per ${m}`).join(', ')}), so pick dishes that can really be made for that at US supermarket prices.
+Calories per person: ${p.meals.map(m => `about ${t.slots[m].kcal} per ${m}`).join(', ')}.
 ${lockedText}
 ${avoid.length ? '\nDo not repeat these dishes, already used elsewhere in the plan: ' + avoid.slice(0, 60).join('; ') + '.' : ''}
 
 Make the days varied but practical: reuse ingredients across the plan where it makes sense (a roast chicken becomes tomorrow's lunch, one bag of spinach covers three meals) so less is wasted and the budget goes further. No dish twice.
 
-Respond ONLY with JSON, no markdown:
-{"staples":["key ingredients bought once and reused across several meals"],"days":[{"day":0,"meals":[{"slot":"breakfast","name":"Dish name","description":"One appetising line."}]}]}` + languageInstruction(lang);
-  return ask(key, prompt, 2500, 0.8);
+Respond ONLY with JSON, no markdown. Dish names only:
+{"staples":["ingredients bought once and used in several meals"],"days":[{"day":0,"meals":{"breakfast":"Dish name","dinner":"Dish name"}}]}` + languageInstruction(lang);
+  return ask(key, prompt, 1600, 0.8);
 }
 
-async function detailDay(key, p, costs, label, dayPlan, staples, lang) {
-  const prompt = `You are a chef and grocery-cost estimator for a home-cooking app. Write the details for ${label}'s meals.
+// Step 2: one meal's card and ingredients. Run for every meal at once.
+async function detailMeal(key, p, t, label, slot, name, staples, lang) {
+  const prompt = `You are a chef and grocery-cost estimator for a home-cooking app. Write the meal card for this ${slot} on ${label}: "${name}". Keep the dish name.
 
-${brief(p, costs)}
-
-Meals to detail (keep each name):
-${dayPlan.map(m => `- ${m.slot}: ${m.name} — ${m.description || ''}`).join('\n')}
-
-Staples bought for the whole plan — use the same ones where they fit: ${staples.slice(0, 25).join(', ') || 'none'}.
+${brief(p)}
+${targetLine(p, t, slot)}
+Staples bought for the whole plan; use them where they fit: ${staples.slice(0, 25).join(', ') || 'none'}.
 
 ${MEAL_RULES}
 
-Respond ONLY with JSON, no markdown: {"meals":[${MEAL_SHAPE}]}` + languageInstruction(lang);
-  const out = await ask(key, prompt, 3200, 0.3);
-  const bySlot = {};
-  (out.meals || []).forEach(m => { if (m && m.slot) bySlot[m.slot] = m; });
-  return dayPlan.map((m, i) => cleanMeal(bySlot[m.slot] || (out.meals || [])[i] || { name: m.name }, m.slot));
+Respond ONLY with JSON, no markdown: ${MEAL_SHAPE.replace('"dinner"', '"' + slot + '"')}` + languageInstruction(lang);
+  return cleanMeal(await ask(key, prompt, 1400, 0.3), slot);
 }
 
-async function oneMeal(key, p, costs, label, slot, dayMeals, avoid, lang) {
+// A new dish for one slot (swaps, and replacing one that broke an allergy).
+async function oneMeal(key, p, t, label, slot, dayMeals, avoid, lang) {
   const prompt = `You are a chef and grocery-cost estimator for a home-cooking app. Suggest ONE new ${slot} for ${label}.
 
-${brief(p, costs)}
-
+${brief(p)}
+${targetLine(p, t, slot)}
 Other meals that day: ${dayMeals.join('; ') || 'none'}.
 Must be different from: ${avoid.slice(0, 80).join('; ') || 'nothing'}.
 
 ${MEAL_RULES}
 
 Respond ONLY with JSON, no markdown: ${MEAL_SHAPE.replace('"dinner"', '"' + slot + '"')}` + languageInstruction(lang);
-  return cleanMeal(await ask(key, prompt, 1500, 0.9), slot);
+  return cleanMeal(await ask(key, prompt, 1400, 0.9), slot);
 }
 
 async function savePrefs(uid, prefs) {
@@ -301,12 +335,13 @@ export default async function handler(req, res) {
   const avoid = list(body.avoid, 120, 80);
 
   try {
+    const t = mealTargets(prefs);
     if (action === 'swap') {
-      const slot = MEAL_SLOTS.includes(body.slot) ? body.slot : 'dinner';
+      const slot = prefs.meals.includes(body.slot) ? body.slot : prefs.meals[0];
       const label = clip(body.dayLabel, 30) || 'that day';
-      const costs = budgetShares(prefs, 1);
-      let meal = await oneMeal(KEY, prefs, costs, label, slot, list(body.dayMeals, 6, 80), avoid, lang);
-      if (allergyHit(meal, prefs.allergies)) meal = await oneMeal(KEY, prefs, costs, label, slot, list(body.dayMeals, 6, 80), avoid.concat(meal.name), lang);
+      const dayMeals = list(body.dayMeals, 6, 80);
+      let meal = await oneMeal(KEY, prefs, t, label, slot, dayMeals, avoid, lang);
+      if (allergyHit(meal, prefs.allergies)) meal = await oneMeal(KEY, prefs, t, label, slot, dayMeals, avoid.concat(meal.name), lang);
       if (allergyHit(meal, prefs.allergies)) return res.status(502).json({ error: 'Could not find a safe swap. Try again.' });
       return res.status(200).json({ meal });
     }
@@ -315,37 +350,39 @@ export default async function handler(req, res) {
     const dayCount = Math.max(1, Math.min(7, parseInt(body.dayCount, 10) || 1));
     const labels = (Array.isArray(body.dayLabels) ? body.dayLabels : []).slice(0, dayCount).map(l => clip(l, 30));
     while (labels.length < dayCount) labels.push('Day ' + (labels.length + 1));
-    const costs = budgetShares(prefs, dayCount);
     const locked = (Array.isArray(body.locked) ? body.locked : [])
       .filter(l => l && l.meal && Number.isInteger(l.day) && l.day >= 0 && l.day < dayCount && MEAL_SLOTS.includes(l.slot))
       .slice(0, 28)
       .map(l => ({ day: l.day, slot: l.slot, name: clip(l.meal.name, 80), meal: cleanMeal(l.meal, l.slot) }));
 
-    const outline = await outlineWeek(KEY, prefs, costs, labels, locked, avoid, lang);
+    const outline = await outlineWeek(KEY, prefs, t, labels, locked, avoid, lang);
     const staples = list(outline.staples, 30, 40);
+    const used = new Set(avoid.map(n => n.toLowerCase()));
 
+    // Every meal of the week is written at the same time. One that fails or
+    // slips an allergen in comes back empty; the app offers "Find a meal".
     const days = await Promise.all(labels.map(async (label, d) => {
-      const planned = ((outline.days || []).find(x => x && x.day === d) || (outline.days || [])[d] || {}).meals || [];
-      const lockedHere = locked.filter(l => l.day === d);
-      const want = prefs.meals.map(slot => {
-        if (lockedHere.find(l => l.slot === slot)) return null;
-        const m = planned.find(x => x && x.slot === slot) || {};
-        return { slot, name: clip(m.name, 80) || `${slot} for ${label}`, description: clip(m.description, 160) };
-      }).filter(Boolean);
-
-      let detailed = want.length ? await detailDay(KEY, prefs, costs, label, want, staples, lang) : [];
-      // A dish that slips an allergen in gets replaced, never shipped.
-      detailed = await Promise.all(detailed.map(async m => {
-        if (!allergyHit(m, prefs.allergies)) return m;
-        const fresh = await oneMeal(KEY, prefs, costs, label, m.slot, [], avoid.concat(m.name), lang);
-        return allergyHit(fresh, prefs.allergies) ? null : fresh;
+      const od = (outline.days || []).find(x => x && x.day === d) || (outline.days || [])[d] || {};
+      const named = od.meals || {};
+      const meals = await Promise.all(prefs.meals.map(async slot => {
+        const lockedMeal = locked.find(l => l.day === d && l.slot === slot);
+        if (lockedMeal) return lockedMeal.meal;
+        const raw = Array.isArray(named) ? (named.find(x => x && x.slot === slot) || {}).name : named[slot];
+        const name = clip(raw, 80).trim();
+        try {
+          let m = name
+            ? await detailMeal(KEY, prefs, t, label, slot, name, staples, lang)
+            : await oneMeal(KEY, prefs, t, label, slot, [], [...used], lang);
+          if (allergyHit(m, prefs.allergies)) m = await oneMeal(KEY, prefs, t, label, slot, [], [...used, m.name], lang);
+          return allergyHit(m, prefs.allergies) ? null : m;
+        } catch (e) {
+          console.warn('meal-plan meal failed:', slot, label, e.message);
+          return null;
+        }
       }));
-
-      const meals = prefs.meals.map(slot =>
-        (lockedHere.find(l => l.slot === slot) || {}).meal || detailed.find(m => m && m.slot === slot) || null
-      ).filter(Boolean);
-      return { day: d, meals };
+      return { day: d, meals: meals.filter(Boolean) };
     }));
+    if (!days.some(d => d.meals.length)) throw new Error('every meal failed');
 
     return res.status(200).json({ days, staples });
   } catch (e) {

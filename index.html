@@ -15663,10 +15663,23 @@
   // (cans, cloves) add up on their own.
   const UNIT_TO = { g: ['w', 1], kg: ['w', 1000], oz: ['w', 28.3495], lb: ['w', 453.592],
     ml: ['v', 1], l: ['v', 1000], tsp: ['v', 4.929], tbsp: ['v', 14.787], cup: ['v', 236.588] };
+  // Same rule as canonKey in api/meal-plan.js: "tomatoes" and "tomato" are one item.
+  function groceryKey(k) {
+    const w = String(k || '').toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').trim().split(/\s+/).filter(Boolean);
+    if (!w.length) return String(k || '').toLowerCase().trim();
+    let x = w[w.length - 1];
+    if (!(x.length <= 3 || /(ss|us|is)$/.test(x))) {
+      if (/ies$/.test(x)) x = x.slice(0, -3) + 'y';
+      else if (/(ch|sh|x|zz|o)es$/.test(x)) x = x.slice(0, -2);
+      else if (/s$/.test(x)) x = x.slice(0, -1);
+    }
+    w[w.length - 1] = x;
+    return w.join(' ').slice(0, 40);
+  }
   function groceryItems(days) {
     const map = new Map();
     days.forEach(d => d.meals.forEach(m => (m.ingredients || []).forEach(i => {
-      const key = String(i.key || i.name || '').toLowerCase().trim();
+      const key = groceryKey(i.key || i.name);
       if (!key) return;
       let it = map.get(key);
       if (!it) { it = { key, name: i.name || key, section: i.section || 'other', cost: 0, qty: {}, meals: new Set() }; map.set(key, it); }
