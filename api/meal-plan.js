@@ -190,7 +190,8 @@ function cleanMeal(m, slot, household, kcalTarget) {
   if (fromIngs && kcalTarget) {
     const ratio = kcalTarget / (sum('kcal') / people);
     if (ratio < 0.8 || ratio > 1.25) {
-      const f = Math.max(0.5, Math.min(1.6, ratio));
+      // To the near edge of the ±10% band, keeping some of the dish's own size.
+      const f = Math.max(0.5, Math.min(1.6, ratio * (ratio < 1 ? 1.1 : 0.9)));
       ings.forEach(i => {
         i.qty = Math.round(i.qty * f * 100) / 100;
         i.cost = Math.round(i.cost * f * 100) / 100;
