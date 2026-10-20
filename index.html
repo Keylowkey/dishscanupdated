@@ -3133,6 +3133,364 @@
   .pp-notice-title { font-weight: 800; font-size: 16px; margin-bottom: 4px; }
   .pp-notice-text { font-size: 13.5px; color: var(--text3); line-height: 1.45; }
 
+  /* ── Meal plan: "Choose for Me" ──
+     The tab (#planView) lists saved plans. The questionnaire (#planFlow) and
+     a plan (#planPage) are full pages built on .profile-page, at the same
+     layer, so popups and sheets still open above them. */
+  .mode-switch.three .mode-btn { min-width: 0; }
+  @media (max-width: 520px) {
+    .mode-switch.three { gap: 4px; }
+    .mode-switch.three .mode-btn {
+      flex-direction: column; gap: 2px; padding: 8px 4px;
+      font-size: 12.5px; line-height: 1.15; text-align: center;
+    }
+    .mode-switch.three .mode-btn i { font-size: 19px; }
+  }
+
+  .plan-hero {
+    border: 2px solid var(--ink); border-radius: var(--radius-lg); box-shadow: var(--shadow);
+    background: var(--sage-light); padding: 22px 20px 20px; margin-bottom: 26px;
+    position: relative; overflow: hidden;
+  }
+  .plan-hero-badge {
+    width: 52px; height: 52px; border-radius: 16px; border: 2px solid var(--ink);
+    background: var(--surface); box-shadow: var(--shadow-sm); transform: rotate(-5deg);
+    display: flex; align-items: center; justify-content: center; font-size: 26px; color: var(--sage-dark);
+    margin-bottom: 14px;
+  }
+  .plan-hero h2 { font-family: var(--font-display); font-size: 24px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 6px; }
+  .plan-hero p { color: var(--text2); font-size: 14.5px; line-height: 1.5; margin-bottom: 16px; }
+  .plan-cta {
+    width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 14px 18px; border-radius: 99px; border: 2px solid var(--ink);
+    background: var(--sage); color: #fff; font: inherit; font-size: 16px; font-weight: 800;
+    box-shadow: 3px 3px 0 var(--ink-shadow); cursor: pointer;
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .plan-cta:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--ink-shadow); }
+  .plan-cta:disabled { opacity: .5; cursor: default; transform: none; box-shadow: 3px 3px 0 var(--ink-shadow); }
+  .plan-cta.ghost { background: var(--surface); color: var(--text); }
+  .plan-cta i { font-size: 19px; }
+
+  .plan-list-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+  .plan-list-head h3 { font-family: var(--font-display); font-size: 18px; font-weight: 800; }
+  .plan-seg { display: inline-flex; gap: 4px; padding: 3px; border: 1.5px solid var(--ink); border-radius: 99px; background: var(--surface); }
+  .plan-seg button {
+    border: none; background: none; color: var(--text2); font: inherit; font-size: 13px; font-weight: 700;
+    padding: 6px 12px; border-radius: 99px; cursor: pointer;
+  }
+  .plan-seg button.on { background: var(--sage); color: #fff; }
+
+  .plan-card {
+    display: flex; align-items: center; gap: 14px; width: 100%; text-align: left;
+    background: var(--surface); color: var(--text); font: inherit;
+    border: 2px solid var(--ink); border-radius: 20px; box-shadow: 3px 3px 0 var(--ink-shadow);
+    padding: 14px 12px 14px 14px; margin-bottom: 12px; cursor: pointer;
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .plan-card:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 var(--ink-shadow); }
+  .plan-card-ico {
+    width: 46px; height: 46px; border-radius: 14px; flex-shrink: 0; border: 2px solid var(--ink);
+    display: flex; align-items: center; justify-content: center; font-size: 22px;
+    background: var(--amber-light); color: var(--text);
+  }
+  .plan-card-body { flex: 1; min-width: 0; }
+  .plan-card-title { font-weight: 800; font-size: 15.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .plan-card-meta { font-size: 13px; color: var(--text3); margin-top: 2px; }
+  .plan-star {
+    width: 40px; height: 40px; border: none; background: none; color: var(--text3); font-size: 21px;
+    display: flex; align-items: center; justify-content: center; border-radius: 50%; cursor: pointer; flex-shrink: 0;
+  }
+  .plan-star.on { color: var(--amber); }
+  .plan-skel {
+    height: 78px; border-radius: 20px; margin-bottom: 12px; background: var(--surface2);
+    position: relative; overflow: hidden;
+  }
+  .plan-skel::after, .meal-img.loading::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(100deg, transparent 20%, rgba(255,255,255,.10) 50%, transparent 80%);
+    background-size: 200% 100%; animation: dishSheen 1.4s linear infinite;
+  }
+  @media (prefers-reduced-motion: reduce) { .plan-skel::after, .meal-img.loading::after { animation: none; } }
+  .plan-empty { text-align: center; padding: 26px 16px 10px; color: var(--text2); }
+  .plan-empty-ico {
+    width: 58px; height: 58px; margin: 0 auto 12px; border-radius: 18px; border: 2px solid var(--ink);
+    background: var(--surface); display: flex; align-items: center; justify-content: center;
+    font-size: 26px; color: var(--sage); transform: rotate(4deg);
+  }
+  .plan-empty-title { font-weight: 800; color: var(--text); font-size: 16px; margin-bottom: 4px; }
+  .plan-empty-text { font-size: 14px; line-height: 1.5; }
+  .plan-empty .plan-cta { margin-top: 16px; width: auto; display: inline-flex; padding: 11px 20px; font-size: 15px; }
+
+  /* Questionnaire */
+  .pf-skip {
+    border: none; background: none; color: var(--text2); font: inherit; font-size: 15px; font-weight: 700;
+    padding: 10px 12px; border-radius: 99px; cursor: pointer; flex-shrink: 0;
+  }
+  .pf-skip[hidden] { display: none; }
+  .pf-progress { height: 5px; background: var(--surface2); }
+  .pf-progress-bar { height: 100%; width: 0; background: var(--sage); border-radius: 0 99px 99px 0; transition: width .3s ease; }
+  .pf-step-n { font-size: 12.5px; font-weight: 700; color: var(--text3); letter-spacing: .04em; margin-bottom: 6px; }
+  .pf-h { font-family: var(--font-display); font-size: 25px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.2; margin-bottom: 6px; }
+  .pf-sub { color: var(--text2); font-size: 14.5px; line-height: 1.5; margin-bottom: 20px; }
+  .pf-label { font-weight: 800; font-size: 15px; margin: 22px 0 10px; }
+  .pf-label:first-child { margin-top: 0; }
+  .pf-label small { font-weight: 600; color: var(--text3); font-size: 13px; margin-left: 4px; }
+  .pf-options { display: grid; gap: 10px; }
+  .pf-options.two { grid-template-columns: 1fr 1fr; }
+  .pf-opt {
+    display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
+    padding: 13px 14px; border-radius: 16px; border: 2px solid var(--border-med);
+    background: var(--surface); color: var(--text); font: inherit; cursor: pointer;
+    transition: border-color .15s ease, background .15s ease, box-shadow .15s ease;
+  }
+  .pf-opt i.pf-ico { font-size: 22px; color: var(--text2); flex-shrink: 0; }
+  .pf-opt-t { font-weight: 800; font-size: 15px; }
+  .pf-opt-s { font-size: 12.5px; color: var(--text3); margin-top: 1px; }
+  .pf-opt.on { border-color: var(--ink); background: var(--sage-light); box-shadow: 3px 3px 0 var(--ink-shadow); }
+  .pf-opt.on i.pf-ico { color: var(--sage-dark); }
+  .pf-opt .pf-tick {
+    margin-left: auto; width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border-med);
+    display: flex; align-items: center; justify-content: center; font-size: 13px; color: transparent; flex-shrink: 0;
+  }
+  .pf-opt.on .pf-tick { background: var(--sage); border-color: var(--sage); color: #fff; }
+  .pf-opt.two-line { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .pf-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pf-chip {
+    display: inline-flex; align-items: center; gap: 6px; padding: 9px 14px; border-radius: 99px;
+    border: 1.5px solid var(--border-med); background: var(--surface); color: var(--text);
+    font: inherit; font-size: 14px; font-weight: 700; cursor: pointer;
+  }
+  .pf-chip.on { background: var(--sage); border-color: var(--ink); color: #fff; }
+  .pf-chip.warn.on { background: var(--danger); }
+  .pf-chip i { font-size: 15px; }
+  .pf-stepper { display: flex; align-items: center; gap: 14px; }
+  .pf-stepper button {
+    width: 46px; height: 46px; border-radius: 50%; border: 2px solid var(--ink); background: var(--surface);
+    color: var(--text); font-size: 20px; display: flex; align-items: center; justify-content: center;
+    box-shadow: 2px 2px 0 var(--ink-shadow); cursor: pointer;
+  }
+  .pf-stepper button:disabled { opacity: .35; cursor: default; }
+  .pf-stepper-n { min-width: 92px; text-align: center; font-family: var(--font-display); font-weight: 800; font-size: 22px; }
+  .pf-stepper-n small { display: block; font-family: var(--font-body); font-size: 12.5px; color: var(--text3); font-weight: 600; }
+  .pf-field {
+    display: flex; align-items: center; gap: 8px; border: 2px solid var(--ink); border-radius: var(--radius);
+    background: var(--surface); padding: 0 14px; transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  .pf-field:focus-within { border-color: var(--sage); box-shadow: 3px 3px 0 var(--sage-light); }
+  .pf-field.bad { border-color: var(--danger); }
+  .pf-field input {
+    flex: 1; min-width: 0; border: none; background: none; outline: none; color: var(--text);
+    font: inherit; font-size: 16px; padding: 13px 0;
+  }
+  .pf-field .pf-cur { font-family: var(--font-display); font-weight: 800; font-size: 24px; color: var(--text2); }
+  .pf-field.money input { font-family: var(--font-display); font-weight: 800; font-size: 26px; padding: 12px 0; }
+  .pf-field .pf-per { color: var(--text3); font-size: 14px; font-weight: 700; white-space: nowrap; }
+  .pf-add { border: none; background: var(--sage); color: #fff; font: inherit; font-weight: 800; font-size: 14px; padding: 8px 14px; border-radius: 99px; cursor: pointer; }
+  .pf-add:disabled { opacity: .4; }
+  .pf-tokens { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .pf-token {
+    display: inline-flex; align-items: center; gap: 4px; padding: 6px 6px 6px 12px; border-radius: 99px;
+    background: var(--surface2); border: 1.5px solid var(--border); font-size: 13.5px; font-weight: 700;
+  }
+  .pf-token button { border: none; background: none; color: var(--text3); width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; }
+  .pf-hint { font-size: 13.5px; color: var(--text2); margin-top: 10px; line-height: 1.5; }
+  .pf-hint b { color: var(--text); }
+  .pf-range { display: flex; gap: 10px; margin-top: 14px; }
+  .pf-range > div { flex: 1; border: 1.5px solid var(--border); border-radius: 14px; padding: 10px 12px; background: var(--surface); }
+  .pf-range-l { font-size: 12px; color: var(--text3); font-weight: 700; }
+  .pf-range-v { font-family: var(--font-display); font-weight: 800; font-size: 17px; }
+  .pf-alert {
+    margin-top: 14px; border: 2px solid var(--danger); border-radius: 16px; padding: 14px;
+    background: var(--surface);
+    background: color-mix(in srgb, var(--danger) 9%, var(--surface));
+  }
+  .pf-alert-t { font-weight: 800; display: flex; gap: 8px; align-items: flex-start; }
+  .pf-alert-t i { color: var(--danger); font-size: 19px; margin-top: 1px; }
+  .pf-alert-s { font-size: 13.5px; color: var(--text2); margin: 4px 0 12px 27px; line-height: 1.45; }
+  .pf-fixes { display: flex; flex-wrap: wrap; gap: 8px; margin-left: 27px; }
+  .pf-fix {
+    border: 1.5px solid var(--ink); background: var(--surface); color: var(--text); font: inherit;
+    font-size: 13.5px; font-weight: 700; padding: 8px 12px; border-radius: 99px; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .pf-fix.primary { background: var(--sage); color: #fff; }
+  .pf-foot {
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--border); background: var(--bg);
+  }
+  .pf-foot[hidden] { display: none; }
+  .pf-note { font-size: 12px; color: var(--text3); margin-top: 18px; line-height: 1.5; }
+
+  /* Generating */
+  .pf-gen { text-align: center; padding: 28px 8px 10px; }
+  .pf-gen-ico {
+    width: 84px; height: 84px; margin: 0 auto 22px; border-radius: 26px; border: 2px solid var(--ink);
+    background: var(--amber-light); box-shadow: var(--shadow-sm);
+    display: flex; align-items: center; justify-content: center; font-size: 40px;
+    animation: stageWiggle 1.6s ease-in-out infinite;
+  }
+  @media (prefers-reduced-motion: reduce) { .pf-gen-ico { animation: none; } }
+  .pf-gen h3 { font-family: var(--font-display); font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+  .pf-gen p { color: var(--text2); font-size: 14.5px; line-height: 1.5; }
+  .pf-gen-bar { height: 10px; border-radius: 99px; background: var(--surface2); border: 1.5px solid var(--ink); margin: 22px auto 10px; max-width: 320px; overflow: hidden; }
+  .pf-gen-bar div { height: 100%; width: 0; background: var(--sage); transition: width .6s ease; }
+  .pf-gen-steps { list-style: none; max-width: 300px; margin: 18px auto 0; text-align: left; }
+  .pf-gen-steps li { display: flex; align-items: center; gap: 10px; padding: 7px 0; color: var(--text3); font-weight: 700; font-size: 14.5px; }
+  .pf-gen-steps li i { font-size: 18px; }
+  .pf-gen-steps li.on { color: var(--text); }
+  .pf-gen-steps li.done { color: var(--sage-dark); }
+  .pf-gen .plan-cta { margin-top: 22px; }
+  .pf-gen.error .pf-gen-ico { background: var(--surface); background: color-mix(in srgb, var(--danger) 14%, var(--surface)); animation: none; color: var(--danger); }
+
+  /* A plan */
+  .pl-tabs { display: flex; gap: 6px; padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--bg); }
+  .pl-tabs button {
+    flex: 1; border: 2px solid transparent; background: none; color: var(--text2); font: inherit;
+    font-size: 14.5px; font-weight: 800; padding: 9px 10px; border-radius: 99px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .pl-tabs button.on { border-color: var(--ink); background: var(--sage-light); color: var(--sage-dark); }
+  .pl-tabs .pl-count { font-size: 12px; background: var(--surface2); color: var(--text2); padding: 1px 7px; border-radius: 99px; }
+  .pl-sum {
+    border: 2px solid var(--ink); border-radius: 20px; box-shadow: 3px 3px 0 var(--ink-shadow);
+    background: var(--surface); padding: 16px; margin-bottom: 18px;
+  }
+  .pl-sum-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+  .pl-sum-total { font-family: var(--font-display); font-size: 28px; font-weight: 800; letter-spacing: -0.02em; }
+  .pl-sum-of { font-size: 13.5px; color: var(--text3); font-weight: 700; text-align: right; }
+  .pl-meter { height: 9px; border-radius: 99px; background: var(--surface2); margin: 10px 0 8px; overflow: hidden; }
+  .pl-meter div { height: 100%; background: var(--sage); border-radius: 99px; transition: width .4s ease; }
+  .pl-meter.over div { background: var(--danger); }
+  .pl-sum-note { font-size: 13px; color: var(--text2); font-weight: 600; }
+  .pl-sum-note.over { color: var(--danger); }
+  .pl-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 14px; padding-top: 14px; border-top: 1.5px dashed var(--border); }
+  .pl-stat { text-align: center; min-width: 0; }
+  .pl-stat-v { font-family: var(--font-display); font-weight: 800; font-size: 16px; }
+  .pl-stat-l { font-size: 11.5px; color: var(--text3); font-weight: 700; }
+  .pl-per { display: flex; gap: 8px; margin-top: 12px; font-size: 13px; color: var(--text2); font-weight: 600; flex-wrap: wrap; }
+  .pl-per span { background: var(--surface2); padding: 4px 10px; border-radius: 99px; }
+
+  .pl-weeks { display: flex; gap: 6px; margin-bottom: 10px; overflow-x: auto; scrollbar-width: none; }
+  .pl-weeks::-webkit-scrollbar, .pl-days::-webkit-scrollbar { display: none; }
+  .pl-week {
+    flex-shrink: 0; border: 1.5px solid var(--border-med); background: var(--surface); color: var(--text2);
+    font: inherit; font-size: 13px; font-weight: 800; padding: 7px 13px; border-radius: 99px; cursor: pointer;
+  }
+  .pl-week.on { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .pl-viewbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+  .pl-viewbar h3 { font-family: var(--font-display); font-weight: 800; font-size: 17px; }
+  .pl-days { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 8px; margin: 0 -2px 8px; scrollbar-width: none; }
+  .pl-day {
+    flex-shrink: 0; width: 56px; padding: 8px 0; border-radius: 16px; border: 2px solid var(--border-med);
+    background: var(--surface); color: var(--text); font: inherit; cursor: pointer; text-align: center;
+  }
+  .pl-day-w { font-size: 11.5px; font-weight: 800; color: var(--text3); text-transform: uppercase; }
+  .pl-day-n { font-family: var(--font-display); font-size: 19px; font-weight: 800; }
+  .pl-day.on { border-color: var(--ink); background: var(--sage); color: #fff; box-shadow: 2px 2px 0 var(--ink-shadow); }
+  .pl-day.on .pl-day-w { color: rgba(255,255,255,.85); }
+  .pl-day-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 6px 0 12px; }
+  .pl-day-title { font-weight: 800; font-size: 16px; }
+  .pl-day-meta { font-size: 13px; color: var(--text3); font-weight: 700; white-space: nowrap; }
+
+  .meal-card {
+    border: 2px solid var(--ink); border-radius: 20px; box-shadow: 3px 3px 0 var(--ink-shadow);
+    background: var(--surface); overflow: hidden; margin-bottom: 14px; position: relative;
+  }
+  .meal-card.locked { box-shadow: 3px 3px 0 var(--sage); }
+  .meal-card.busy { opacity: .55; pointer-events: none; }
+  .meal-main { display: flex; gap: 12px; padding: 12px; width: 100%; background: none; border: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+  .meal-img {
+    width: 92px; height: 92px; border-radius: 14px; flex-shrink: 0; overflow: hidden; position: relative;
+    background: var(--surface2); display: flex; align-items: center; justify-content: center;
+    color: var(--text3); font-size: 30px;
+  }
+  .meal-img img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .4s ease; }
+  .meal-img.ready img { opacity: 1; }
+  .meal-body { flex: 1; min-width: 0; }
+  .meal-slot { font-size: 11.5px; font-weight: 800; color: var(--sage-dark); text-transform: uppercase; letter-spacing: .05em; display: flex; align-items: center; gap: 5px; }
+  .meal-slot .ti-lock-filled { color: var(--sage-dark); font-size: 12px; }
+  .meal-name { font-weight: 800; font-size: 15.5px; line-height: 1.3; margin: 2px 0 3px; }
+  .meal-desc { font-size: 13px; color: var(--text2); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .meal-facts { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 7px; font-size: 12.5px; color: var(--text2); font-weight: 700; }
+  .meal-facts span { display: inline-flex; align-items: center; gap: 3px; }
+  .meal-facts i { font-size: 14px; color: var(--text3); }
+  .meal-macros { display: flex; gap: 6px; padding: 0 12px 10px; flex-wrap: wrap; }
+  .meal-macros span { font-size: 11.5px; font-weight: 800; padding: 3px 8px; border-radius: 99px; background: var(--surface2); color: var(--text2); }
+  .meal-actions { display: flex; border-top: 1.5px solid var(--border); }
+  .meal-act {
+    flex: 1; border: none; background: none; color: var(--text2); font: inherit; font-size: 13.5px; font-weight: 800;
+    padding: 11px 6px; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;
+  }
+  .meal-act + .meal-act { border-left: 1.5px solid var(--border); }
+  .meal-act i { font-size: 17px; }
+  .meal-act.on { color: var(--sage-dark); }
+  #planFlow .ti.spin, #planPage .ti.spin { display: inline-block; animation: ccSpin .8s linear infinite; }
+  @keyframes ccSpin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { #planFlow .ti.spin, #planPage .ti.spin { animation-duration: 2.4s; } }
+  .meal-gap {
+    border: 2px dashed var(--border-med); border-radius: 20px; padding: 16px; margin-bottom: 14px;
+    display: flex; align-items: center; gap: 12px; color: var(--text2); font-size: 14px;
+  }
+  .meal-gap .pf-fix { margin-left: auto; flex-shrink: 0; }
+
+  .pl-overview-day { border: 1.5px solid var(--border); border-radius: 16px; padding: 12px 14px; margin-bottom: 10px; background: var(--surface); width: 100%; text-align: left; font: inherit; color: inherit; cursor: pointer; display: block; }
+  .pl-overview-day b { font-size: 14.5px; }
+  .pl-overview-day .pl-day-meta { float: right; }
+  .pl-overview-day ul { list-style: none; margin-top: 6px; }
+  .pl-overview-day li { font-size: 13.5px; color: var(--text2); padding: 2px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pl-overview-day li em { font-style: normal; font-weight: 800; color: var(--text3); font-size: 11.5px; text-transform: uppercase; margin-right: 6px; }
+  .pl-regen { margin: 6px 0 4px; }
+
+  /* Grocery list */
+  .gl-share { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+  .gl-share button {
+    border: 2px solid var(--ink); border-radius: 16px; background: var(--surface); color: var(--text);
+    font: inherit; font-size: 13px; font-weight: 800; padding: 10px 4px; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 3px; box-shadow: 2px 2px 0 var(--ink-shadow);
+  }
+  .gl-share button i { font-size: 20px; }
+  .gl-share button:disabled { opacity: .5; }
+  .gl-add { margin-bottom: 18px; }
+  .gl-sec { margin-bottom: 18px; }
+  .gl-sec-h { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 14px; margin-bottom: 6px; }
+  .gl-sec-h i { font-size: 18px; color: var(--sage-dark); }
+  .gl-sec-h span { margin-left: auto; font-size: 12.5px; color: var(--text3); }
+  .gl-items { border: 1.5px solid var(--border); border-radius: 16px; background: var(--surface); overflow: hidden; }
+  .gl-item { display: flex; align-items: center; gap: 10px; padding: 4px 4px 4px 12px; min-height: 52px; }
+  .gl-item + .gl-item { border-top: 1px solid var(--border); }
+  .gl-check {
+    width: 26px; height: 26px; border-radius: 8px; border: 2px solid var(--border-med); background: none;
+    flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: transparent;
+    font-size: 15px; cursor: pointer; padding: 0;
+  }
+  .gl-item.done .gl-check { background: var(--sage); border-color: var(--sage); color: #fff; }
+  .gl-main { flex: 1; min-width: 0; background: none; border: none; text-align: left; color: inherit; font: inherit; padding: 8px 0; cursor: pointer; }
+  .gl-name { font-weight: 700; font-size: 14.5px; }
+  .gl-qty { font-size: 12.5px; color: var(--text3); margin-top: 1px; }
+  .gl-item.done .gl-name { text-decoration: line-through; color: var(--text3); }
+  .gl-price { font-weight: 800; font-size: 14px; white-space: nowrap; }
+  .gl-item.done .gl-price { color: var(--text3); }
+  .gl-item.have .gl-price { text-decoration: line-through; color: var(--text3); }
+  .gl-btn {
+    width: 40px; height: 40px; border: none; background: none; color: var(--text3); font-size: 19px;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0;
+  }
+  .gl-btn.on { color: var(--sage-dark); }
+  .gl-legend { font-size: 12.5px; color: var(--text3); margin: -8px 0 16px; display: flex; align-items: center; gap: 4px; }
+  .gl-legend i { font-size: 15px; }
+
+  /* "Back to meal plan" while cooking a planned meal */
+  .plan-return {
+    position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom)); transform: translateX(-50%);
+    z-index: 900; display: none; align-items: center; gap: 4px;
+    background: var(--text); color: var(--bg); border-radius: 99px; box-shadow: var(--shadow-sm);
+    padding: 4px 4px 4px 14px; max-width: calc(100vw - 32px);
+  }
+  .plan-return.show { display: inline-flex; }
+  .plan-return button { border: none; background: none; color: inherit; font: inherit; font-weight: 800; font-size: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 8px 4px; white-space: nowrap; }
+  .plan-return .plan-return-x { width: 34px; height: 34px; justify-content: center; border-radius: 50%; opacity: .7; padding: 0; }
+
   /* ── Action sheet (menus and confirmations) ──
      Above every popup (100001-100002), below toasts (100010). */
   .cc-sheet-scrim {
@@ -3974,7 +4332,8 @@
   .cc-rtl .sw-body, .cc-rtl .lang-label, .cc-rtl .nt-meal-name { text-align: right; }
   /* Directional icons need mirroring, symmetric ones must not be touched. */
   .cc-rtl .rp-back i, .cc-rtl .rp-tile-arrow,
-  .cc-rtl .swap-arrow i, .cc-rtl .legal-back i { transform: scaleX(-1); }
+  .cc-rtl .swap-arrow i, .cc-rtl .legal-back i, .cc-rtl .pp-back i,
+  .cc-rtl #pfNext .ti-arrow-right, .cc-rtl .plan-return .ti-arrow-left { transform: scaleX(-1); }
   .cc-rtl .dh-chip { margin-left: 0; margin-right: 8px; }
   .cc-rtl .nutri-sources, .cc-rtl .nutri-disclaimer { direction: rtl; }
   /* Anchored panels are pinned to the right edge, which throws them off-screen
@@ -4716,9 +5075,12 @@
     </div>
   </header>
 
-  <div class="mode-switch" id="modeSwitch">
+  <div class="mode-switch three" id="modeSwitch">
     <button class="mode-btn active" id="modeCookBtn" onclick="switchMode('cook')">
       <i class="ti ti-chef-hat"></i> Cook a Dish
+    </button>
+    <button class="mode-btn" id="modePlanBtn" onclick="switchMode('plan')">
+      <i class="ti ti-calendar-event"></i> Meal Plan
     </button>
     <button class="mode-btn" id="modeCommunityBtn" onclick="switchMode('community')">
       <i class="ti ti-users-group"></i> Community
@@ -5353,6 +5715,25 @@
   </div>
   <!-- END COMMUNITY MODE -->
 
+  <!-- MEAL PLAN MODE: "Choose for Me" -->
+  <div class="mode-view" id="planView">
+    <div class="plan-hero">
+      <div class="plan-hero-badge"><i class="ti ti-sparkles"></i></div>
+      <h2>Choose for Me</h2>
+      <p>Tell us how you eat and what you want to spend. We'll plan every meal and write your grocery list.</p>
+      <button class="plan-cta" onclick="openPlanFlow()"><i class="ti ti-calendar-event"></i> <span>Plan my meals</span></button>
+    </div>
+    <div class="plan-list-head">
+      <h3>Your plans</h3>
+      <div class="plan-seg" role="tablist" aria-label="Show">
+        <button class="on" id="planFilterAll" onclick="setPlanFilter('all')">All</button>
+        <button id="planFilterFav" onclick="setPlanFilter('fav')"><i class="ti ti-star"></i> Favorites</button>
+      </div>
+    </div>
+    <div id="planList"></div>
+  </div>
+  <!-- END MEAL PLAN MODE -->
+
   <!-- HISTORY VIEW (opened from dropdown) -->
   <div class="page-view" id="historyView">
     <div class="page-view-header">
@@ -5583,6 +5964,41 @@
       <i class="ti ti-check"></i> Update password
     </button>
   </div>
+</div>
+
+<!-- Meal plan questionnaire, then the "building your plan" screen. -->
+<div class="profile-page" id="planFlow" aria-hidden="true">
+  <div class="pp-bar">
+    <button class="pp-back" onclick="planFlowBack()" aria-label="Back"><i class="ti ti-arrow-left"></i></button>
+    <div class="pp-title">Choose for Me</div>
+    <button class="pf-skip" id="pfSkip" onclick="planFlowSkip()" hidden>Skip</button>
+  </div>
+  <div class="pf-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" id="pfProgress"><div class="pf-progress-bar" id="pfBar"></div></div>
+  <div class="pp-scroll" id="pfScroll"><div id="pfBody"></div></div>
+  <div class="pf-foot" id="pfFoot">
+    <button class="plan-cta" id="pfNext" onclick="planFlowNext()"><span id="pfNextLabel">Continue</span> <i class="ti ti-arrow-right"></i></button>
+  </div>
+</div>
+
+<!-- One meal plan: meals by day, and the grocery list. -->
+<div class="profile-page" id="planPage" aria-hidden="true">
+  <div class="pp-bar">
+    <button class="pp-back" onclick="closePlanPage()" aria-label="Back"><i class="ti ti-arrow-left"></i></button>
+    <div class="pp-title" id="plTitle">Meal plan</div>
+    <button class="plan-star" id="plFav" onclick="togglePlanFavorite()" aria-label="Favorite"><i class="ti ti-star"></i></button>
+    <button class="pp-more" onclick="planMoreMenu()" aria-label="More options"><i class="ti ti-dots"></i></button>
+  </div>
+  <div class="pl-tabs" role="tablist">
+    <button class="on" id="plTabMeals" role="tab" onclick="setPlanTab('meals')"><i class="ti ti-chef-hat"></i> Meals</button>
+    <button id="plTabGrocery" role="tab" onclick="setPlanTab('grocery')"><i class="ti ti-shopping-cart"></i> Grocery list</button>
+  </div>
+  <div class="pp-scroll" id="plScroll"><div id="plBody"></div></div>
+</div>
+
+<!-- Shown while cooking a meal from a plan, to get back to it. -->
+<div class="plan-return" id="planReturn">
+  <button onclick="returnToPlan()"><i class="ti ti-arrow-left"></i> <span>Back to meal plan</span></button>
+  <button class="plan-return-x" onclick="hidePlanReturn()" aria-label="Close"><i class="ti ti-x"></i></button>
 </div>
 
 <!-- View another user's profile + public favorites -->
@@ -6070,7 +6486,7 @@
     <!-- PRIVACY -->
     <div class="legal-body" id="legalPrivacy" style="display:none;">
       <h1>Privacy Policy</h1>
-      <div class="legal-dates">Effective date: June 16, 2026 · Last updated: October 12, 2026</div>
+      <div class="legal-dates">Effective date: June 16, 2026 · Last updated: October 19, 2026</div>
 
       <p>This Privacy Policy explains what information Capture &amp; Cook LLC ("we," "us") collects, how we use it, and your choices. It applies to captureandcook.com.</p>
 
@@ -6081,6 +6497,7 @@
         <p><strong>About allergy &amp; dietary preferences.</strong> If you choose to save allergies or dietary preferences, this may be considered sensitive health-related information. Providing it is entirely optional. We use it only to flag ingredients and suggest substitutions for you inside the app. We do not sell it, and it is not shown to other users.</p>
       </div>
       <p><strong>Photos and videos you upload.</strong> Food photos you submit for dish analysis, takeout scanning, or community sharing, and cooking videos you post to the community (up to 60 seconds). Photos and videos are compressed on your device before upload.</p>
+      <p><strong>Meal plan answers.</strong> If you use Choose for Me, the answers you give: plan length, how many people you cook for, your goal, diet, allergies, cooking time and skill, cuisines you like, foods to avoid, and your grocery budget. We save them to your account so your next plan starts filled in, along with the plans and grocery lists you make.</p>
       <p><strong>Content you create.</strong> Recipes saved to your history, favorites, ratings, community posts, captions, comments, reactions, and reports you submit.</p>
       <p><strong>Support messages.</strong> If you contact support, we receive your name, email, and message.</p>
       <p><strong>Technical information.</strong> Like most web services, our hosting providers automatically log basic technical data (such as IP address and browser type) for security and operations.</p>
@@ -6096,12 +6513,12 @@
       </ul>
 
       <h2>3. AI Processing</h2>
-      <p>Photos you submit for analysis, takeout scanning, or community-feed screening are processed by our AI provider (Anthropic) to generate results. Videos you post are screened the same way, using a few still frames taken from the video. To show a picture for recipes that don't come with a photo, the dish name and its main ingredients are sent to OpenAI to create an image, which is stored and reused for that dish; your photos and account details are never sent to OpenAI. When you run an allergy check, the dish name, its ingredient list, and the allergens being checked are sent to the AI provider to generate substitution suggestions. Saved addresses and store searches are processed by Google's mapping services to return nearby results. We send only what is needed for the feature to work.</p>
+      <p>Photos you submit for analysis, takeout scanning, or community-feed screening are processed by our AI provider (Anthropic) to generate results. Videos you post are screened the same way, using a few still frames taken from the video. To show a picture for recipes that don't come with a photo, the dish name and its main ingredients are sent to OpenAI to create an image, which is stored and reused for that dish; your photos and account details are never sent to OpenAI. When you make a meal plan, your meal plan answers are sent to the AI provider to choose dishes, estimate costs and nutrition, and write the grocery list; your name and email are not included. When you run an allergy check, the dish name, its ingredient list, and the allergens being checked are sent to the AI provider to generate substitution suggestions. Saved addresses and store searches are processed by Google's mapping services to return nearby results. We send only what is needed for the feature to work.</p>
 
       <h2>4. Who Can See Your Information</h2>
       <ul>
         <li><strong>Community content is visible to other signed-in users:</strong> your username, avatar, posts, captions, comments, and reactions.</li>
-        <li><strong>Private by default:</strong> your email, name, saved address, allergy/dietary preferences, dish history, favorites, and support messages are not visible to other users.</li>
+        <li><strong>Private by default:</strong> your email, name, saved address, allergy/dietary preferences, meal plans and their answers, dish history, favorites, and support messages are not visible to other users.</li>
         <li>Database rules (row-level security) enforce that users cannot access each other's private data.</li>
       </ul>
 
@@ -6709,6 +7126,7 @@
           if (typeof closeReels === 'function') closeReels();
         };
         if (reelsOpen && reels.classList.contains('above-profile')) { reelsBack(); return; }
+        if (typeof planBackHandled === 'function' && planBackHandled()) return;
         if (typeof profilePageOpen === 'function' && profilePageOpen()) { profileBack(); return; }
         if (reelsOpen) { reelsBack(); return; }
 
@@ -6724,10 +7142,14 @@
         const bar = document.getElementById('rpDetailBar');
         if (bar && bar.style.display !== 'none' && typeof rpBack === 'function') { rpBack(); return; }
 
-        // 6. On the Community tab, go back to Cook rather than leaving.
-        const community = document.getElementById('communityView');
-        if (community && !community.classList.contains('hidden') &&
-            typeof switchTab === 'function') { switchTab('cook'); return; }
+        // 6. History or Favorites close; cooking a planned meal goes back to
+        //    the plan; any other tab goes back to Cook rather than leaving.
+        //    (This used to call switchTab('cook'), which threw, so back did
+        //    nothing at all on the main screen.)
+        if (document.querySelector('.page-view.active')) { closeSubView(); return; }
+        const cookTab = document.getElementById('cookView');
+        if (cookTab && cookTab.classList.contains('active') && typeof planReturnShown === 'function' && planReturnShown()) { returnToPlan(); return; }
+        if (cookTab && !cookTab.classList.contains('active')) { switchMode('cook'); return; }
 
         // 7. Nothing open: minimise rather than destroy the activity, so
         //    returning to the app is instant instead of a cold start.
@@ -9344,7 +9766,241 @@
     "Share this recipe": ["Compartir esta receta","Partager cette recette","Rezept teilen","यह रेसिपी साझा करें","شارك هذه الوصفة"],
     "Pick who gets it": ["Elige quién la recibe","Choisissez les destinataires","Wähle die Empfänger","चुनें कि किसे भेजना है","اختر من يستلمها"],
     "Recipes people sent you": ["Recetas que te enviaron","Recettes qu'on vous a envoyées","Rezepte, die dir gesendet wurden","आपको भेजी गई रेसिपी","وصفات أرسلها لك الآخرون"],
-    "Pick a background you like": ["Elige un fondo que te guste","Choisissez un fond","Wähle einen Hintergrund","अपनी पसंद की पृष्ठभूमि चुनें","اختر خلفية تعجبك"]
+    "Pick a background you like": ["Elige un fondo que te guste","Choisissez un fond","Wähle einen Hintergrund","अपनी पसंद की पृष्ठभूमि चुनें","اختر خلفية تعجبك"],
+    // — meal planner —
+    "Show": ["Mostrar","Afficher","Anzeigen","दिखाएं","عرض"],
+    "Meal Plan": ["Plan de comidas","Repas","Essensplan","भोजन योजना","خطة الوجبات"],
+    "Choose for Me": ["Elige por mí","Choisis pour moi","Wähl für mich","मेरे लिए चुनें","اختر لي"],
+    "Tell us how you eat and what you want to spend. We'll plan every meal and write your grocery list.": ["Dinos cómo comes y cuánto quieres gastar. Planificaremos cada comida y haremos tu lista de compras.","Dites-nous comment vous mangez et combien vous voulez dépenser. Nous planifions chaque repas et écrivons votre liste de courses.","Sag uns, wie du isst und was du ausgeben willst. Wir planen jede Mahlzeit und schreiben deine Einkaufsliste.","बताइए आप कैसे खाते हैं और कितना खर्च करना चाहते हैं। हम हर भोजन की योजना बनाएंगे और आपकी किराने की सूची लिखेंगे।","أخبرنا كيف تأكل وكم تريد أن تنفق. سنخطط لكل وجبة ونكتب قائمة مشترياتك."],
+    "Plan my meals": ["Planificar mis comidas","Planifier mes repas","Meine Mahlzeiten planen","मेरे भोजन की योजना बनाएं","خطط وجباتي"],
+    "Your plans": ["Tus planes","Vos plans","Deine Pläne","आपकी योजनाएं","خططك"],
+    "All": ["Todos","Tous","Alle","सभी","الكل"],
+    "Skip": ["Omitir","Passer","Überspringen","छोड़ें","تخطَّ"],
+    "Continue": ["Continuar","Continuer","Weiter","जारी रखें","متابعة"],
+    "Meal plan": ["Plan de comidas","Plan de repas","Essensplan","भोजन योजना","خطة الوجبات"],
+    "Meals": ["Comidas","Repas","Mahlzeiten","भोजन","الوجبات"],
+    "Grocery list": ["Lista de compras","Liste de courses","Einkaufsliste","किराने की सूची","قائمة المشتريات"],
+    "Back to meal plan": ["Volver al plan","Retour au plan","Zurück zum Plan","भोजन योजना पर वापस","العودة إلى الخطة"],
+    "Close": ["Cerrar","Fermer","Schließen","बंद करें","إغلاق"],
+    "Favorite": ["Favorito","Favori","Favorit","पसंदीदा","المفضلة"],
+    "More options": ["Más opciones","Plus d'options","Weitere Optionen","और विकल्प","خيارات أخرى"],
+    "Breakfast": ["Desayuno","Petit-déjeuner","Frühstück","नाश्ता","الفطور"],
+    "Lunch": ["Almuerzo","Déjeuner","Mittagessen","दोपहर का भोजन","الغداء"],
+    "Dinner": ["Cena","Dîner","Abendessen","रात का खाना","العشاء"],
+    "Snack": ["Merienda","Collation","Snack","नाश्ता (स्नैक)","وجبة خفيفة"],
+    "One day": ["Un día","Un jour","Ein Tag","एक दिन","يوم واحد"],
+    "Just today": ["Solo hoy","Juste aujourd'hui","Nur heute","सिर्फ आज","اليوم فقط"],
+    "One week": ["Una semana","Une semaine","Eine Woche","एक सप्ताह","أسبوع واحد"],
+    "7 days": ["7 días","7 jours","7 Tage","7 दिन","7 أيام"],
+    "One month": ["Un mes","Un mois","Ein Monat","एक महीना","شهر واحد"],
+    "4 weeks": ["4 semanas","4 semaines","4 Wochen","4 सप्ताह","4 أسابيع"],
+    "Lose weight": ["Bajar de peso","Perdre du poids","Abnehmen","वजन कम करना","إنقاص الوزن"],
+    "Filling, lighter meals": ["Comidas ligeras que sacian","Repas légers et rassasiants","Sättigende, leichtere Gerichte","पेट भरने वाले हल्के भोजन","وجبات خفيفة ومشبعة"],
+    "Build muscle": ["Ganar músculo","Prendre du muscle","Muskeln aufbauen","मांसपेशियां बनाना","بناء العضلات"],
+    "High in protein": ["Ricas en proteína","Riches en protéines","Viel Protein","प्रोटीन से भरपूर","غنية بالبروتين"],
+    "Stay balanced": ["Mantener el equilibrio","Rester équilibré","Ausgewogen bleiben","संतुलित रहना","البقاء متوازنًا"],
+    "Keep my weight steady": ["Mantener mi peso","Garder mon poids stable","Gewicht halten","मेरा वजन स्थिर रखें","الحفاظ على وزني"],
+    "Eat healthier": ["Comer más sano","Manger plus sain","Gesünder essen","सेहतमंद खाना","تناول طعام صحي أكثر"],
+    "More whole foods": ["Más alimentos naturales","Plus d'aliments bruts","Mehr naturbelassene Lebensmittel","अधिक प्राकृतिक भोजन","المزيد من الأطعمة الطبيعية"],
+    "Save money": ["Ahorrar dinero","Économiser","Geld sparen","पैसे बचाना","توفير المال"],
+    "Stretch every dollar": ["Aprovecha cada dólar","Chaque dollar compte","Jeden Dollar ausnutzen","हर डॉलर का पूरा उपयोग","استفد من كل دولار"],
+    "Feed the family": ["Alimentar a la familia","Nourrir la famille","Die Familie versorgen","परिवार को खिलाना","إطعام العائلة"],
+    "Meals kids enjoy": ["Comidas que gustan a los niños","Des repas que les enfants aiment","Gerichte, die Kinder mögen","बच्चों को पसंद आने वाले भोजन","وجبات يحبها الأطفال"],
+    "Vegetarian": ["Vegetariana","Végétarien","Vegetarisch","शाकाहारी","نباتي"],
+    "Vegan": ["Vegana","Végan","Vegan","वीगन","نباتي صرف"],
+    "Halal": ["Halal","Halal","Halal","हलाल","حلال"],
+    "Keto": ["Keto","Céto","Keto","कीटो","كيتو"],
+    "Gluten-free": ["Sin gluten","Sans gluten","Glutenfrei","ग्लूटेन-मुक्त","خالٍ من الغلوتين"],
+    "Dairy-free": ["Sin lácteos","Sans lactose","Milchfrei","डेयरी-मुक्त","خالٍ من الألبان"],
+    "Nuts": ["Frutos secos","Fruits à coque","Nüsse","मेवे","المكسرات"],
+    "Dairy": ["Lácteos","Produits laitiers","Milchprodukte","डेयरी","الألبان"],
+    "Eggs": ["Huevos","Œufs","Eier","अंडे","البيض"],
+    "Gluten": ["Gluten","Gluten","Gluten","ग्लूटेन","الغلوتين"],
+    "Shellfish": ["Mariscos","Fruits de mer","Meeresfrüchte","शेलफिश","المحار"],
+    "Soy": ["Soja","Soja","Soja","सोया","الصويا"],
+    "Quick": ["Rápido","Rapide","Schnell","जल्दी","سريع"],
+    "Under 20 minutes": ["Menos de 20 minutos","Moins de 20 minutes","Unter 20 Minuten","20 मिनट से कम","أقل من 20 دقيقة"],
+    "Balanced": ["Equilibrado","Équilibré","Ausgewogen","संतुलित","متوازن"],
+    "Under 45 minutes": ["Menos de 45 minutos","Moins de 45 minutes","Unter 45 Minuten","45 मिनट से कम","أقل من 45 دقيقة"],
+    "No rush": ["Sin prisa","Sans se presser","Ohne Eile","कोई जल्दी नहीं","بلا عجلة"],
+    "Any length": ["Cualquier duración","Peu importe la durée","Beliebig lang","कितना भी समय","أي مدة"],
+    "Beginner": ["Principiante","Débutant","Anfänger","शुरुआती","مبتدئ"],
+    "Simple steps": ["Pasos sencillos","Étapes simples","Einfache Schritte","आसान चरण","خطوات بسيطة"],
+    "Comfortable": ["Con soltura","À l'aise","Sicher","सहज","مريح"],
+    "Everyday cooking": ["Cocina de diario","Cuisine du quotidien","Alltagsküche","रोज़ का खाना","طبخ يومي"],
+    "Confident": ["Con experiencia","Confirmé","Erfahren","आत्मविश्वासी","واثق"],
+    "Bring on a challenge": ["Que venga un reto","Place au défi","Gern eine Herausforderung","चुनौती के लिए तैयार","أحب التحدي"],
+    "Italian": ["Italiana","Italienne","Italienisch","इतालवी","إيطالي"],
+    "Mexican": ["Mexicana","Mexicaine","Mexikanisch","मैक्सिकन","مكسيكي"],
+    "American": ["Estadounidense","Américaine","Amerikanisch","अमेरिकी","أمريكي"],
+    "Mediterranean": ["Mediterránea","Méditerranéenne","Mediterran","भूमध्यसागरीय","متوسطي"],
+    "Middle Eastern": ["De Oriente Medio","Moyen-orientale","Nahöstlich","मध्य-पूर्वी","شرق أوسطي"],
+    "Indian": ["India","Indienne","Indisch","भारतीय","هندي"],
+    "Chinese": ["China","Chinoise","Chinesisch","चीनी","صيني"],
+    "Japanese": ["Japonesa","Japonaise","Japanisch","जापानी","ياباني"],
+    "Korean": ["Coreana","Coréenne","Koreanisch","कोरियाई","كوري"],
+    "Thai": ["Tailandesa","Thaïe","Thailändisch","थाई","تايلاندي"],
+    "Vietnamese": ["Vietnamita","Vietnamienne","Vietnamesisch","वियतनामी","فيتنامي"],
+    "Greek": ["Griega","Grecque","Griechisch","यूनानी","يوناني"],
+    "French": ["Francesa","Française","Französisch","फ्रेंच","فرنسي"],
+    "Caribbean": ["Caribeña","Caribéenne","Karibisch","कैरिबियन","كاريبي"],
+    "Produce": ["Frutas y verduras","Fruits et légumes","Obst und Gemüse","फल और सब्ज़ियां","الخضار والفواكه"],
+    "Meat & seafood": ["Carne y pescado","Viande et poisson","Fleisch und Fisch","मांस और समुद्री भोजन","اللحوم والمأكولات البحرية"],
+    "Dairy & eggs": ["Lácteos y huevos","Produits laitiers et œufs","Milchprodukte und Eier","डेयरी और अंडे","الألبان والبيض"],
+    "Bakery": ["Panadería","Boulangerie","Bäckerei","बेकरी","المخبوزات"],
+    "Pantry": ["Despensa","Épicerie","Vorrat","पैंट्री","المؤن"],
+    "Spices & seasonings": ["Especias y condimentos","Épices et assaisonnements","Gewürze","मसाले","التوابل والبهارات"],
+    "Frozen": ["Congelados","Surgelés","Tiefkühl","फ्रोज़न","المجمدات"],
+    "Drinks": ["Bebidas","Boissons","Getränke","पेय","المشروبات"],
+    "Other": ["Otros","Autres","Sonstiges","अन्य","أخرى"],
+    "1 person": ["1 persona","1 personne","1 Person","1 व्यक्ति","شخص واحد"],
+    "{n} people": ["{n} personas","{n} personnes","{n} Personen","{n} लोग","{n} أشخاص"],
+    "person": ["persona","personne","Person","व्यक्ति","شخص"],
+    "people": ["personas","personnes","Personen","लोग","أشخاص"],
+    "per day": ["al día","par jour","pro Tag","प्रति दिन","في اليوم"],
+    "per week": ["a la semana","par semaine","pro Woche","प्रति सप्ताह","في الأسبوع"],
+    "per month": ["al mes","par mois","pro Monat","प्रति माह","في الشهر"],
+    "1 day": ["1 día","1 jour","1 Tag","1 दिन","يوم واحد"],
+    "{n} days": ["{n} días","{n} jours","{n} Tage","{n} दिन","{n} أيام"],
+    "1 meal": ["1 comida","1 repas","1 Mahlzeit","1 भोजन","وجبة واحدة"],
+    "{n} meals": ["{n} comidas","{n} repas","{n} Mahlzeiten","{n} भोजन","{n} وجبات"],
+    "Couldn't update the plan. Try again.": ["No se pudo actualizar el plan. Inténtalo de nuevo.","Impossible de mettre à jour le plan. Réessayez.","Plan konnte nicht aktualisiert werden. Versuch es noch einmal.","योजना अपडेट नहीं हो सकी। फिर से कोशिश करें।","تعذّر تحديث الخطة. حاول مرة أخرى."],
+    "Added to favorites": ["Añadido a favoritos","Ajouté aux favoris","Zu Favoriten hinzugefügt","पसंदीदा में जोड़ा गया","أُضيفت إلى المفضلة"],
+    "Removed from favorites": ["Quitado de favoritos","Retiré des favoris","Aus Favoriten entfernt","पसंदीदा से हटाया गया","أُزيلت من المفضلة"],
+    "How long should we plan?": ["¿Para cuánto tiempo planificamos?","Sur quelle durée planifier ?","Für wie lange sollen wir planen?","कितने समय की योजना बनाएं?","ما المدة التي نخطط لها؟"],
+    "Pick a length and who you're cooking for.": ["Elige la duración y para quién cocinas.","Choisissez une durée et pour qui vous cuisinez.","Wähle die Dauer und für wen du kochst.","अवधि चुनें और बताएं कि आप किसके लिए पका रहे हैं।","اختر المدة ولمن تطبخ."],
+    "What's your main goal?": ["¿Cuál es tu objetivo principal?","Quel est votre objectif principal ?","Was ist dein Hauptziel?","आपका मुख्य लक्ष्य क्या है?","ما هدفك الرئيسي؟"],
+    "We'll shape portions and ingredients around it.": ["Ajustaremos porciones e ingredientes a él.","Nous adaptons portions et ingrédients en conséquence.","Wir richten Portionen und Zutaten danach aus.","हम हिस्से और सामग्री उसी के अनुसार तय करेंगे।","سنضبط الكميات والمكونات وفقًا له."],
+    "Which meals should we plan?": ["¿Qué comidas planificamos?","Quels repas planifier ?","Welche Mahlzeiten sollen wir planen?","किन भोजनों की योजना बनाएं?","ما الوجبات التي نخطط لها؟"],
+    "Pick every meal you want planned each day.": ["Elige cada comida que quieras planificar a diario.","Choisissez chaque repas à planifier chaque jour.","Wähle jede Mahlzeit, die wir täglich planen sollen.","हर दिन जिन भोजनों की योजना चाहिए, उन्हें चुनें।","اختر كل وجبة تريد تخطيطها يوميًا."],
+    "Any diet or allergies?": ["¿Alguna dieta o alergia?","Un régime ou des allergies ?","Ernährungsweise oder Allergien?","कोई डाइट या एलर्जी?","هل لديك نظام غذائي أو حساسية؟"],
+    "We check every ingredient, and never include your allergies.": ["Revisamos cada ingrediente y nunca incluimos tus alérgenos.","Nous vérifions chaque ingrédient et n'incluons jamais vos allergènes.","Wir prüfen jede Zutat und lassen deine Allergene immer weg.","हम हर सामग्री जांचते हैं और आपकी एलर्जी वाली चीज़ें कभी शामिल नहीं करते।","نفحص كل مكوّن ولا نضيف أبدًا ما يسبب لك الحساسية."],
+    "How much time do you have?": ["¿Cuánto tiempo tienes?","Combien de temps avez-vous ?","Wie viel Zeit hast du?","आपके पास कितना समय है?","كم لديك من الوقت؟"],
+    "For cooking on a typical day.": ["Para cocinar en un día normal.","Pour cuisiner un jour normal.","Zum Kochen an einem normalen Tag.","एक आम दिन खाना पकाने के लिए।","للطبخ في يوم عادي."],
+    "What do you like to eat?": ["¿Qué te gusta comer?","Qu'aimez-vous manger ?","Was isst du gern?","आपको क्या खाना पसंद है?","ماذا تحب أن تأكل؟"],
+    "Pick cuisines you enjoy, and anything you never want to see.": ["Elige las cocinas que te gustan y lo que nunca quieres ver.","Choisissez les cuisines que vous aimez et ce que vous ne voulez jamais voir.","Wähle Küchen, die du magst, und was du nie sehen willst.","पसंदीदा व्यंजन चुनें, और वह भी जो आप कभी नहीं देखना चाहते।","اختر المطابخ التي تحبها، وما لا تريد رؤيته أبدًا."],
+    "What's your grocery budget?": ["¿Cuál es tu presupuesto para la compra?","Quel est votre budget courses ?","Wie hoch ist dein Einkaufsbudget?","आपका किराने का बजट कितना है?","ما ميزانية مشترياتك؟"],
+    "Everything for this plan, for everyone you cook for.": ["Todo lo de este plan, para todos los que comen.","Tout ce plan, pour tous ceux pour qui vous cuisinez.","Alles für diesen Plan, für alle, für die du kochst.","इस योजना का सब कुछ, उन सभी के लिए जिनके लिए आप पकाते हैं।","كل ما تحتاجه هذه الخطة، لكل من تطبخ لهم."],
+    "Step {n} of {total}": ["Paso {n} de {total}","Étape {n} sur {total}","Schritt {n} von {total}","चरण {n} / {total}","الخطوة {n} من {total}"],
+    "Plan length": ["Duración del plan","Durée du plan","Plandauer","योजना की अवधि","مدة الخطة"],
+    "How many people?": ["¿Cuántas personas?","Combien de personnes ?","Wie viele Personen?","कितने लोग?","كم عدد الأشخاص؟"],
+    "Fewer people": ["Menos personas","Moins de personnes","Weniger Personen","कम लोग","أشخاص أقل"],
+    "More people": ["Más personas","Plus de personnes","Mehr Personen","अधिक लोग","أشخاص أكثر"],
+    "Pick at least one meal.": ["Elige al menos una comida.","Choisissez au moins un repas.","Wähle mindestens eine Mahlzeit.","कम से कम एक भोजन चुनें।","اختر وجبة واحدة على الأقل."],
+    "Diet": ["Dieta","Régime","Ernährung","डाइट","النظام الغذائي"],
+    "Pick any": ["Elige las que quieras","Au choix","Beliebig viele","कोई भी चुनें","اختر ما تشاء"],
+    "Allergies": ["Alergias","Allergies","Allergien","एलर्जी","الحساسية"],
+    "Never included": ["Nunca se incluyen","Jamais inclus","Nie enthalten","कभी शामिल नहीं","لا تُضاف أبدًا"],
+    "Meal plans are made by AI and checked for your allergens, but always read labels when you shop.": ["Los planes los crea la IA y se revisan para tus alérgenos, pero lee siempre las etiquetas al comprar.","Les plans sont créés par IA et vérifiés pour vos allergènes, mais lisez toujours les étiquettes en magasin.","Pläne werden von KI erstellt und auf deine Allergene geprüft, lies aber beim Einkaufen immer die Etiketten.","भोजन योजनाएं AI बनाता है और आपकी एलर्जी के लिए जांचता है, फिर भी खरीदारी करते समय हमेशा लेबल पढ़ें।","تُنشأ الخطط بالذكاء الاصطناعي وتُفحص لمسببات حساسيتك، لكن اقرأ الملصقات دائمًا عند التسوق."],
+    "Cooking time": ["Tiempo de cocina","Temps de cuisine","Kochzeit","पकाने का समय","وقت الطبخ"],
+    "Cooking skill": ["Nivel en la cocina","Niveau en cuisine","Kochkenntnisse","पकाने का कौशल","مهارة الطبخ"],
+    "Cuisines you like": ["Cocinas que te gustan","Cuisines que vous aimez","Küchen, die du magst","पसंदीदा व्यंजन","المطابخ التي تحبها"],
+    "Foods to avoid": ["Alimentos que evitar","Aliments à éviter","Zu meidende Lebensmittel","जिन चीज़ों से बचना है","أطعمة تتجنبها"],
+    "Add": ["Añadir","Ajouter","Hinzufügen","जोड़ें","إضافة"],
+    "e.g. mushrooms, cilantro": ["p. ej. champiñones, cilantro","ex. champignons, coriandre","z. B. Pilze, Koriander","जैसे मशरूम, धनिया","مثل الفطر، الكزبرة"],
+    "Budget": ["Presupuesto","Budget","Budget","बजट","الميزانية"],
+    "Minimum": ["Mínimo","Minimum","Minimum","न्यूनतम","الحد الأدنى"],
+    "For {people}, {meals} a day, {days}.": ["Para {people}, {meals} al día, {days}.","Pour {people}, {meals} par jour, {days}.","Für {people}, {meals} pro Tag, {days}.","{people} के लिए, दिन में {meals}, {days}।","لـ {people}، {meals} يوميًا، {days}."],
+    "Based on USDA food cost data.": ["Según datos de costos de alimentos del USDA.","D'après les coûts alimentaires de l'USDA.","Auf Basis der USDA-Lebensmittelkosten.","USDA के भोजन लागत आंकड़ों पर आधारित।","بناءً على بيانات تكلفة الغذاء من وزارة الزراعة الأمريكية."],
+    "Build my plan": ["Crear mi plan","Créer mon plan","Meinen Plan erstellen","मेरी योजना बनाएं","أنشئ خطتي"],
+    "Enter a budget up to {max}.": ["Introduce un presupuesto de hasta {max}.","Saisissez un budget jusqu'à {max}.","Gib ein Budget bis {max} ein.","{max} तक का बजट डालें।","أدخل ميزانية حتى {max}."],
+    "Use {amount}": ["Usar {amount}","Utiliser {amount}","{amount} verwenden","{amount} इस्तेमाल करें","استخدم {amount}"],
+    "Skip snacks": ["Sin meriendas","Sans collations","Ohne Snacks","स्नैक्स छोड़ें","بدون وجبات خفيفة"],
+    "Fewer meals a day": ["Menos comidas al día","Moins de repas par jour","Weniger Mahlzeiten pro Tag","दिन में कम भोजन","وجبات أقل يوميًا"],
+    "Shorter plan": ["Plan más corto","Plan plus court","Kürzerer Plan","छोटी योजना","خطة أقصر"],
+    "This plan needs at least {amount}": ["Este plan necesita al menos {amount}","Ce plan demande au moins {amount}","Dieser Plan braucht mindestens {amount}","इस योजना के लिए कम से कम {amount} चाहिए","تحتاج هذه الخطة إلى {amount} على الأقل"],
+    "That's about {per} a meal for each person, the least healthy home cooking costs. Try one of these:": ["Son unos {per} por comida y persona, lo mínimo que cuesta cocinar sano en casa. Prueba una de estas opciones:","Soit environ {per} par repas et par personne, le minimum pour cuisiner sainement. Essayez l'une de ces options :","Das sind etwa {per} pro Mahlzeit und Person, das Minimum für gesundes Kochen zu Hause. Probier eine davon:","यह प्रति व्यक्ति प्रति भोजन लगभग {per} है, घर पर सेहतमंद खाने की न्यूनतम लागत। इनमें से कोई आज़माएं:","هذا نحو {per} للوجبة لكل شخص، وهو أقل ما يكلفه الطبخ الصحي في المنزل. جرّب أحد هذه الخيارات:"],
+    "Snacks removed": ["Meriendas quitadas","Collations retirées","Snacks entfernt","स्नैक्स हटाए गए","أُزيلت الوجبات الخفيفة"],
+    "Stop making this plan?": ["¿Dejar de crear este plan?","Arrêter de créer ce plan ?","Planerstellung abbrechen?","यह योजना बनाना रोकें?","إيقاف إنشاء هذه الخطة؟"],
+    "Your answers are kept, so you can start again.": ["Tus respuestas se guardan para empezar de nuevo.","Vos réponses sont conservées pour recommencer.","Deine Antworten bleiben gespeichert, du kannst neu starten.","आपके जवाब सहेजे रहेंगे, ताकि आप फिर से शुरू कर सकें।","تُحفظ إجاباتك لتبدأ من جديد."],
+    "Stop": ["Detener","Arrêter","Abbrechen","रोकें","إيقاف"],
+    "Month from {date}": ["Mes desde el {date}","Mois à partir du {date}","Monat ab {date}","{date} से महीना","شهر من {date}"],
+    "Week of {date}": ["Semana del {date}","Semaine du {date}","Woche ab {date}","{date} का सप्ताह","أسبوع {date}"],
+    "We couldn't reach the kitchen. Check your connection and try again.": ["No pudimos conectar con la cocina. Revisa tu conexión e inténtalo de nuevo.","Impossible de joindre la cuisine. Vérifiez votre connexion et réessayez.","Die Küche ist nicht erreichbar. Prüfe deine Verbindung und versuch es noch einmal.","रसोई तक नहीं पहुंच सके। अपना कनेक्शन जांचें और फिर से कोशिश करें।","تعذّر الوصول إلى المطبخ. تحقق من اتصالك وحاول مرة أخرى."],
+    "Could not build your plan. Please try again.": ["No se pudo crear tu plan. Inténtalo de nuevo.","Impossible de créer votre plan. Réessayez.","Dein Plan konnte nicht erstellt werden. Versuch es noch einmal.","आपकी योजना नहीं बन सकी। कृपया फिर से कोशिश करें।","تعذّر إنشاء خطتك. حاول مرة أخرى."],
+    "We hit a snag": ["Algo salió mal","Un petit souci","Da hat etwas nicht geklappt","कुछ गड़बड़ हो गई","حدثت مشكلة"],
+    "Try again": ["Intentar de nuevo","Réessayer","Erneut versuchen","फिर से कोशिश करें","حاول مرة أخرى"],
+    "Change my answers": ["Cambiar mis respuestas","Modifier mes réponses","Antworten ändern","मेरे जवाब बदलें","تغيير إجاباتي"],
+    "Planning your meals": ["Planificando tus comidas","Planification de vos repas","Deine Mahlzeiten werden geplant","आपके भोजन की योजना बन रही है","نخطط لوجباتك"],
+    "Choosing dishes for you": ["Eligiendo platos para ti","Choix des plats pour vous","Gerichte für dich auswählen","आपके लिए व्यंजन चुन रहे हैं","نختار الأطباق لك"],
+    "Fitting your budget": ["Ajustando a tu presupuesto","Ajustement à votre budget","An dein Budget anpassen","आपके बजट में फिट कर रहे हैं","نلائم ميزانيتك"],
+    "Writing your grocery list": ["Escribiendo tu lista de compras","Rédaction de votre liste de courses","Einkaufsliste schreiben","आपकी किराने की सूची लिख रहे हैं","نكتب قائمة مشترياتك"],
+    "A month takes a minute or two. Keep the app open.": ["Un mes tarda uno o dos minutos. Mantén la app abierta.","Un mois prend une à deux minutes. Gardez l'app ouverte.","Ein Monat dauert ein bis zwei Minuten. Lass die App offen.","एक महीने में एक-दो मिनट लगते हैं। ऐप खुला रखें।","يستغرق الشهر دقيقة أو اثنتين. أبقِ التطبيق مفتوحًا."],
+    "This takes about a minute.": ["Tarda alrededor de un minuto.","Cela prend environ une minute.","Das dauert etwa eine Minute.","इसमें लगभग एक मिनट लगता है।","يستغرق ذلك دقيقة تقريبًا."],
+    "Week 1 is ready. Planning the rest of the month…": ["La semana 1 está lista. Planificando el resto del mes…","La semaine 1 est prête. Planification du reste du mois…","Woche 1 ist fertig. Der Rest des Monats wird geplant…","सप्ताह 1 तैयार है। बाकी महीने की योजना बन रही है…","الأسبوع الأول جاهز. نخطط لبقية الشهر…"],
+    "Your plan is ready": ["Tu plan está listo","Votre plan est prêt","Dein Plan ist fertig","आपकी योजना तैयार है","خطتك جاهزة"],
+    "Couldn't save your plan. We'll keep trying.": ["No se pudo guardar tu plan. Seguiremos intentándolo.","Impossible d'enregistrer votre plan. Nous réessayons.","Plan konnte nicht gespeichert werden. Wir versuchen es weiter.","आपकी योजना सहेजी नहीं जा सकी। हम कोशिश करते रहेंगे।","تعذّر حفظ خطتك. سنواصل المحاولة."],
+    "Couldn't open this plan": ["No se pudo abrir este plan","Impossible d'ouvrir ce plan","Plan konnte nicht geöffnet werden","यह योजना खुल नहीं सकी","تعذّر فتح هذه الخطة"],
+    "Check your connection and try again.": ["Revisa tu conexión e inténtalo de nuevo.","Vérifiez votre connexion et réessayez.","Prüfe deine Verbindung und versuch es noch einmal.","अपना कनेक्शन जांचें और फिर से कोशिश करें।","تحقق من اتصالك وحاول مرة أخرى."],
+    "estimated, of your {budget} budget": ["estimado, de tu presupuesto de {budget}","estimé, sur votre budget de {budget}","geschätzt, von deinem Budget von {budget}","अनुमानित, आपके {budget} बजट में से","تقديري، من ميزانيتك البالغة {budget}"],
+    "{amount} over budget. Swap a few meals for cheaper ones.": ["{amount} por encima del presupuesto. Cambia algunas comidas por otras más baratas.","{amount} au-dessus du budget. Remplacez quelques repas par des moins chers.","{amount} über Budget. Tausche ein paar Mahlzeiten gegen günstigere.","बजट से {amount} ज़्यादा। कुछ भोजन सस्ते विकल्पों से बदलें।","تتجاوز الميزانية بـ {amount}. استبدل بعض الوجبات بأخرى أرخص."],
+    "{amount} under budget": ["{amount} por debajo del presupuesto","{amount} sous le budget","{amount} unter Budget","बजट से {amount} कम","أقل من الميزانية بـ {amount}"],
+    "{amount} a meal": ["{amount} por comida","{amount} par repas","{amount} pro Mahlzeit","{amount} प्रति भोजन","{amount} للوجبة"],
+    "{amount} a serving": ["{amount} por ración","{amount} par portion","{amount} pro Portion","{amount} प्रति सर्विंग","{amount} للحصة"],
+    "kcal / day": ["kcal / día","kcal / jour","kcal / Tag","kcal / दिन","سعرة / يوم"],
+    "Nutrition is per person, per day.": ["Nutrición por persona y día.","Valeurs par personne et par jour.","Nährwerte pro Person und Tag.","पोषण प्रति व्यक्ति, प्रति दिन है।","القيم الغذائية لكل شخص في اليوم."],
+    "Week {n}": ["Semana {n}","Semaine {n}","Woche {n}","सप्ताह {n}","الأسبوع {n}"],
+    "Your week": ["Tu semana","Votre semaine","Deine Woche","आपका सप्ताह","أسبوعك"],
+    "Day": ["Día","Jour","Tag","दिन","اليوم"],
+    "Overview": ["Resumen","Aperçu","Übersicht","सारांश","نظرة عامة"],
+    "{n} kcal": ["{n} kcal","{n} kcal","{n} kcal","{n} kcal","{n} سعرة"],
+    "Locked meals stay. The rest of week {n} gets new dishes.": ["Las comidas fijadas se quedan. El resto de la semana {n} recibe platos nuevos.","Les repas verrouillés restent. Le reste de la semaine {n} change.","Gesperrte Mahlzeiten bleiben. Der Rest von Woche {n} bekommt neue Gerichte.","लॉक किए भोजन वैसे ही रहेंगे। सप्ताह {n} के बाकी में नए व्यंजन आएंगे।","تبقى الوجبات المقفلة. وتحصل بقية الأسبوع {n} على أطباق جديدة."],
+    "Lock the meals you like. Everything else gets new dishes.": ["Fija las comidas que te gusten. El resto recibe platos nuevos.","Verrouillez les repas que vous aimez. Le reste change.","Sperre die Mahlzeiten, die du magst. Der Rest bekommt neue Gerichte.","जो भोजन पसंद हैं उन्हें लॉक करें। बाकी सब में नए व्यंजन आएंगे।","اقفل الوجبات التي تعجبك. وكل ما عداها يحصل على أطباق جديدة."],
+    "Finding new ideas…": ["Buscando ideas nuevas…","Recherche de nouvelles idées…","Neue Ideen werden gesucht…","नए आइडिया ढूंढ रहे हैं…","نبحث عن أفكار جديدة…"],
+    "New ideas for unlocked meals": ["Ideas nuevas para las comidas no fijadas","Nouvelles idées pour les repas non verrouillés","Neue Ideen für nicht gesperrte Mahlzeiten","अनलॉक भोजन के लिए नए आइडिया","أفكار جديدة للوجبات غير المقفلة"],
+    "Cook {dish}": ["Cocinar {dish}","Cuisiner {dish}","{dish} kochen","{dish} पकाएं","اطبخ {dish}"],
+    "{n} min": ["{n} min","{n} min","{n} Min.","{n} मिनट","{n} دقيقة"],
+    "Protein {n}g": ["Proteína {n} g","Protéines {n} g","Protein {n} g","प्रोटीन {n}g","بروتين {n} غ"],
+    "Carbs {n}g": ["Carbohidratos {n} g","Glucides {n} g","Kohlenhydrate {n} g","कार्ब्स {n}g","كربوهيدرات {n} غ"],
+    "Fat {n}g": ["Grasa {n} g","Lipides {n} g","Fett {n} g","वसा {n}g","دهون {n} غ"],
+    "Locked": ["Fijada","Verrouillé","Gesperrt","लॉक","مقفلة"],
+    "Lock": ["Fijar","Verrouiller","Sperren","लॉक करें","اقفل"],
+    "Swap": ["Cambiar","Changer","Tauschen","बदलें","استبدل"],
+    "Cook": ["Cocinar","Cuisiner","Kochen","पकाएं","اطبخ"],
+    "No meal planned yet.": ["Aún no hay comida planificada.","Aucun repas prévu pour l'instant.","Noch keine Mahlzeit geplant.","अभी कोई भोजन तय नहीं है।","لا توجد وجبة مخططة بعد."],
+    "Find a meal": ["Buscar una comida","Trouver un repas","Mahlzeit finden","भोजन खोजें","ابحث عن وجبة"],
+    "Couldn't find a swap. Try again.": ["No se encontró un cambio. Inténtalo de nuevo.","Aucun remplacement trouvé. Réessayez.","Kein Ersatz gefunden. Versuch es noch einmal.","कोई बदलाव नहीं मिला। फिर से कोशिश करें।","لم نجد بديلًا. حاول مرة أخرى."],
+    "Every meal here is locked. Unlock one to get new ideas.": ["Todas las comidas están fijadas. Libera una para obtener ideas nuevas.","Tous les repas sont verrouillés. Déverrouillez-en un pour de nouvelles idées.","Alle Mahlzeiten sind gesperrt. Entsperre eine für neue Ideen.","यहां हर भोजन लॉक है। नए आइडिया के लिए किसी एक को अनलॉक करें।","كل الوجبات هنا مقفلة. افتح إحداها للحصول على أفكار جديدة."],
+    "Get new ideas?": ["¿Obtener ideas nuevas?","Obtenir de nouvelles idées ?","Neue Ideen holen?","नए आइडिया पाएं?","الحصول على أفكار جديدة؟"],
+    "{n} unlocked meals will be replaced. Locked meals stay as they are.": ["Se reemplazarán {n} comidas no fijadas. Las fijadas se quedan igual.","{n} repas non verrouillés seront remplacés. Les repas verrouillés restent.","{n} nicht gesperrte Mahlzeiten werden ersetzt. Gesperrte bleiben.","{n} अनलॉक भोजन बदल दिए जाएंगे। लॉक किए भोजन वैसे ही रहेंगे।","سيتم استبدال {n} من الوجبات غير المقفلة. وتبقى المقفلة كما هي."],
+    "Get new ideas": ["Obtener ideas nuevas","Nouvelles idées","Neue Ideen holen","नए आइडिया पाएं","احصل على أفكار جديدة"],
+    "New ideas are in": ["Ya tienes ideas nuevas","Nouvelles idées prêtes","Neue Ideen sind da","नए आइडिया आ गए","وصلت أفكار جديدة"],
+    "Whole month": ["Todo el mes","Tout le mois","Ganzer Monat","पूरा महीना","الشهر كاملًا"],
+    "Nothing to buy yet": ["Aún no hay nada que comprar","Rien à acheter pour l'instant","Noch nichts zu kaufen","अभी कुछ खरीदना नहीं है","لا شيء للشراء بعد"],
+    "Your grocery list fills in from the meals in your plan.": ["Tu lista de compras se llena con las comidas de tu plan.","Votre liste se remplit à partir des repas du plan.","Deine Einkaufsliste füllt sich aus den Mahlzeiten deines Plans.","आपकी किराने की सूची आपकी योजना के भोजन से भरती है।","تمتلئ قائمة مشترياتك من وجبات خطتك."],
+    "1 item left to get": ["Falta 1 artículo","Il reste 1 article","Noch 1 Artikel","1 चीज़ लेनी बाकी है","بقي غرض واحد"],
+    "{n} items left to get": ["Faltan {n} artículos","Il reste {n} articles","Noch {n} Artikel","{n} चीज़ें लेनी बाकी हैं","بقي {n} أغراض"],
+    "All done. Happy cooking!": ["¡Listo! ¡A cocinar!","Tout est prêt. Bonne cuisine !","Alles erledigt. Viel Spaß beim Kochen!","सब हो गया। खुश होकर पकाइए!","انتهيت. طبخًا ممتعًا!"],
+    "Copy": ["Copiar","Copier","Kopieren","कॉपी करें","نسخ"],
+    "PDF": ["PDF","PDF","PDF","PDF","PDF"],
+    "Add an item, like paper towels": ["Añade un artículo, como papel de cocina","Ajoutez un article, comme de l'essuie-tout","Artikel hinzufügen, z. B. Küchenrolle","कोई चीज़ जोड़ें, जैसे पेपर टॉवल","أضف غرضًا، مثل المناديل الورقية"],
+    "Tap the house if you already have it. It comes off the total.": ["Toca la casa si ya lo tienes. Se resta del total.","Touchez la maison si vous l'avez déjà. C'est déduit du total.","Tippe aufs Haus, wenn du es schon hast. Es wird abgezogen.","अगर पहले से है तो घर पर टैप करें। यह कुल से घट जाएगा।","اضغط على المنزل إن كان لديك. سيُخصم من المجموع."],
+    "Added by you": ["Añadido por ti","Ajouté par vous","Von dir hinzugefügt","आपके द्वारा जोड़ा गया","أضفته أنت"],
+    "for 1 meal": ["para 1 comida","pour 1 repas","für 1 Mahlzeit","1 भोजन के लिए","لوجبة واحدة"],
+    "for {n} meals": ["para {n} comidas","pour {n} repas","für {n} Mahlzeiten","{n} भोजन के लिए","لـ {n} وجبات"],
+    "Have at home": ["Lo tengo en casa","Déjà à la maison","Zu Hause vorhanden","घर पर है","موجود في المنزل"],
+    "Prices are estimates from average US grocery prices, for the amounts your meals use. Store prices and pack sizes vary.": ["Los precios son estimaciones según precios medios en EE. UU., para las cantidades que usan tus comidas. Los precios y tamaños varían por tienda.","Les prix sont estimés d'après les prix moyens aux États-Unis, pour les quantités utilisées. Prix et formats varient selon les magasins.","Preise sind Schätzungen nach US-Durchschnittspreisen für die verwendeten Mengen. Preise und Packungsgrößen variieren.","कीमतें अमेरिका की औसत किराना कीमतों पर आधारित अनुमान हैं, आपके भोजन में लगी मात्रा के लिए। दुकान की कीमतें और पैक साइज़ अलग हो सकते हैं।","الأسعار تقديرية وفق متوسط أسعار البقالة في الولايات المتحدة، للكميات التي تستخدمها وجباتك. تختلف الأسعار وأحجام العبوات بين المتاجر."],
+    "Grocery list: {name}": ["Lista de compras: {name}","Liste de courses : {name}","Einkaufsliste: {name}","किराने की सूची: {name}","قائمة المشتريات: {name}"],
+    "Estimated total: {amount}": ["Total estimado: {amount}","Total estimé : {amount}","Geschätzte Summe: {amount}","अनुमानित कुल: {amount}","المجموع التقديري: {amount}"],
+    "Already at home": ["Ya en casa","Déjà à la maison","Schon zu Hause","पहले से घर पर","موجود في المنزل"],
+    "Made with Capture & Cook": ["Hecho con Capture & Cook","Créé avec Capture & Cook","Erstellt mit Capture & Cook","Capture & Cook से बनाया गया","صُنع باستخدام Capture & Cook"],
+    "Grocery list copied": ["Lista de compras copiada","Liste de courses copiée","Einkaufsliste kopiert","किराने की सूची कॉपी हो गई","نُسخت قائمة المشتريات"],
+    "Couldn't copy. Try Share instead.": ["No se pudo copiar. Prueba Compartir.","Copie impossible. Essayez Partager.","Kopieren fehlgeschlagen. Versuch Teilen.","कॉपी नहीं हो सका। शेयर आज़माएं।","تعذّر النسخ. جرّب المشاركة."],
+    "Couldn't make the PDF. Try Copy instead.": ["No se pudo crear el PDF. Prueba Copiar.","Impossible de créer le PDF. Essayez Copier.","PDF konnte nicht erstellt werden. Versuch Kopieren.","PDF नहीं बन सका। कॉपी आज़माएं।","تعذّر إنشاء ملف PDF. جرّب النسخ."],
+    "Change answers and rebuild": ["Cambiar respuestas y rehacer","Modifier les réponses et refaire","Antworten ändern und neu planen","जवाब बदलें और फिर से बनाएं","غيّر الإجابات وأعد الإنشاء"],
+    "Start a new plan": ["Empezar un plan nuevo","Commencer un nouveau plan","Neuen Plan starten","नई योजना शुरू करें","ابدأ خطة جديدة"],
+    "Delete plan": ["Eliminar plan","Supprimer le plan","Plan löschen","योजना हटाएं","حذف الخطة"],
+    "Delete this plan?": ["¿Eliminar este plan?","Supprimer ce plan ?","Diesen Plan löschen?","यह योजना हटाएं?","حذف هذه الخطة؟"],
+    "Its meals and grocery list will be gone for good.": ["Sus comidas y su lista de compras se borrarán para siempre.","Ses repas et sa liste de courses seront définitivement supprimés.","Mahlzeiten und Einkaufsliste sind dann endgültig weg.","इसके भोजन और किराने की सूची हमेशा के लिए हट जाएंगे।","ستُحذف وجباتها وقائمة مشترياتها نهائيًا."],
+    "Couldn't delete the plan. Try again.": ["No se pudo eliminar el plan. Inténtalo de nuevo.","Impossible de supprimer le plan. Réessayez.","Plan konnte nicht gelöscht werden. Versuch es noch einmal.","योजना हटाई नहीं जा सकी। फिर से कोशिश करें।","تعذّر حذف الخطة. حاول مرة أخرى."],
+    "Plan deleted": ["Plan eliminado","Plan supprimé","Plan gelöscht","योजना हटा दी गई","حُذفت الخطة"],
+    "Sign in to save plans": ["Inicia sesión para guardar planes","Connectez-vous pour enregistrer vos plans","Melde dich an, um Pläne zu speichern","योजनाएं सहेजने के लिए साइन इन करें","سجّل الدخول لحفظ الخطط"],
+    "Your plans and grocery lists are saved to your account.": ["Tus planes y listas de compras se guardan en tu cuenta.","Vos plans et listes de courses sont enregistrés dans votre compte.","Deine Pläne und Einkaufslisten werden in deinem Konto gespeichert.","आपकी योजनाएं और किराने की सूचियां आपके खाते में सहेजी जाती हैं।","تُحفظ خططك وقوائم مشترياتك في حسابك."],
+    "Couldn't load your plans": ["No se pudieron cargar tus planes","Impossible de charger vos plans","Pläne konnten nicht geladen werden","आपकी योजनाएं लोड नहीं हो सकीं","تعذّر تحميل خططك"],
+    "No favorite plans yet": ["Aún no hay planes favoritos","Pas encore de plans favoris","Noch keine Lieblingspläne","अभी कोई पसंदीदा योजना नहीं","لا توجد خطط مفضلة بعد"],
+    "Tap the star on a plan you love to keep it here.": ["Toca la estrella de un plan que te encante para guardarlo aquí.","Touchez l'étoile d'un plan que vous aimez pour le garder ici.","Tippe auf den Stern eines Plans, um ihn hier zu behalten.","जो योजना पसंद है उसके स्टार पर टैप करें ताकि वह यहां रहे।","اضغط على النجمة في خطة تحبها لتبقى هنا."],
+    "No plans yet": ["Aún no hay planes","Pas encore de plans","Noch keine Pläne","अभी कोई योजना नहीं","لا توجد خطط بعد"],
+    "Answer a few quick questions and we'll plan your meals and groceries.": ["Responde unas preguntas rápidas y planificaremos tus comidas y compras.","Répondez à quelques questions et nous planifions vos repas et courses.","Beantworte ein paar kurze Fragen und wir planen Mahlzeiten und Einkäufe.","कुछ आसान सवालों के जवाब दें, हम आपके भोजन और किराने की योजना बनाएंगे।","أجب عن بضعة أسئلة سريعة وسنخطط لوجباتك ومشترياتك."]
   };
 
   function ccLang() {
@@ -10958,11 +11614,15 @@
   // ── Mode Switch (Cook vs Takeout) ──
   function switchMode(mode) {
     document.getElementById('modeCookBtn').classList.toggle('active', mode === 'cook');
+    document.getElementById('modePlanBtn').classList.toggle('active', mode === 'plan');
     document.getElementById('modeCommunityBtn').classList.toggle('active', mode === 'community');
     document.getElementById('cookView').classList.toggle('active', mode === 'cook');
     document.getElementById('takeoutView').classList.toggle('active', mode === 'takeout');
+    document.getElementById('planView').classList.toggle('active', mode === 'plan');
     document.getElementById('communityView').classList.toggle('active', mode === 'community');
+    if (mode !== 'cook') hidePlanReturn();
     if (mode === 'community') enterCommunity();
+    if (mode === 'plan') enterPlan();
   }
 
   // ── Standalone sub-views (History / Favorites from dropdown) ──
@@ -10972,7 +11632,9 @@
     document.getElementById('modeSwitch').style.display = 'none';
     document.getElementById('cookView').classList.remove('active');
     document.getElementById('takeoutView').classList.remove('active');
+    document.getElementById('planView').classList.remove('active');
     document.getElementById('communityView').classList.remove('active');
+    hidePlanReturn();
     // Show the chosen sub-view, hide the other
     document.getElementById('historyView').classList.toggle('active', which === 'history');
     document.getElementById('favoritesView').classList.toggle('active', which === 'favorites');
@@ -13877,6 +14539,1543 @@
       btn.disabled = false;
       btn.innerHTML = '<i class="ti ti-send"></i> Send message';
     }
+  }
+</script>
+<script>
+  // ═══════════════════════════════════════════════════════════════════════
+  // "Choose for Me" meal plans
+  // ═══════════════════════════════════════════════════════════════════════
+  // The Plan tab lists saved plans. "Plan my meals" opens a seven-step
+  // questionnaire, then /api/meal-plan builds the plan a week at a time
+  // (a month is week 1, then weeks 2–4 together, told week 1's dishes). The
+  // grocery list is never stored: it's worked out from the plan's meals every
+  // time, so swaps and new ideas update it on their own. Only what the user
+  // did to it (ticked, have at home, own items) is saved, keyed by item.
+  //
+  // Rows live in meal_plans (owner-only RLS). The questionnaire answers are
+  // also saved to the profile through the API, to prefill the next plan.
+
+  // Mirrors lib/plan-config.js so the budget screen works before the
+  // server's copy arrives; the server's copy wins once loaded.
+  let planCfg = {
+    minCostPerMeal: 2.75,
+    comfortableCostPerMeal: [3.5, 6.0],
+    mealWeights: { breakfast: 0.8, lunch: 1.0, dinner: 1.2, snack: 0.4 },
+    periods: { daily: 1, weekly: 7, monthly: 28 },
+    maxHousehold: 12,
+    maxBudget: 20000
+  };
+  let planCfgLoaded = false;
+  async function loadPlanConfig() {
+    if (planCfgLoaded) return;
+    try {
+      const r = await fetch('/api/meal-plan?config=1');
+      const j = await r.json();
+      if (j && j.config && j.config.periods) { planCfg = j.config; planCfgLoaded = true; }
+    } catch (e) { /* the bundled copy is the same numbers */ }
+  }
+
+  const PLAN_SLOTS = [
+    { id: 'breakfast', label: 'Breakfast', icon: 'ti-coffee' },
+    { id: 'lunch', label: 'Lunch', icon: 'ti-salad' },
+    { id: 'dinner', label: 'Dinner', icon: 'ti-tools-kitchen-2' },
+    { id: 'snack', label: 'Snack', icon: 'ti-apple' }
+  ];
+  const PLAN_PERIODS = [
+    { id: 'daily', label: 'One day', sub: 'Just today', icon: 'ti-calendar-due' },
+    { id: 'weekly', label: 'One week', sub: '7 days', icon: 'ti-calendar-week' },
+    { id: 'monthly', label: 'One month', sub: '4 weeks', icon: 'ti-calendar-month' }
+  ];
+  const PLAN_GOALS = [
+    { id: 'weight-loss', label: 'Lose weight', sub: 'Filling, lighter meals', icon: 'ti-scale' },
+    { id: 'muscle-gain', label: 'Build muscle', sub: 'High in protein', icon: 'ti-barbell' },
+    { id: 'maintenance', label: 'Stay balanced', sub: 'Keep my weight steady', icon: 'ti-target' },
+    { id: 'eat-healthier', label: 'Eat healthier', sub: 'More whole foods', icon: 'ti-heart' },
+    { id: 'save-money', label: 'Save money', sub: 'Stretch every dollar', icon: 'ti-coin' },
+    { id: 'family-friendly', label: 'Feed the family', sub: 'Meals kids enjoy', icon: 'ti-mood-kid' }
+  ];
+  const PLAN_DIETS = [
+    { id: 'vegetarian', label: 'Vegetarian' }, { id: 'vegan', label: 'Vegan' }, { id: 'halal', label: 'Halal' },
+    { id: 'keto', label: 'Keto' }, { id: 'gluten-free', label: 'Gluten-free' }, { id: 'dairy-free', label: 'Dairy-free' }
+  ];
+  const PLAN_TIMES = [
+    { id: 'quick', label: 'Quick', sub: 'Under 20 minutes', icon: 'ti-bolt' },
+    { id: 'balanced', label: 'Balanced', sub: 'Under 45 minutes', icon: 'ti-clock' },
+    { id: 'any', label: 'No rush', sub: 'Any length', icon: 'ti-chef-hat' }
+  ];
+  const PLAN_SKILLS = [
+    { id: 'beginner', label: 'Beginner', sub: 'Simple steps' },
+    { id: 'comfortable', label: 'Comfortable', sub: 'Everyday cooking' },
+    { id: 'confident', label: 'Confident', sub: 'Bring on a challenge' }
+  ];
+  const PLAN_CUISINES = ['Italian', 'Mexican', 'American', 'Mediterranean', 'Middle Eastern', 'Indian', 'Chinese',
+    'Japanese', 'Korean', 'Thai', 'Vietnamese', 'Greek', 'French', 'Caribbean'];
+  const GL_SECTIONS = [
+    { id: 'produce', label: 'Produce', icon: 'ti-leaf' },
+    { id: 'meat-seafood', label: 'Meat & seafood', icon: 'ti-meat' },
+    { id: 'dairy-eggs', label: 'Dairy & eggs', icon: 'ti-egg' },
+    { id: 'bakery', label: 'Bakery', icon: 'ti-bread' },
+    { id: 'pantry', label: 'Pantry', icon: 'ti-box' },
+    { id: 'spices', label: 'Spices & seasonings', icon: 'ti-salt' },
+    { id: 'frozen', label: 'Frozen', icon: 'ti-snowflake' },
+    { id: 'beverages', label: 'Drinks', icon: 'ti-cup' },
+    { id: 'other', label: 'Other', icon: 'ti-basket' }
+  ];
+
+  // ── Small helpers ──
+  // A sentence with values in it can't be matched whole by the translation
+  // observer, so translate the template, then fill it in.
+  function ccFmt(en, vars) {
+    let s = en;
+    const lang = ccLang();
+    if (lang !== 'en') {
+      const row = CC_T[en];
+      const i = CC_LANG_ORDER.indexOf(lang);
+      if (row && i >= 0 && row[i]) s = row[i];
+    }
+    return s.replace(/\{(\w+)\}/g, (m, k) => (vars && vars[k] != null ? vars[k] : m));
+  }
+  const ccT = (en) => ccFmt(en);
+  function planLocale() { const l = ccLang(); return l === 'en' ? 'en-US' : l; }
+  function money(n) {
+    n = Number(n) || 0;
+    return '$' + (n >= 1000 ? Math.round(n).toLocaleString('en-US') : n >= 100 ? Math.round(n) : n.toFixed(2));
+  }
+  function moneyWhole(n) { return '$' + Math.round(Number(n) || 0).toLocaleString('en-US'); }
+  function isoDate(d) {
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function parseIso(s) { const [y, m, d] = String(s).split('-').map(Number); return new Date(y, (m || 1) - 1, d || 1); }
+  function addDays(s, n) { const d = parseIso(s); d.setDate(d.getDate() + n); return isoDate(d); }
+  function dayName(s, opts, locale) { return parseIso(s).toLocaleDateString(locale || planLocale(), opts); }
+  const FULL_DAY = { weekday: 'long', month: 'short', day: 'numeric' };
+  const SHORT_DATE = { month: 'short', day: 'numeric' };
+  function peopleText(n) { return n === 1 ? ccT('1 person') : ccFmt('{n} people', { n }); }
+  function clone(o) { return JSON.parse(JSON.stringify(o)); }
+  function planSlot(id) { return PLAN_SLOTS.find(s => s.id === id) || PLAN_SLOTS[2]; }
+  function isNativeApp() { return !!(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform()); }
+
+  // ── Budget rules (same formulas as lib/plan-config.js) ──
+  function planSlotWeight(meals) { return (meals || []).reduce((s, m) => s + (planCfg.mealWeights[m] || 0), 0); }
+  function planMinimum(p) {
+    return Math.ceil((planCfg.periods[p.period] || 0) * p.household * planSlotWeight(p.meals) * planCfg.minCostPerMeal);
+  }
+  function planComfort(p) {
+    const base = (planCfg.periods[p.period] || 0) * p.household * planSlotWeight(p.meals);
+    const r5 = n => Math.max(5, Math.round(n / 5) * 5);
+    return [r5(base * planCfg.comfortableCostPerMeal[0]), r5(base * planCfg.comfortableCostPerMeal[1])];
+  }
+  function budgetPer(period) {
+    return period === 'daily' ? ccT('per day') : period === 'monthly' ? ccT('per month') : ccT('per week');
+  }
+
+  // ── Saved answers ──
+  const PLAN_PREFS_KEY = 'cc-plan-prefs';
+  let planServerPrefs = null, planServerPrefsTried = false;
+  function defaultPlanPrefs() {
+    return { period: 'weekly', household: 2, goal: '', meals: ['breakfast', 'lunch', 'dinner'], diets: [],
+      allergies: [], time: 'balanced', skill: 'comfortable', cuisines: [], avoid: [], budget: null };
+  }
+  function normalizePrefs(p) {
+    const d = defaultPlanPrefs();
+    p = Object.assign(d, p || {});
+    if (!planCfg.periods[p.period]) p.period = 'weekly';
+    p.household = Math.max(1, Math.min(planCfg.maxHousehold, parseInt(p.household, 10) || 2));
+    p.meals = (p.meals || []).filter(m => planCfg.mealWeights[m] != null);
+    ['diets', 'allergies', 'cuisines', 'avoid'].forEach(k => { if (!Array.isArray(p[k])) p[k] = []; });
+    // Allergies on the profile always carry over: they're a safety setting.
+    (typeof myAllergens !== 'undefined' ? myAllergens : []).forEach(a => { if (!p.allergies.includes(a)) p.allergies.push(a); });
+    p.budget = Number(p.budget) > 0 ? Number(p.budget) : null;
+    return p;
+  }
+  function localPrefs() {
+    try { return JSON.parse(localStorage.getItem(PLAN_PREFS_KEY) || 'null'); } catch (e) { return null; }
+  }
+  function rememberPrefs(p) {
+    try { localStorage.setItem(PLAN_PREFS_KEY, JSON.stringify(p)); } catch (e) { /* private mode */ }
+    planServerPrefs = p;
+    if (!currentUser) return;
+    fetch('/api/meal-plan', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'prefs_save', prefs: p }) }).catch(() => {});
+  }
+  async function fetchServerPrefs() {
+    if (planServerPrefsTried || !currentUser) return null;
+    planServerPrefsTried = true;
+    try {
+      const r = await fetch('/api/meal-plan', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'prefs_get' }) });
+      const j = await r.json();
+      if (r.ok && j.prefs) planServerPrefs = j.prefs;
+    } catch (e) { /* the local copy will do */ }
+    return planServerPrefs;
+  }
+
+  // ═══════════ The Plan tab: saved plans ═══════════
+  const planState = { plans: null, error: false, filter: 'all', loading: false };
+  const PLAN_CACHE_KEY = () => 'cc-plans-' + (currentUser ? currentUser.id : 'anon');
+  const PLAN_LIST_COLS = 'id,title,period,favorite,summary,created_at,updated_at';
+
+  function enterPlan() {
+    loadPlanConfig();
+    if (planState.plans === null) {
+      try { const c = JSON.parse(localStorage.getItem(PLAN_CACHE_KEY()) || 'null'); if (Array.isArray(c)) planState.plans = c; } catch (e) {}
+    }
+    renderPlanList();
+    loadPlans();
+  }
+  async function loadPlans() {
+    if (!currentUser || typeof supaClient === 'undefined' || !supaClient) { renderPlanList(); return; }
+    if (planState.loading) return;
+    planState.loading = true;
+    try {
+      const { data, error } = await supaClient.from('meal_plans').select(PLAN_LIST_COLS)
+        .eq('user_id', currentUser.id).order('updated_at', { ascending: false }).limit(60);
+      if (error) throw error;
+      planState.plans = data || [];
+      planState.error = false;
+      try { localStorage.setItem(PLAN_CACHE_KEY(), JSON.stringify(planState.plans)); } catch (e) {}
+    } catch (e) {
+      console.warn('meal plans:', e);
+      planState.error = planState.plans === null;
+    } finally {
+      planState.loading = false;
+      renderPlanList();
+    }
+  }
+  function setPlanFilter(f) {
+    planState.filter = f;
+    document.getElementById('planFilterAll').classList.toggle('on', f === 'all');
+    document.getElementById('planFilterFav').classList.toggle('on', f === 'fav');
+    renderPlanList();
+  }
+  function planEmpty(icon, title, text, button) {
+    return '<div class="plan-empty"><div class="plan-empty-ico"><i class="ti ' + icon + '"></i></div>' +
+      '<div class="plan-empty-title">' + title + '</div><div class="plan-empty-text">' + text + '</div>' +
+      (button || '') + '</div>';
+  }
+  function planMetaLine(p) {
+    const s = p.summary || {};
+    const parts = [];
+    if (s.days) parts.push(s.days === 1 ? ccT('1 day') : ccFmt('{n} days', { n: s.days }));
+    if (s.household) parts.push(peopleText(s.household));
+    if (s.cost) parts.push(moneyWhole(s.cost));
+    return parts.join(' · ');
+  }
+  function renderPlanList() {
+    const el = document.getElementById('planList');
+    if (!el) return;
+    if (!currentUser) {
+      el.innerHTML = planEmpty('ti-lock', 'Sign in to save plans', 'Your plans and grocery lists are saved to your account.');
+      return;
+    }
+    if (planState.plans === null) {
+      el.innerHTML = planState.error
+        ? planEmpty('ti-alert-triangle', "Couldn't load your plans", 'Check your connection and try again.',
+            '<button class="plan-cta ghost" onclick="planState.error=false;planState.plans=null;renderPlanList();loadPlans()"><i class="ti ti-refresh"></i> <span>Try again</span></button>')
+        : '<div class="plan-skel"></div><div class="plan-skel"></div>';
+      return;
+    }
+    const list = planState.filter === 'fav' ? planState.plans.filter(p => p.favorite) : planState.plans;
+    if (!list.length) {
+      el.innerHTML = planState.filter === 'fav'
+        ? planEmpty('ti-star', 'No favorite plans yet', 'Tap the star on a plan you love to keep it here.')
+        : planEmpty('ti-calendar-event', 'No plans yet', "Answer a few quick questions and we'll plan your meals and groceries.");
+      return;
+    }
+    const icon = { daily: 'ti-calendar-due', weekly: 'ti-calendar-week', monthly: 'ti-calendar-month' };
+    el.innerHTML = list.map(p =>
+      '<div class="plan-card" role="button" tabindex="0" onclick="openPlan(\'' + p.id + '\')">' +
+        '<div class="plan-card-ico"><i class="ti ' + (icon[p.period] || 'ti-calendar-event') + '"></i></div>' +
+        '<div class="plan-card-body"><div class="plan-card-title">' + escapeHtml(p.title) + '</div>' +
+          '<div class="plan-card-meta">' + escapeHtml(planMetaLine(p)) + '</div></div>' +
+        '<button class="plan-star' + (p.favorite ? ' on' : '') + '" aria-label="Favorite" ' +
+          'onclick="event.stopPropagation();setPlanFavorite(\'' + p.id + '\',' + !p.favorite + ')">' +
+          '<i class="ti ' + (p.favorite ? 'ti-star-filled' : 'ti-star') + '"></i></button>' +
+      '</div>').join('');
+  }
+  async function setPlanFavorite(id, on) {
+    const row = (planState.plans || []).find(p => p.id === id);
+    if (row) row.favorite = on;
+    if (planCur && planCur.id === id) { planCur.favorite = on; renderPlanHead(); }
+    renderPlanList();
+    const { error } = await supaClient.from('meal_plans').update({ favorite: on }).eq('id', id);
+    if (error) {
+      if (row) row.favorite = !on;
+      if (planCur && planCur.id === id) { planCur.favorite = !on; renderPlanHead(); }
+      renderPlanList();
+      showToast(ccT("Couldn't update the plan. Try again."));
+    } else {
+      showToast(on ? ccT('Added to favorites') : ccT('Removed from favorites'));
+    }
+  }
+
+  // ═══════════ The questionnaire ═══════════
+  const PF_STEPS = [
+    { id: 'length', title: 'How long should we plan?', sub: "Pick a length and who you're cooking for.", required: true },
+    { id: 'goal', title: "What's your main goal?", sub: "We'll shape portions and ingredients around it." },
+    { id: 'meals', title: 'Which meals should we plan?', sub: 'Pick every meal you want planned each day.', required: true },
+    { id: 'diet', title: 'Any diet or allergies?', sub: 'We check every ingredient, and never include your allergies.' },
+    { id: 'time', title: 'How much time do you have?', sub: 'For cooking on a typical day.' },
+    { id: 'taste', title: 'What do you like to eat?', sub: 'Pick cuisines you enjoy, and anything you never want to see.' },
+    { id: 'budget', title: "What's your grocery budget?", sub: 'Everything for this plan, for everyone you cook for.', required: true }
+  ];
+  let pf = null;   // { step, prefs, replaceId, building, ctl }
+
+  async function openPlanFlow(opts) {
+    opts = opts || {};
+    loadPlanConfig();
+    const start = opts.prefs || planServerPrefs || localPrefs();
+    pf = { step: opts.step || 0, prefs: normalizePrefs(clone(start || {})), replaceId: opts.replaceId || null, touched: !!start };
+    const page = document.getElementById('planFlow');
+    page.classList.add('open');
+    page.setAttribute('aria-hidden', 'false');
+    renderPlanFlow();
+    // Answers saved on another device arrive a moment later; use them only
+    // if nothing has been filled in here yet.
+    if (!start) {
+      const server = await fetchServerPrefs();
+      if (server && pf && !pf.touched && !pf.building) { pf.prefs = normalizePrefs(clone(server)); renderPlanFlow(); }
+    }
+  }
+  function closePlanFlow() {
+    const page = document.getElementById('planFlow');
+    page.classList.remove('open');
+    page.setAttribute('aria-hidden', 'true');
+    if (pf && pf.ctl) pf.ctl.abort();
+    pf = null;
+  }
+  function planFlowOpen() { const el = document.getElementById('planFlow'); return !!(el && el.classList.contains('open')); }
+
+  function pfStepValid(step) {
+    const p = pf.prefs;
+    if (step === 0) return !!planCfg.periods[p.period] && p.household >= 1;
+    if (step === 2) return p.meals.length > 0;
+    if (step === 6) return pfBudgetState().ok;
+    return true;
+  }
+  function pfHasAnswer(step) {
+    const p = pf.prefs;
+    return step === 1 ? !!p.goal
+      : step === 3 ? (p.diets.length + p.allergies.length) > 0
+      : step === 5 ? (p.cuisines.length + p.avoid.length) > 0
+      : true;
+  }
+  function pfBudgetState() {
+    const p = pf.prefs;
+    const min = planMinimum(p);
+    const b = Number(p.budget);
+    if (!(b > 0)) return { ok: false, empty: true, min };
+    if (b > planCfg.maxBudget) return { ok: false, tooHigh: true, min };
+    if (b < min) return { ok: false, low: true, min };
+    return { ok: true, min };
+  }
+
+  function pfOpt(act, field, value, on, label, sub, icon, tick) {
+    return '<button class="pf-opt' + (on ? ' on' : '') + '" data-act="' + act + '" data-f="' + field + '" data-v="' + escapeHtml(value) + '" aria-pressed="' + on + '">' +
+      (icon ? '<i class="ti ' + icon + ' pf-ico"></i>' : '') +
+      '<div><div class="pf-opt-t">' + label + '</div>' + (sub ? '<div class="pf-opt-s">' + sub + '</div>' : '') + '</div>' +
+      (tick ? '<span class="pf-tick"><i class="ti ti-check"></i></span>' : '') + '</button>';
+  }
+  function pfChip(field, value, on, label, warn, icon) {
+    return '<button class="pf-chip' + (on ? ' on' : '') + (warn ? ' warn' : '') + '" data-act="toggle" data-f="' + field + '" data-v="' + escapeHtml(value) + '" aria-pressed="' + on + '">' +
+      (icon ? '<i class="ti ' + icon + '"></i>' : '') + '<span>' + label + '</span></button>';
+  }
+
+  function renderPlanFlow() {
+    if (!pf) return;
+    if (pf.building) return;   // the generating screen owns the page
+    const s = pf.step, p = pf.prefs, step = PF_STEPS[s];
+    const total = PF_STEPS.length;
+    document.getElementById('pfBar').style.width = ((s + 1) / total * 100) + '%';
+    document.getElementById('pfProgress').setAttribute('aria-valuenow', Math.round((s + 1) / total * 100));
+    document.getElementById('pfFoot').hidden = false;
+    const skip = document.getElementById('pfSkip');
+    skip.hidden = !!step.required || pfHasAnswer(s);
+    let h = '<div class="pf-step-n">' + escapeHtml(ccFmt('Step {n} of {total}', { n: s + 1, total })) + '</div>' +
+      '<h2 class="pf-h">' + step.title + '</h2><p class="pf-sub">' + step.sub + '</p>';
+
+    if (step.id === 'length') {
+      h += '<div class="pf-label">Plan length</div><div class="pf-options">' +
+        PLAN_PERIODS.map(o => pfOpt('set', 'period', o.id, p.period === o.id, o.label, o.sub, o.icon, true)).join('') + '</div>' +
+        '<div class="pf-label">How many people?</div>' +
+        '<div class="pf-stepper">' +
+          '<button data-act="people" data-v="-1" aria-label="Fewer people"' + (p.household <= 1 ? ' disabled' : '') + '><i class="ti ti-minus"></i></button>' +
+          '<div class="pf-stepper-n" aria-live="polite">' + p.household + '<small>' + escapeHtml(p.household === 1 ? ccT('person') : ccT('people')) + '</small></div>' +
+          '<button data-act="people" data-v="1" aria-label="More people"' + (p.household >= planCfg.maxHousehold ? ' disabled' : '') + '><i class="ti ti-plus"></i></button>' +
+        '</div>';
+    } else if (step.id === 'goal') {
+      h += '<div class="pf-options two">' +
+        PLAN_GOALS.map(o => pfOpt('set', 'goal', o.id, p.goal === o.id, o.label, o.sub, o.icon).replace('class="pf-opt', 'class="pf-opt two-line')).join('') + '</div>';
+    } else if (step.id === 'meals') {
+      h += '<div class="pf-options">' +
+        PLAN_SLOTS.map(o => pfOpt('toggle', 'meals', o.id, p.meals.includes(o.id), o.label, '', o.icon, true)).join('') + '</div>';
+      if (!p.meals.length) h += '<p class="pf-hint">Pick at least one meal.</p>';
+    } else if (step.id === 'diet') {
+      h += '<div class="pf-label">Diet <small>Pick any</small></div><div class="pf-chips">' +
+        PLAN_DIETS.map(o => pfChip('diets', o.id, p.diets.includes(o.id), o.label)).join('') + '</div>' +
+        '<div class="pf-label">Allergies <small>Never included</small></div><div class="pf-chips">' +
+        Object.keys(ALLERGENS).map(k => pfChip('allergies', k, p.allergies.includes(k), ALLERGENS[k].label, true, 'ti-alert-triangle')).join('') + '</div>' +
+        '<p class="pf-note">Meal plans are made by AI and checked for your allergens, but always read labels when you shop.</p>';
+    } else if (step.id === 'time') {
+      h += '<div class="pf-label">Cooking time</div><div class="pf-options">' +
+        PLAN_TIMES.map(o => pfOpt('set', 'time', o.id, p.time === o.id, o.label, o.sub, o.icon, true)).join('') + '</div>' +
+        '<div class="pf-label">Cooking skill</div><div class="pf-options">' +
+        PLAN_SKILLS.map(o => pfOpt('set', 'skill', o.id, p.skill === o.id, o.label, o.sub, '', true)).join('') + '</div>';
+    } else if (step.id === 'taste') {
+      h += '<div class="pf-label">Cuisines you like <small>Pick any</small></div><div class="pf-chips">' +
+        PLAN_CUISINES.map(c => pfChip('cuisines', c, p.cuisines.includes(c), c)).join('') + '</div>' +
+        '<div class="pf-label">Foods to avoid</div>' +
+        '<div class="pf-field"><input id="pfAvoid" type="text" maxlength="40" enterkeyhint="done" placeholder="e.g. mushrooms, cilantro" autocomplete="off">' +
+          '<button class="pf-add" data-act="avoid-add">Add</button></div>' +
+        '<div class="pf-tokens">' + p.avoid.map((a, i) =>
+          '<span class="pf-token">' + escapeHtml(a) + '<button data-act="avoid-del" data-v="' + i + '" aria-label="Remove"><i class="ti ti-x"></i></button></span>').join('') + '</div>';
+    } else if (step.id === 'budget') {
+      const [lo, hi] = planComfort(p);
+      const days = planCfg.periods[p.period];
+      h += '<div class="pf-field money" id="pfBudgetField"><span class="pf-cur">$</span>' +
+          '<input id="pfBudget" type="text" inputmode="decimal" enterkeyhint="done" autocomplete="off" aria-label="Budget" placeholder="' + lo + '" value="' + (p.budget ? String(p.budget) : '') + '">' +
+          '<span class="pf-per">' + escapeHtml(budgetPer(p.period)) + '</span></div>' +
+        '<div class="pf-range">' +
+          '<div><div class="pf-range-l">Minimum</div><div class="pf-range-v">' + moneyWhole(planMinimum(p)) + '</div></div>' +
+          '<div><div class="pf-range-l">Comfortable</div><div class="pf-range-v">' + moneyWhole(lo) + '–' + moneyWhole(hi) + '</div></div>' +
+        '</div>' +
+        '<div id="pfBudgetMsg"></div>' +
+        '<p class="pf-hint">' + escapeHtml(ccFmt('For {people}, {meals} a day, {days}.', {
+          people: peopleText(p.household),
+          meals: p.meals.length === 1 ? ccT('1 meal') : ccFmt('{n} meals', { n: p.meals.length }),
+          days: days === 1 ? ccT('1 day') : ccFmt('{n} days', { n: days })
+        })) + ' <span>Based on USDA food cost data.</span></p>';
+    }
+    document.getElementById('pfBody').innerHTML = h;
+    if (step.id === 'budget') pfRenderBudgetMsg(false);
+    pfRenderNext();
+  }
+
+  function pfRenderNext() {
+    const last = pf.step === PF_STEPS.length - 1;
+    const btn = document.getElementById('pfNext');
+    btn.disabled = !pfStepValid(pf.step);
+    btn.innerHTML = last
+      ? '<i class="ti ti-sparkles"></i> <span>Build my plan</span>'
+      : '<span>Continue</span> <i class="ti ti-arrow-right"></i>';
+  }
+
+  // Under the budget field: why it can't go ahead, and one-tap ways out.
+  function pfRenderBudgetMsg(showEmpty) {
+    const el = document.getElementById('pfBudgetMsg');
+    if (!el) return;
+    const st = pfBudgetState(), p = pf.prefs;
+    document.getElementById('pfBudgetField').classList.toggle('bad', !!(st.low || st.tooHigh));
+    if (st.tooHigh) {
+      el.innerHTML = '<div class="pf-alert"><div class="pf-alert-t"><i class="ti ti-alert-triangle"></i><span>' +
+        escapeHtml(ccFmt('Enter a budget up to {max}.', { max: moneyWhole(planCfg.maxBudget) })) + '</span></div></div>';
+      return;
+    }
+    if (!st.low) { el.innerHTML = ''; return; }
+    const fixes = ['<button class="pf-fix primary" data-act="budget-min"><i class="ti ti-check"></i> ' +
+      escapeHtml(ccFmt('Use {amount}', { amount: moneyWhole(st.min) })) + '</button>'];
+    if (p.meals.includes('snack') && p.meals.length > 1) fixes.push('<button class="pf-fix" data-act="drop-snack"><i class="ti ti-apple"></i> <span>Skip snacks</span></button>');
+    if (p.meals.length > 1) fixes.push('<button class="pf-fix" data-act="goto" data-v="2"><i class="ti ti-tools-kitchen-2"></i> <span>Fewer meals a day</span></button>');
+    if (p.household > 1) fixes.push('<button class="pf-fix" data-act="goto" data-v="0"><i class="ti ti-users"></i> <span>Fewer people</span></button>');
+    if (p.period !== 'daily') fixes.push('<button class="pf-fix" data-act="goto" data-v="0"><i class="ti ti-calendar-due"></i> <span>Shorter plan</span></button>');
+    el.innerHTML = '<div class="pf-alert" role="alert"><div class="pf-alert-t"><i class="ti ti-alert-triangle"></i><span>' +
+        escapeHtml(ccFmt('This plan needs at least {amount}', { amount: moneyWhole(st.min) })) + '</span></div>' +
+      '<div class="pf-alert-s">' + escapeHtml(ccFmt("That's about {per} a meal for each person, the least healthy home cooking costs. Try one of these:", { per: money(planCfg.minCostPerMeal) })) + '</div>' +
+      '<div class="pf-fixes">' + fixes.join('') + '</div></div>';
+  }
+
+  // One listener for every control in the questionnaire.
+  document.getElementById('pfBody').addEventListener('click', e => {
+    const b = e.target.closest('[data-act]');
+    if (!b || !pf) return;
+    const p = pf.prefs, act = b.dataset.act, f = b.dataset.f, v = b.dataset.v;
+    pf.touched = true;
+    if (act === 'set') {
+      p[f] = (f === 'goal' && p.goal === v) ? '' : v;      // tapping the chosen goal clears it
+    } else if (act === 'toggle') {
+      const i = p[f].indexOf(v);
+      if (i >= 0) p[f].splice(i, 1); else p[f].push(v);
+      if (f === 'meals') p.meals.sort((a, b2) => PLAN_SLOTS.findIndex(s => s.id === a) - PLAN_SLOTS.findIndex(s => s.id === b2));
+    } else if (act === 'people') {
+      p.household = Math.max(1, Math.min(planCfg.maxHousehold, p.household + Number(v)));
+    } else if (act === 'avoid-add') {
+      pfAddAvoid(); return;
+    } else if (act === 'avoid-del') {
+      p.avoid.splice(Number(v), 1);
+    } else if (act === 'budget-min') {
+      p.budget = pfBudgetState().min;
+    } else if (act === 'drop-snack') {
+      p.meals = p.meals.filter(m => m !== 'snack');
+      showToast(ccT('Snacks removed'));
+    } else if (act === 'goto') {
+      pf.step = Number(v);
+      document.getElementById('pfScroll').scrollTop = 0;
+    }
+    renderPlanFlow();
+  });
+  document.getElementById('pfBody').addEventListener('input', e => {
+    if (!pf || e.target.id !== 'pfBudget') return;
+    pf.touched = true;
+    const n = parseFloat(String(e.target.value).replace(/[^0-9.]/g, ''));
+    pf.prefs.budget = Number.isFinite(n) ? Math.round(n * 100) / 100 : null;
+    pfRenderBudgetMsg(false);
+    pfRenderNext();
+  });
+  document.getElementById('pfBody').addEventListener('keydown', e => {
+    if (e.key !== 'Enter' || !pf) return;
+    if (e.target.id === 'pfAvoid') { e.preventDefault(); pfAddAvoid(); }
+    else if (e.target.id === 'pfBudget') { e.preventDefault(); e.target.blur(); if (pfBudgetState().ok) planFlowNext(); }
+  });
+  function pfAddAvoid() {
+    const input = document.getElementById('pfAvoid');
+    if (!input) return;
+    const items = input.value.split(',').map(s => s.trim()).filter(Boolean);
+    items.forEach(it => {
+      if (pf.prefs.avoid.length < 20 && !pf.prefs.avoid.some(a => a.toLowerCase() === it.toLowerCase())) pf.prefs.avoid.push(it.slice(0, 40));
+    });
+    renderPlanFlow();
+    const again = document.getElementById('pfAvoid');
+    if (again) again.focus();
+  }
+
+  function planFlowNext() {
+    if (!pf || pf.building) return;
+    if (!pfStepValid(pf.step)) { if (pf.step === 6) pfRenderBudgetMsg(true); return; }
+    if (pf.step < PF_STEPS.length - 1) {
+      pf.step++;
+      document.getElementById('pfScroll').scrollTop = 0;
+      renderPlanFlow();
+      return;
+    }
+    buildPlan();
+  }
+  function planFlowSkip() {
+    if (!pf || pf.building) return;
+    pf.step = Math.min(PF_STEPS.length - 1, pf.step + 1);
+    document.getElementById('pfScroll').scrollTop = 0;
+    renderPlanFlow();
+  }
+  async function planFlowBack() {
+    if (!pf) return;
+    if (pf.building === 'error') { cancelPlanBuild(); return; }
+    if (pf.building) {
+      const stop = await ccConfirm({ title: ccT('Stop making this plan?'), message: ccT("Your answers are kept, so you can start again."),
+        confirmLabel: ccT('Stop'), icon: 'ti-x' });
+      if (stop) cancelPlanBuild();
+      return;
+    }
+    if (pf.step > 0) { pf.step--; document.getElementById('pfScroll').scrollTop = 0; renderPlanFlow(); return; }
+    closePlanFlow();
+  }
+
+  // ═══════════ Building a plan ═══════════
+  function planTitle(period, start) {
+    if (period === 'daily') return dayName(start, FULL_DAY);
+    if (period === 'monthly') return ccFmt('Month from {date}', { date: dayName(start, SHORT_DATE) });
+    return ccFmt('Week of {date}', { date: dayName(start, SHORT_DATE) });
+  }
+
+  // One week (or one day) from the server, retried once if it stumbles.
+  async function requestPlanWeek(prefs, dates, locked, avoid, signal) {
+    const body = JSON.stringify({ action: 'week', prefs, dayCount: dates.length,
+      dayLabels: dates.map(d => dayName(d, FULL_DAY, 'en-US')), locked, avoid });
+    for (let attempt = 0; ; attempt++) {
+      const ctl = new AbortController();
+      const onAbort = () => ctl.abort();
+      signal.addEventListener('abort', onAbort);
+      const timer = setTimeout(() => ctl.abort(), 85000);
+      let res, out;
+      try {
+        res = await fetch('/api/meal-plan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body, signal: ctl.signal });
+        out = await res.json().catch(() => ({}));
+      } catch (e) {
+        if (signal.aborted) throw e;
+        if (attempt < 1) continue;
+        throw new Error(ccT("We couldn't reach the kitchen. Check your connection and try again."));
+      } finally {
+        clearTimeout(timer);
+        signal.removeEventListener('abort', onAbort);
+      }
+      if (res.ok && Array.isArray(out.days)) {
+        return dates.map((date, i) => ({ date, meals: ((out.days.find(d => d.day === i) || out.days[i] || {}).meals) || [] }));
+      }
+      if (res.status >= 500 && attempt < 1) continue;
+      throw new Error(out.error || ccT('Could not build your plan. Please try again.'));
+    }
+  }
+
+  // The generating screen. Progress is estimated (a week takes ~40s) and
+  // jumps forward as each week arrives.
+  let planGenTimer = null;
+  function renderPlanGen(state) {
+    document.getElementById('pfFoot').hidden = true;
+    document.getElementById('pfSkip').hidden = true;
+    document.getElementById('pfBar').style.width = '100%';
+    const body = document.getElementById('pfBody');
+    if (state.error) {
+      body.innerHTML = '<div class="pf-gen error" role="alert"><div class="pf-gen-ico"><i class="ti ti-alert-triangle"></i></div>' +
+        '<h3>We hit a snag</h3><p>' + escapeHtml(state.error) + '</p>' +
+        '<button class="plan-cta" onclick="buildPlan()"><i class="ti ti-refresh"></i> <span>Try again</span></button>' +
+        '<button class="plan-cta ghost" style="margin-top:10px" onclick="pfEditAnswers()"><i class="ti ti-pencil"></i> <span>Change my answers</span></button></div>';
+      return;
+    }
+    body.innerHTML = '<div class="pf-gen"><div class="pf-gen-ico"><i class="ti ti-chef-hat"></i></div>' +
+      '<h3>Planning your meals</h3><p id="pgText">' + escapeHtml(state.text) + '</p>' +
+      '<div class="pf-gen-bar"><div id="pgBar"></div></div>' +
+      '<ul class="pf-gen-steps" id="pgSteps">' +
+        '<li><i class="ti ti-circle"></i> <span>Choosing dishes for you</span></li>' +
+        '<li><i class="ti ti-circle"></i> <span>Fitting your budget</span></li>' +
+        '<li><i class="ti ti-circle"></i> <span>Writing your grocery list</span></li></ul>' +
+      '<button class="plan-cta ghost" onclick="planFlowBack()"><span>Cancel</span></button></div>';
+  }
+  function startPlanGenProgress(waves) {
+    const t0 = Date.now();
+    let done = 0;
+    const tick = () => {
+      const bar = document.getElementById('pgBar');
+      const steps = document.querySelectorAll('#pgSteps li');
+      if (!bar) return;
+      const t = (Date.now() - t0) / 1000;
+      const inWave = 1 - Math.exp(-((t - done * 40) / 38));   // eases toward each week's end
+      const pct = Math.min(96, ((done + Math.max(0, Math.min(0.92, inWave))) / waves) * 100);
+      bar.style.width = pct + '%';
+      const stage = pct < 34 ? 0 : pct < 72 ? 1 : 2;
+      steps.forEach((li, i) => {
+        li.className = i < stage ? 'done' : i === stage ? 'on' : '';
+        li.querySelector('i').className = 'ti ' + (i < stage ? 'ti-circle-check' : i === stage ? 'ti-loader-2 spin' : 'ti-circle');
+      });
+    };
+    clearInterval(planGenTimer);
+    planGenTimer = setInterval(tick, 400);
+    tick();
+    return { wave() { done++; tick(); }, stop() { clearInterval(planGenTimer); } };
+  }
+
+  async function buildPlan() {
+    if (!pf) return;
+    const prefs = clone(pf.prefs);
+    rememberPrefs(prefs);
+    const n = planCfg.periods[prefs.period];
+    const start = isoDate(new Date());
+    const dates = Array.from({ length: n }, (_, i) => addDays(start, i));
+    const weeks = [];
+    for (let i = 0; i < n; i += 7) weeks.push(dates.slice(i, i + 7));
+    const ctl = new AbortController();
+    pf.building = true;
+    pf.ctl = ctl;
+    renderPlanGen({ text: weeks.length > 1 ? ccT('A month takes a minute or two. Keep the app open.') : ccT('This takes about a minute.') });
+    const prog = startPlanGenProgress(weeks.length > 1 ? 2 : 1);
+    try {
+      const first = await requestPlanWeek(prefs, weeks[0], [], [], ctl.signal);
+      let days = first;
+      if (weeks.length > 1) {
+        prog.wave();
+        const t = document.getElementById('pgText');
+        if (t) t.textContent = ccT('Week 1 is ready. Planning the rest of the month…');
+        const avoid = planMealNames(first);
+        const rest = await Promise.all(weeks.slice(1).map(w => requestPlanWeek(prefs, w, [], avoid, ctl.signal)));
+        rest.forEach(r => { days = days.concat(r); });
+      }
+      prog.stop();
+      if (!days.some(d => d.meals.length)) throw new Error(ccT('Could not build your plan. Please try again.'));
+      await finishPlan(prefs, start, days);
+    } catch (e) {
+      prog.stop();
+      if (ctl.signal.aborted || !pf) return;
+      pf.ctl = null;
+      pf.building = 'error';        // the page stays on the error screen
+      renderPlanGen({ error: e.message || ccT('Could not build your plan. Please try again.') });
+    }
+  }
+  function cancelPlanBuild() {
+    if (!pf) return;
+    if (pf.ctl) pf.ctl.abort();
+    clearInterval(planGenTimer);
+    pf.building = false;
+    pf.ctl = null;
+    pf.step = PF_STEPS.length - 1;
+    renderPlanFlow();
+  }
+  function pfEditAnswers() {
+    if (!pf) return;
+    pf.building = false;
+    pf.step = 0;
+    renderPlanFlow();
+  }
+
+  async function finishPlan(prefs, start, days) {
+    let row;
+    const old = pf.replaceId && planCur && planCur.id === pf.replaceId ? planCur : null;
+    if (old) {
+      row = old;
+      row.prefs = prefs; row.period = prefs.period;
+      row.plan = { startDate: start, days };
+      row.title = planTitle(prefs.period, start);
+      // Ticks belonged to the old meals; things at home and the user's own items still hold.
+      row.grocery = { checked: {}, have: (row.grocery || {}).have || {}, custom: ((row.grocery || {}).custom || []).map(c => Object.assign(c, { done: false })) };
+    } else {
+      row = { id: null, title: planTitle(prefs.period, start), period: prefs.period, prefs, favorite: false,
+        plan: { startDate: start, days }, grocery: { checked: {}, have: {}, custom: [] } };
+    }
+    // A "Stop making this plan?" question still open is moot now.
+    if (ccSheetOpen()) closeCcSheet(null);
+    closePlanFlow();
+    openPlanRow(row, { fresh: true });
+    await savePlanNow(row);
+    if (row.id) showToast(ccT('Your plan is ready'));
+  }
+
+  // ═══════════ Saving ═══════════
+  let planCur = null;          // the plan on screen (full row)
+  let planSaveTimer = null;
+  let planSaveChain = Promise.resolve();
+  let planSaveFailed = false;
+
+  function planSummary(row) {
+    const days = (row.plan && row.plan.days) || [];
+    let meals = 0, cost = 0;
+    days.forEach(d => d.meals.forEach(m => { meals++; cost += Number(m.cost) || 0; }));
+    return { days: days.length, meals, cost: Math.round(cost * 100) / 100, household: row.prefs.household, start: row.plan.startDate };
+  }
+  function queuePlanSave() {
+    clearTimeout(planSaveTimer);
+    const row = planCur;
+    planSaveTimer = setTimeout(() => savePlanNow(row), 700);
+  }
+  function savePlanNow(row) {
+    clearTimeout(planSaveTimer);
+    if (!row || !currentUser) return Promise.resolve();
+    planSaveChain = planSaveChain.then(async () => {
+      row.summary = planSummary(row);
+      const payload = { title: row.title, period: row.period, prefs: row.prefs, plan: row.plan, grocery: row.grocery,
+        favorite: !!row.favorite, summary: row.summary, updated_at: new Date().toISOString() };
+      try {
+        if (row.id) {
+          const { error } = await supaClient.from('meal_plans').update(payload).eq('id', row.id);
+          if (error) throw error;
+        } else {
+          const { data, error } = await supaClient.from('meal_plans').insert(Object.assign({ user_id: currentUser.id }, payload)).select('id, created_at').single();
+          if (error) throw error;
+          row.id = data.id;
+          row.created_at = data.created_at;
+        }
+        row.updated_at = payload.updated_at;
+        planSaveFailed = false;
+        // Keep the list in step without refetching it.
+        const listRow = { id: row.id, title: row.title, period: row.period, favorite: row.favorite, summary: row.summary, created_at: row.created_at, updated_at: row.updated_at };
+        planState.plans = [listRow].concat((planState.plans || []).filter(p => p.id !== row.id));
+        try { localStorage.setItem(PLAN_CACHE_KEY(), JSON.stringify(planState.plans)); } catch (e) {}
+        renderPlanList();
+      } catch (e) {
+        console.warn('save plan:', e);
+        if (!planSaveFailed) showToast(ccT("Couldn't save your plan. We'll keep trying."));
+        planSaveFailed = true;
+        clearTimeout(planSaveTimer);
+        planSaveTimer = setTimeout(() => { if (planCur === row) savePlanNow(row); }, 8000);
+      }
+    });
+    return planSaveChain;
+  }
+
+  // ═══════════ A plan on screen ═══════════
+  const pv = { tab: 'meals', week: 0, day: 0, overview: false, gScope: null, busy: {}, regen: false };
+
+  async function openPlan(id) {
+    if (planCur && planCur.id === id) { openPlanRow(planCur); return; }
+    const page = document.getElementById('planPage');
+    page.classList.add('open');
+    page.setAttribute('aria-hidden', 'false');
+    document.getElementById('plTitle').textContent = ((planState.plans || []).find(p => p.id === id) || {}).title || ccT('Meal plan');
+    document.getElementById('plBody').innerHTML = '<div class="plan-skel" style="height:150px"></div><div class="plan-skel" style="height:120px"></div><div class="plan-skel" style="height:120px"></div>';
+    try {
+      const { data, error } = await supaClient.from('meal_plans').select('*').eq('id', id).single();
+      if (error) throw error;
+      data.prefs = normalizePrefs(data.prefs);
+      data.grocery = Object.assign({ checked: {}, have: {}, custom: [] }, data.grocery || {});
+      if (!page.classList.contains('open')) return;
+      openPlanRow(data);
+    } catch (e) {
+      document.getElementById('plBody').innerHTML = planEmpty('ti-alert-triangle', "Couldn't open this plan", 'Check your connection and try again.',
+        '<button class="plan-cta ghost" onclick="openPlan(\'' + id + '\')"><i class="ti ti-refresh"></i> <span>Try again</span></button>');
+    }
+  }
+  function openPlanRow(row, opts) {
+    const fresh = planCur !== row;
+    planCur = row;
+    if (fresh || (opts && opts.fresh)) {
+      Object.assign(pv, { tab: 'meals', week: 0, day: 0, overview: false, gScope: null, busy: {}, regen: false });
+      // Open on today if it's in the plan.
+      const today = isoDate(new Date());
+      const idx = row.plan.days.findIndex(d => d.date === today);
+      if (idx > 0) { pv.week = Math.floor(idx / 7); pv.day = idx; }
+    }
+    const page = document.getElementById('planPage');
+    page.classList.add('open');
+    page.setAttribute('aria-hidden', 'false');
+    renderPlanPage();
+  }
+  function closePlanPage() {
+    const page = document.getElementById('planPage');
+    page.classList.remove('open');
+    page.setAttribute('aria-hidden', 'true');
+    if (planSaveTimer && planCur) savePlanNow(planCur);
+  }
+  function planPageOpen() { const el = document.getElementById('planPage'); return !!(el && el.classList.contains('open')); }
+
+  function renderPlanHead() {
+    if (!planCur) return;
+    document.getElementById('plTitle').textContent = planCur.title;
+    const fav = document.getElementById('plFav');
+    fav.classList.toggle('on', !!planCur.favorite);
+    fav.innerHTML = '<i class="ti ' + (planCur.favorite ? 'ti-star-filled' : 'ti-star') + '"></i>';
+    fav.hidden = !planCur.id;
+  }
+  function setPlanTab(t) {
+    pv.tab = t;
+    document.getElementById('plScroll').scrollTop = 0;
+    renderPlanPage();
+  }
+  function renderPlanPage() {
+    if (!planCur) return;
+    renderPlanHead();
+    document.getElementById('plTabMeals').classList.toggle('on', pv.tab === 'meals');
+    document.getElementById('plTabGrocery').classList.toggle('on', pv.tab === 'grocery');
+    document.getElementById('plTabMeals').setAttribute('aria-selected', pv.tab === 'meals');
+    document.getElementById('plTabGrocery').setAttribute('aria-selected', pv.tab === 'grocery');
+    document.getElementById('plBody').innerHTML = pv.tab === 'meals' ? renderPlanMeals() : renderGrocery();
+    if (pv.tab === 'meals') observePlanImages();
+  }
+
+  function planDays() { return planCur.plan.days; }
+  function planWeeksCount() { return Math.ceil(planDays().length / 7); }
+  function weekDayRange(w) { const s = w * 7; return [s, Math.min(planDays().length, s + 7)]; }
+  function planMealNames(days) { const out = []; days.forEach(d => d.meals.forEach(m => out.push(m.name))); return out; }
+  function mealFor(di, slot) { const d = planDays()[di]; return d ? d.meals.find(m => m.slot === slot) : null; }
+
+  function renderPlanSummary() {
+    const p = planCur.prefs, days = planDays();
+    let cost = 0, meals = 0, kcal = 0, pr = 0, cb = 0, ft = 0;
+    days.forEach(d => d.meals.forEach(m => {
+      meals++; cost += Number(m.cost) || 0;
+      kcal += m.calories || 0; pr += m.protein_g || 0; cb += m.carbs_g || 0; ft += m.fat_g || 0;
+    }));
+    const n = days.length || 1;
+    const budget = Number(p.budget) || 0;
+    const over = budget && cost > budget;
+    const pct = budget ? Math.min(100, cost / budget * 100) : 0;
+    const diff = Math.abs(budget - cost);
+    return '<div class="pl-sum">' +
+      '<div class="pl-sum-top"><div class="pl-sum-total">' + money(cost) + '</div>' +
+        '<div class="pl-sum-of">' + escapeHtml(ccFmt('estimated, of your {budget} budget', { budget: moneyWhole(budget) })) + '</div></div>' +
+      '<div class="pl-meter' + (over ? ' over' : '') + '"><div style="width:' + pct + '%"></div></div>' +
+      '<div class="pl-sum-note' + (over ? ' over' : '') + '">' + escapeHtml(over
+          ? ccFmt('{amount} over budget. Swap a few meals for cheaper ones.', { amount: money(diff) })
+          : ccFmt('{amount} under budget', { amount: money(diff) })) + '</div>' +
+      '<div class="pl-per"><span>' + escapeHtml(ccFmt('{amount} a meal', { amount: money(meals ? cost / meals : 0) })) + '</span>' +
+        '<span>' + escapeHtml(ccFmt('{amount} a serving', { amount: money(meals ? cost / meals / p.household : 0) })) + '</span></div>' +
+      '<div class="pl-stats">' +
+        '<div class="pl-stat"><div class="pl-stat-v">' + Math.round(kcal / n).toLocaleString(planLocale()) + '</div><div class="pl-stat-l">kcal / day</div></div>' +
+        '<div class="pl-stat"><div class="pl-stat-v">' + Math.round(pr / n) + 'g</div><div class="pl-stat-l">Protein</div></div>' +
+        '<div class="pl-stat"><div class="pl-stat-v">' + Math.round(cb / n) + 'g</div><div class="pl-stat-l">Carbs</div></div>' +
+        '<div class="pl-stat"><div class="pl-stat-v">' + Math.round(ft / n) + 'g</div><div class="pl-stat-l">Fat</div></div>' +
+      '</div><div class="pf-note" style="margin-top:10px">Nutrition is per person, per day.</div></div>';
+  }
+
+  function renderPlanMeals() {
+    const days = planDays(), weeks = planWeeksCount();
+    let h = renderPlanSummary();
+    if (weeks > 1) {
+      h += '<div class="pl-weeks">' + Array.from({ length: weeks }, (_, w) =>
+        '<button class="pl-week' + (pv.week === w ? ' on' : '') + '" data-act="week" data-v="' + w + '">' + escapeHtml(ccFmt('Week {n}', { n: w + 1 })) + '</button>').join('') + '</div>';
+    }
+    const [a, b] = weekDayRange(pv.week);
+    if (days.length > 1) {
+      h += '<div class="pl-viewbar"><h3>' + (weeks > 1 ? escapeHtml(ccFmt('Week {n}', { n: pv.week + 1 })) : '<span>Your week</span>') + '</h3>' +
+        '<div class="plan-seg"><button class="' + (pv.overview ? '' : 'on') + '" data-act="view" data-v="day">Day</button>' +
+        '<button class="' + (pv.overview ? 'on' : '') + '" data-act="view" data-v="all">Overview</button></div></div>';
+    }
+    if (pv.overview && days.length > 1) {
+      for (let i = a; i < b; i++) {
+        const d = days[i];
+        const dc = d.meals.reduce((s, m) => s + (Number(m.cost) || 0), 0);
+        h += '<button class="pl-overview-day" data-act="day" data-v="' + i + '" data-go="1"><span class="pl-day-meta">' + money(dc) + '</span><b>' + escapeHtml(dayName(d.date, FULL_DAY)) + '</b><ul>' +
+          planCur.prefs.meals.map(slot => {
+            const m = d.meals.find(x => x.slot === slot);
+            return '<li><em>' + planSlot(slot).label + '</em>' + (m ? escapeHtml(m.name) : '—') + (m && m.locked ? ' <i class="ti ti-lock-filled"></i>' : '') + '</li>';
+          }).join('') + '</ul></button>';
+      }
+    } else {
+      if (pv.day < a || pv.day >= b) pv.day = a;
+      if (days.length > 1) {
+        h += '<div class="pl-days">';
+        for (let i = a; i < b; i++) {
+          const dt = parseIso(days[i].date);
+          h += '<button class="pl-day' + (pv.day === i ? ' on' : '') + '" data-act="day" data-v="' + i + '" aria-label="' + escapeHtml(dayName(days[i].date, FULL_DAY)) + '">' +
+            '<div class="pl-day-w">' + escapeHtml(dt.toLocaleDateString(planLocale(), { weekday: 'short' })) + '</div>' +
+            '<div class="pl-day-n">' + dt.getDate() + '</div></button>';
+        }
+        h += '</div>';
+      }
+      const d = days[pv.day];
+      const dc = d.meals.reduce((s, m) => s + (Number(m.cost) || 0), 0);
+      const dk = d.meals.reduce((s, m) => s + (m.calories || 0), 0);
+      h += '<div class="pl-day-head"><div class="pl-day-title">' + escapeHtml(dayName(d.date, FULL_DAY)) + '</div>' +
+        '<div class="pl-day-meta">' + money(dc) + ' · ' + escapeHtml(ccFmt('{n} kcal', { n: dk.toLocaleString(planLocale()) })) + '</div></div>';
+      planCur.prefs.meals.forEach(slot => {
+        const m = d.meals.find(x => x.slot === slot);
+        h += m ? renderMealCard(pv.day, m) : renderMealGap(pv.day, slot);
+      });
+    }
+    const scopeText = weeks > 1 ? ccFmt('Locked meals stay. The rest of week {n} gets new dishes.', { n: pv.week + 1 }) : ccT('Lock the meals you like. Everything else gets new dishes.');
+    h += '<div class="pl-regen"><button class="plan-cta ghost" data-act="regen"' + (pv.regen ? ' disabled' : '') + '>' +
+      (pv.regen ? '<i class="ti ti-loader-2 spin"></i> <span>Finding new ideas…</span>' : '<i class="ti ti-refresh"></i> <span>New ideas for unlocked meals</span>') +
+      '</button><p class="pf-hint" style="text-align:center">' + escapeHtml(scopeText) + '</p></div>';
+    return h;
+  }
+
+  function mealKey(di, m) { return di + ':' + m.slot + ':' + m.name; }
+  function renderMealCard(di, m) {
+    const slot = planSlot(m.slot);
+    const busy = pv.busy[di + ':' + m.slot] || (pv.regen && !m.locked);
+    const img = m.image_url
+      ? '<img src="' + escapeHtml(m.image_url) + '" alt="" onload="this.parentNode.classList.add(\'ready\')" onerror="this.remove()">'
+      : '';
+    return '<div class="meal-card' + (m.locked ? ' locked' : '') + (busy ? ' busy' : '') + '" data-d="' + di + '" data-s="' + m.slot + '">' +
+      '<button class="meal-main" data-act="cook" aria-label="' + escapeHtml(ccFmt('Cook {dish}', { dish: m.name })) + '">' +
+        '<div class="meal-img' + (m.image_url ? '' : ' want') + '" data-img="' + escapeHtml(mealKey(di, m)) + '"><i class="ti ' + slot.icon + '"></i>' + img + '</div>' +
+        '<div class="meal-body">' +
+          '<div class="meal-slot"><span>' + slot.label + '</span>' + (m.locked ? '<i class="ti ti-lock-filled" aria-label="Locked"></i>' : '') + '</div>' +
+          '<div class="meal-name">' + escapeHtml(m.name) + '</div>' +
+          (m.description ? '<div class="meal-desc">' + escapeHtml(m.description) + '</div>' : '') +
+          '<div class="meal-facts">' +
+            '<span><i class="ti ti-clock"></i>' + escapeHtml(ccFmt('{n} min', { n: m.prepMinutes || 30 })) + '</span>' +
+            '<span><i class="ti ti-coin"></i>' + money(m.cost) + '</span>' +
+            '<span><i class="ti ti-flame"></i>' + escapeHtml(ccFmt('{n} kcal', { n: m.calories || 0 })) + '</span>' +
+          '</div>' +
+        '</div>' +
+      '</button>' +
+      '<div class="meal-macros"><span>' + escapeHtml(ccFmt('Protein {n}g', { n: m.protein_g || 0 })) + '</span>' +
+        '<span>' + escapeHtml(ccFmt('Carbs {n}g', { n: m.carbs_g || 0 })) + '</span>' +
+        '<span>' + escapeHtml(ccFmt('Fat {n}g', { n: m.fat_g || 0 })) + '</span></div>' +
+      '<div class="meal-actions">' +
+        '<button class="meal-act' + (m.locked ? ' on' : '') + '" data-act="lock" aria-pressed="' + !!m.locked + '"><i class="ti ' + (m.locked ? 'ti-lock-filled' : 'ti-lock-open') + '"></i> <span>' + (m.locked ? 'Locked' : 'Lock') + '</span></button>' +
+        '<button class="meal-act" data-act="swap"' + (m.locked ? ' disabled style="opacity:.4"' : '') + '>' +
+          (pv.busy[di + ':' + m.slot] ? '<i class="ti ti-loader-2 spin"></i>' : '<i class="ti ti-arrows-shuffle"></i>') + ' <span>Swap</span></button>' +
+        '<button class="meal-act" data-act="cook"><i class="ti ti-chef-hat"></i> <span>Cook</span></button>' +
+      '</div></div>';
+  }
+  function renderMealGap(di, slot) {
+    const busy = pv.busy[di + ':' + slot];
+    return '<div class="meal-gap"><i class="ti ' + planSlot(slot).icon + '" style="font-size:22px"></i>' +
+      '<div><b>' + planSlot(slot).label + '</b><div>No meal planned yet.</div></div>' +
+      '<button class="pf-fix primary" data-act="gap" data-d="' + di + '" data-s="' + slot + '"' + (busy ? ' disabled' : '') + '>' +
+        (busy ? '<i class="ti ti-loader-2 spin"></i>' : '<i class="ti ti-sparkles"></i>') + ' <span>Find a meal</span></button></div>';
+  }
+
+  // One listener for everything on the plan page.
+  document.getElementById('plBody').addEventListener('click', e => {
+    const b = e.target.closest('[data-act]');
+    if (!b || !planCur) return;
+    const act = b.dataset.act;
+    const card = b.closest('.meal-card');
+    const di = card ? Number(card.dataset.d) : Number(b.dataset.d);
+    const slot = card ? card.dataset.s : b.dataset.s;
+    if (act === 'week') { pv.week = Number(b.dataset.v); pv.day = pv.week * 7; renderPlanPage(); }
+    else if (act === 'view') { pv.overview = b.dataset.v === 'all'; renderPlanPage(); }
+    else if (act === 'day') { pv.day = Number(b.dataset.v); if (b.dataset.go) { pv.overview = false; document.getElementById('plScroll').scrollTop = 0; } renderPlanPage(); }
+    else if (act === 'lock') { toggleMealLock(di, slot); }
+    else if (act === 'swap' || act === 'gap') { swapPlanMeal(di, slot); }
+    else if (act === 'cook') { cookPlanMeal(di, slot); }
+    else if (act === 'regen') { regenerateUnlocked(); }
+    else if (act === 'gscope') { pv.gScope = b.dataset.v; renderPlanPage(); }
+    else if (act === 'gcheck') { groceryToggle('checked', b.dataset.k); }
+    else if (act === 'ghave') { groceryToggle('have', b.dataset.k); }
+    else if (act === 'gcustom') { groceryCustomToggle(b.dataset.k); }
+    else if (act === 'gdel') { groceryCustomDelete(b.dataset.k); }
+    else if (act === 'gadd') { groceryAddCustom(); }
+    else if (act === 'gcopy') { groceryCopy(); }
+    else if (act === 'gshare') { groceryShare(); }
+    else if (act === 'gpdf') { groceryPdf(b); }
+  });
+  document.getElementById('plBody').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && e.target.id === 'glAdd') { e.preventDefault(); groceryAddCustom(); }
+  });
+
+  function toggleMealLock(di, slot) {
+    const m = mealFor(di, slot);
+    if (!m) return;
+    m.locked = !m.locked;
+    renderPlanPage();
+    queuePlanSave();
+  }
+
+  async function swapPlanMeal(di, slot) {
+    const key = di + ':' + slot;
+    if (pv.busy[key] || pv.regen) return;
+    const day = planDays()[di];
+    pv.busy[key] = true;
+    renderPlanPage();
+    const row = planCur;
+    try {
+      const res = await fetch('/api/meal-plan', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'swap', prefs: row.prefs, slot, dayLabel: dayName(day.date, FULL_DAY, 'en-US'),
+          dayMeals: day.meals.filter(m => m.slot !== slot).map(m => m.name), avoid: planMealNames(row.plan.days) }) });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok || !out.meal) throw new Error(out.error || ccT("Couldn't find a swap. Try again."));
+      const i = day.meals.findIndex(m => m.slot === slot);
+      out.meal.slot = slot;
+      if (i >= 0) day.meals[i] = out.meal; else {
+        day.meals.push(out.meal);
+        day.meals.sort((x, y) => PLAN_SLOTS.findIndex(s => s.id === x.slot) - PLAN_SLOTS.findIndex(s => s.id === y.slot));
+      }
+      savePlanNow(row);
+    } catch (e) {
+      showToast(e.message || ccT("Couldn't find a swap. Try again."));
+    } finally {
+      delete pv.busy[key];
+      if (planCur === row) renderPlanPage();
+    }
+  }
+
+  async function regenerateUnlocked() {
+    if (pv.regen) return;
+    const row = planCur, days = planDays(), weeks = planWeeksCount();
+    const [a, b] = weeks > 1 ? weekDayRange(pv.week) : [0, days.length];
+    const scope = days.slice(a, b);
+    const unlocked = scope.reduce((s, d) => s + row.prefs.meals.filter(sl => { const m = d.meals.find(x => x.slot === sl); return !m || !m.locked; }).length, 0);
+    if (!unlocked) { showToast(ccT('Every meal here is locked. Unlock one to get new ideas.')); return; }
+    const ok = await ccConfirm({
+      title: ccT('Get new ideas?'),
+      message: ccFmt('{n} unlocked meals will be replaced. Locked meals stay as they are.', { n: unlocked }),
+      confirmLabel: ccT('Get new ideas'), danger: false, icon: 'ti-refresh'
+    });
+    if (!ok) return;
+    pv.regen = true;
+    renderPlanPage();
+    try {
+      const locked = [];
+      scope.forEach((d, i) => d.meals.forEach(m => { if (m.locked) locked.push({ day: i, slot: m.slot, meal: m }); }));
+      const fresh = await requestPlanWeek(row.prefs, scope.map(d => d.date), locked, planMealNames(days), new AbortController().signal);
+      fresh.forEach((fd, i) => {
+        const d = scope[i];
+        d.meals = row.prefs.meals.map(slot => {
+          const old = d.meals.find(m => m.slot === slot);
+          if (old && old.locked) return old;
+          return fd.meals.find(m => m.slot === slot) || null;
+        }).filter(Boolean);
+      });
+      savePlanNow(row);
+      showToast(ccT('New ideas are in'));
+    } catch (e) {
+      showToast(e.message || ccT('Could not build your plan. Please try again.'));
+    } finally {
+      pv.regen = false;
+      if (planCur === row) renderPlanPage();
+    }
+  }
+
+  // Cook a planned meal: the normal recipe flow, with a way back.
+  function cookPlanMeal(di, slot) {
+    const m = mealFor(di, slot);
+    if (!m) return;
+    closePlanPage();
+    switchMode('cook');
+    cookSearchQuery = m.name;
+    cookOptionList = [{ variation: m.name, blurb: m.description }];
+    const opts = document.getElementById('cookOptions');
+    if (opts) { opts.classList.remove('visible'); opts.innerHTML = ''; }
+    pickCookOption(0);
+    document.getElementById('planReturn').classList.add('show');
+  }
+  function hidePlanReturn() { const el = document.getElementById('planReturn'); if (el) el.classList.remove('show'); }
+  function planReturnShown() { const el = document.getElementById('planReturn'); return !!(el && el.classList.contains('show')); }
+  function returnToPlan() {
+    hidePlanReturn();
+    switchMode('plan');
+    if (planCur) openPlanRow(planCur);
+  }
+
+  // ── Dish pictures for meal cards: on screen only, two at a time ──
+  const planImg = { queue: [], active: 0, off: false, io: null, tried: {} };
+  function observePlanImages() {
+    if (planImg.off) return;
+    if (!planImg.io && 'IntersectionObserver' in window) {
+      planImg.io = new IntersectionObserver(entries => entries.forEach(en => {
+        if (!en.isIntersecting) return;
+        planImg.io.unobserve(en.target);
+        const k = en.target.dataset.img;
+        if (k && !planImg.tried[k] && !planImg.queue.includes(k)) { planImg.queue.push(k); pumpPlanImages(); }
+      }), { root: document.getElementById('plScroll'), rootMargin: '200px' });
+    }
+    document.querySelectorAll('#plBody .meal-img.want').forEach(el => {
+      el.classList.add('loading');
+      if (planImg.io) planImg.io.observe(el); else { planImg.queue.push(el.dataset.img); }
+    });
+    pumpPlanImages();
+  }
+  function findMealByKey(k) {
+    if (!planCur) return null;
+    const [di, slot, ...rest] = k.split(':');
+    const m = mealFor(Number(di), slot);
+    return m && m.name === rest.join(':') ? m : null;
+  }
+  async function pumpPlanImages() {
+    while (!planImg.off && planImg.active < 2 && planImg.queue.length) {
+      const k = planImg.queue.shift();
+      const m = findMealByKey(k);
+      if (!m || m.image_url || planImg.tried[k]) continue;
+      planImg.tried[k] = true;
+      planImg.active++;
+      const row = planCur;
+      (async () => {
+        try {
+          const res = await fetch('/api/dish-image', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ dish: m.name, ingredients: (m.ingredients || []).map(i => i.name) }) });
+          if (res.status === 503) { planImg.off = true; planImg.queue = []; }
+          const out = await res.json().catch(() => ({}));
+          if (!res.ok || !out.url) throw new Error('no image');
+          m.image_url = out.url;
+          if (planCur === row) queuePlanSave();
+          document.querySelectorAll('#plBody .meal-img').forEach(el => {
+            if (el.dataset.img !== k) return;
+            el.classList.remove('want');
+            const img = new Image();
+            img.alt = '';
+            img.onload = () => { el.classList.remove('loading'); el.classList.add('ready'); };
+            img.onerror = () => { el.classList.remove('loading'); img.remove(); };
+            img.src = out.url;
+            el.appendChild(img);
+          });
+        } catch (e) {
+          document.querySelectorAll('#plBody .meal-img').forEach(el => { if (el.dataset.img === k) el.classList.remove('loading', 'want'); });
+        } finally {
+          planImg.active--;
+          pumpPlanImages();
+        }
+      })();
+    }
+    if (planImg.off) document.querySelectorAll('#plBody .meal-img.loading').forEach(el => el.classList.remove('loading', 'want'));
+  }
+
+  // ═══════════ Grocery list ═══════════
+  // Same item across meals → one line. Quantities add up within a unit family
+  // (weight, volume) and are shown in the most readable unit; counted units
+  // (cans, cloves) add up on their own.
+  const UNIT_TO = { g: ['w', 1], kg: ['w', 1000], oz: ['w', 28.3495], lb: ['w', 453.592],
+    ml: ['v', 1], l: ['v', 1000], tsp: ['v', 4.929], tbsp: ['v', 14.787], cup: ['v', 236.588] };
+  function groceryItems(days) {
+    const map = new Map();
+    days.forEach(d => d.meals.forEach(m => (m.ingredients || []).forEach(i => {
+      const key = String(i.key || i.name || '').toLowerCase().trim();
+      if (!key) return;
+      let it = map.get(key);
+      if (!it) { it = { key, name: i.name || key, section: i.section || 'other', cost: 0, qty: {}, meals: new Set() }; map.set(key, it); }
+      it.cost += Number(i.cost) || 0;
+      const u = UNIT_TO[i.unit];
+      const fam = u ? u[0] : 'c:' + (i.unit || 'each');
+      it.qty[fam] = (it.qty[fam] || 0) + (Number(i.qty) || 0) * (u ? u[1] : 1);
+      it.meals.add(m.name);
+    })));
+    return [...map.values()];
+  }
+  function niceNum(n, step) {
+    const r = Math.max(step, Math.round(n / step) * step);
+    const whole = Math.floor(r), frac = Math.round((r - whole) * 100) / 100;
+    const f = { 0.25: '¼', 0.5: '½', 0.75: '¾', 0.33: '⅓', 0.67: '⅔' }[frac];
+    if (f) return (whole ? whole : '') + f;
+    return String(Math.round(r * 10) / 10);
+  }
+  const UNIT_PLURAL = { clove: 'cloves', can: 'cans', bunch: 'bunches', slice: 'slices', cup: 'cups' };
+  function qtyText(it) {
+    const parts = [];
+    Object.keys(it.qty).forEach(fam => {
+      const v = it.qty[fam];
+      if (!(v > 0)) return;
+      if (fam === 'w') parts.push(v >= 340 ? niceNum(v / 453.592, 0.25) + ' lb' : niceNum(v / 28.3495, 0.5) + ' oz');
+      else if (fam === 'v') {
+        if (v >= 59) {
+          const cups = v / 236.588;
+          parts.push(niceNum(cups, 0.25) + (Math.round(cups * 4) / 4 > 1 ? ' cups' : ' cup'));
+        } else if (v >= 14) parts.push(niceNum(v / 14.787, 0.5) + ' tbsp');
+        else parts.push(niceNum(v / 4.929, 0.25) + ' tsp');
+      }
+      else {
+        const unit = fam.slice(2);
+        if (unit === 'pinch') { parts.push('pinch'); return; }
+        const n = Math.ceil(v * 2) / 2;
+        const t = niceNum(n, 0.5);
+        parts.push(unit === 'each' ? t : t + ' ' + (n > 1 && UNIT_PLURAL[unit] ? UNIT_PLURAL[unit] : unit));
+      }
+    });
+    return parts.join(' + ');
+  }
+  function groceryScopes() {
+    const w = planWeeksCount();
+    if (w <= 1) return null;
+    return Array.from({ length: w }, (_, i) => 'w' + i).concat('all');
+  }
+  function groceryScope() {
+    const sc = groceryScopes();
+    if (!sc) return 'all';
+    if (!pv.gScope || !sc.includes(pv.gScope)) pv.gScope = 'w' + pv.week;
+    return pv.gScope;
+  }
+  function scopeDays(scope) {
+    if (scope === 'all') return planDays();
+    const [a, b] = weekDayRange(Number(scope.slice(1)));
+    return planDays().slice(a, b);
+  }
+  function scopeLabel(scope) {
+    if (scope === 'all') return groceryScopes() ? ccT('Whole month') : planCur.title;
+    return ccFmt('Week {n}', { n: Number(scope.slice(1)) + 1 });
+  }
+  function groceryModel() {
+    const g = planCur.grocery;
+    const scope = groceryScope();
+    const days = scopeDays(scope);
+    const items = groceryItems(days);
+    items.forEach(it => {
+      it.checked = !!g.checked[scope + '|' + it.key];
+      it.have = !!g.have[it.key];
+    });
+    const custom = (g.custom || []).filter(c => !groceryScopes() || c.scope === scope);
+    const toBuy = items.filter(it => !it.have);
+    const total = toBuy.reduce((s, it) => s + it.cost, 0);
+    const budget = (Number(planCur.prefs.budget) || 0) * days.length / (planDays().length || 1);
+    return { scope, days, items, custom, total, budget, left: toBuy.filter(it => !it.checked).length + custom.filter(c => !c.done).length };
+  }
+  function renderGrocery() {
+    const gm = groceryModel();
+    let h = '';
+    const scopes = groceryScopes();
+    if (scopes) {
+      h += '<div class="pl-weeks">' + scopes.map(sc =>
+        '<button class="pl-week' + (gm.scope === sc ? ' on' : '') + '" data-act="gscope" data-v="' + sc + '">' + escapeHtml(scopeLabel(sc)) + '</button>').join('') + '</div>';
+    }
+    if (!gm.items.length && !gm.custom.length) {
+      return h + planEmpty('ti-shopping-cart', 'Nothing to buy yet', 'Your grocery list fills in from the meals in your plan.');
+    }
+    const over = gm.budget && gm.total > gm.budget;
+    h += '<div class="pl-sum"><div class="pl-sum-top"><div class="pl-sum-total">' + money(gm.total) + '</div>' +
+        '<div class="pl-sum-of">' + escapeHtml(ccFmt('estimated, of your {budget} budget', { budget: moneyWhole(gm.budget) })) + '</div></div>' +
+      '<div class="pl-meter' + (over ? ' over' : '') + '"><div style="width:' + (gm.budget ? Math.min(100, gm.total / gm.budget * 100) : 0) + '%"></div></div>' +
+      '<div class="pl-sum-note">' + escapeHtml(gm.left ? (gm.left === 1 ? ccT('1 item left to get') : ccFmt('{n} items left to get', { n: gm.left })) : ccT('All done. Happy cooking!')) + '</div></div>';
+    h += '<div class="gl-share">' +
+      '<button data-act="gcopy"><i class="ti ti-copy"></i><span>Copy</span></button>' +
+      '<button data-act="gshare"><i class="ti ti-share"></i><span>Share</span></button>' +
+      '<button data-act="gpdf"><i class="ti ti-file-type-pdf"></i><span>PDF</span></button></div>';
+    h += '<div class="pf-field gl-add"><input id="glAdd" type="text" maxlength="60" enterkeyhint="done" autocomplete="off" placeholder="Add an item, like paper towels">' +
+      '<button class="pf-add" data-act="gadd">Add</button></div>';
+    h += '<div class="gl-legend"><i class="ti ti-home"></i> <span>Tap the house if you already have it. It comes off the total.</span></div>';
+    if (gm.custom.length) {
+      h += '<div class="gl-sec"><div class="gl-sec-h"><i class="ti ti-pencil"></i> <b>Added by you</b></div><div class="gl-items">' +
+        gm.custom.map(c => '<div class="gl-item' + (c.done ? ' done' : '') + '">' +
+          '<button class="gl-check" data-act="gcustom" data-k="' + c.id + '" aria-label="' + escapeHtml(c.name) + '" aria-pressed="' + !!c.done + '"><i class="ti ti-check"></i></button>' +
+          '<button class="gl-main" data-act="gcustom" data-k="' + c.id + '"><div class="gl-name">' + escapeHtml(c.name) + '</div></button>' +
+          '<button class="gl-btn" data-act="gdel" data-k="' + c.id + '" aria-label="Remove"><i class="ti ti-trash"></i></button></div>').join('') +
+        '</div></div>';
+    }
+    GL_SECTIONS.forEach(sec => {
+      const list = gm.items.filter(it => (GL_SECTIONS.some(s => s.id === it.section) ? it.section : 'other') === sec.id)
+        .sort((a, b) => (a.have - b.have) || a.name.localeCompare(b.name));
+      if (!list.length) return;
+      const secCost = list.filter(it => !it.have).reduce((s, it) => s + it.cost, 0);
+      h += '<div class="gl-sec"><div class="gl-sec-h"><i class="ti ' + sec.icon + '"></i> <b>' + sec.label + '</b><span>' + money(secCost) + '</span></div><div class="gl-items">' +
+        list.map(it => {
+          const k = escapeHtml(it.key);
+          const used = it.meals.size === 1 ? ccT('for 1 meal') : ccFmt('for {n} meals', { n: it.meals.size });
+          return '<div class="gl-item' + (it.checked ? ' done' : '') + (it.have ? ' have' : '') + '">' +
+            '<button class="gl-check" data-act="gcheck" data-k="' + k + '" aria-label="' + escapeHtml(it.name) + '" aria-pressed="' + it.checked + '"><i class="ti ti-check"></i></button>' +
+            '<button class="gl-main" data-act="gcheck" data-k="' + k + '"><div class="gl-name">' + escapeHtml(it.name) + '</div>' +
+              '<div class="gl-qty">' + escapeHtml([qtyText(it), it.have ? ccT('Have at home') : used].filter(Boolean).join(' · ')) + '</div></button>' +
+            '<div class="gl-price">' + money(it.cost) + '</div>' +
+            '<button class="gl-btn' + (it.have ? ' on' : '') + '" data-act="ghave" data-k="' + k + '" aria-label="Have at home" aria-pressed="' + it.have + '"><i class="ti ' + (it.have ? 'ti-home-check' : 'ti-home') + '"></i></button>' +
+          '</div>';
+        }).join('') + '</div></div>';
+    });
+    h += '<p class="pf-note">Prices are estimates from average US grocery prices, for the amounts your meals use. Store prices and pack sizes vary.</p>';
+    return h;
+  }
+  function groceryToggle(kind, key) {
+    const g = planCur.grocery;
+    const k = kind === 'checked' ? groceryScope() + '|' + key : key;
+    if (g[kind][k]) delete g[kind][k]; else g[kind][k] = 1;
+    const y = document.getElementById('plScroll').scrollTop;
+    renderPlanPage();
+    document.getElementById('plScroll').scrollTop = y;
+    queuePlanSave();
+  }
+  function groceryAddCustom() {
+    const input = document.getElementById('glAdd');
+    const name = input ? input.value.trim().slice(0, 60) : '';
+    if (!name) { if (input) input.focus(); return; }
+    planCur.grocery.custom = planCur.grocery.custom || [];
+    planCur.grocery.custom.push({ id: 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name, scope: groceryScope(), done: false });
+    renderPlanPage();
+    queuePlanSave();
+    const again = document.getElementById('glAdd');
+    if (again) again.focus();
+  }
+  function groceryCustomToggle(id) {
+    const c = (planCur.grocery.custom || []).find(x => x.id === id);
+    if (!c) return;
+    c.done = !c.done;
+    const y = document.getElementById('plScroll').scrollTop;
+    renderPlanPage();
+    document.getElementById('plScroll').scrollTop = y;
+    queuePlanSave();
+  }
+  function groceryCustomDelete(id) {
+    planCur.grocery.custom = (planCur.grocery.custom || []).filter(x => x.id !== id);
+    renderPlanPage();
+    queuePlanSave();
+  }
+
+  // The list as text, for copying and sharing.
+  function groceryText() {
+    const gm = groceryModel();
+    const lines = [ccFmt('Grocery list: {name}', { name: scopeLabel(gm.scope) === planCur.title ? planCur.title : planCur.title + ' · ' + scopeLabel(gm.scope) }),
+      ccFmt('Estimated total: {amount}', { amount: money(gm.total) }), ''];
+    if (gm.custom.length) {
+      lines.push(ccT('Added by you').toUpperCase());
+      gm.custom.forEach(c => lines.push((c.done ? '✓ ' : '☐ ') + c.name));
+      lines.push('');
+    }
+    GL_SECTIONS.forEach(sec => {
+      const list = gm.items.filter(it => !it.have && (GL_SECTIONS.some(s => s.id === it.section) ? it.section : 'other') === sec.id)
+        .sort((a, b) => a.name.localeCompare(b.name));
+      if (!list.length) return;
+      lines.push(ccT(sec.label).toUpperCase());
+      list.forEach(it => lines.push((it.checked ? '✓ ' : '☐ ') + it.name + (qtyText(it) ? ' (' + qtyText(it) + ')' : '') + ' · ' + money(it.cost)));
+      lines.push('');
+    });
+    const have = gm.items.filter(it => it.have);
+    if (have.length) lines.push(ccT('Already at home') + ': ' + have.map(it => it.name).join(', '), '');
+    lines.push(ccT('Made with Capture & Cook'));
+    return lines.join('\n');
+  }
+  async function copyPlainText(text) {
+    try { await navigator.clipboard.writeText(text); return true; } catch (e) {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      let ok = false;
+      try { ok = document.execCommand('copy'); } catch (e2) {}
+      ta.remove();
+      return ok;
+    }
+  }
+  async function groceryCopy() {
+    showToast((await copyPlainText(groceryText())) ? ccT('Grocery list copied') : ccT("Couldn't copy. Try Share instead."));
+  }
+  const shareCancelled = e => /cancel|abort/i.test(String((e && (e.message || e.name)) || ''));
+  async function groceryShare() {
+    const text = groceryText();
+    const title = ccT('Grocery list');
+    try {
+      const S = window.Capacitor && Capacitor.Plugins && Capacitor.Plugins.Share;
+      if (isNativeApp() && S) { await S.share({ title, text, dialogTitle: title }); return; }
+      if (navigator.share) { await navigator.share({ title, text }); return; }
+      groceryCopy();
+    } catch (e) {
+      if (!shareCancelled(e)) groceryCopy();
+    }
+  }
+
+  // ── PDF ──
+  // Drawn on a canvas, so every language and script prints exactly as on
+  // screen, then wrapped as JPEG pages in a minimal PDF. No library needed.
+  async function groceryPdf(btn) {
+    if (btn) btn.disabled = true;
+    try {
+      const gm = groceryModel();
+      const pages = drawGroceryPages(gm);
+      const pdf = jpegPagesToPdf(pages);
+      const name = 'grocery-list-' + (planCur.plan.startDate || 'plan') + '.pdf';
+      await shareBinary(pdf, name, 'application/pdf', ccT('Grocery list'));
+    } catch (e) {
+      if (!shareCancelled(e)) { console.warn('pdf:', e); showToast(ccT("Couldn't make the PDF. Try Copy instead.")); }
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  }
+  function drawGroceryPages(gm) {
+    const W = 1240, H = 1754, M = 96;           // A4 at 150 dpi
+    const rtl = document.documentElement.dir === 'rtl';
+    const font = (w, s) => w + ' ' + s + 'px "Bricolage Grotesque", "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif';
+    const pages = [];
+    let c, ctx, y;
+    const X = x => (rtl ? W - x : x);
+    const newPage = () => {
+      if (c) pages.push(c);
+      c = document.createElement('canvas'); c.width = W; c.height = H;
+      ctx = c.getContext('2d');
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);
+      ctx.direction = rtl ? 'rtl' : 'ltr';
+      ctx.textBaseline = 'alphabetic';
+      y = M;
+    };
+    const text = (s, x, yy, f, color, align) => {
+      ctx.font = f; ctx.fillStyle = color || '#1e2b22';
+      ctx.textAlign = align === 'end' ? (rtl ? 'left' : 'right') : (rtl ? 'right' : 'left');
+      ctx.fillText(s, X(x), yy);
+    };
+    const fit = (s, f, max) => {
+      ctx.font = f;
+      if (ctx.measureText(s).width <= max) return s;
+      while (s.length > 1 && ctx.measureText(s + '…').width > max) s = s.slice(0, -1);
+      return s + '…';
+    };
+    const ensure = h => { if (y + h > H - M) newPage(); };
+    newPage();
+    text(ccT('Grocery list'), M, y + 40, font('800', 52));
+    y += 78;
+    text(scopeLabel(gm.scope) === planCur.title ? planCur.title : planCur.title + ' · ' + scopeLabel(gm.scope), M, y + 10, font('600', 26), '#5f6e64');
+    text(ccFmt('Estimated total: {amount}', { amount: money(gm.total) }), W - M, y + 10, font('800', 26), '#16a34a', 'end');
+    y += 40;
+    ctx.fillStyle = '#1e2b22'; ctx.fillRect(M, y, W - 2 * M, 3);
+    y += 30;
+    const row = (label, sub, price, done) => {
+      ensure(64);
+      ctx.strokeStyle = '#1e2b22'; ctx.lineWidth = 3;
+      const bx = rtl ? W - M - 30 : M;
+      ctx.strokeRect(bx, y + 8, 30, 30);
+      if (done) { ctx.fillStyle = '#22c55e'; ctx.fillRect(bx + 6, y + 14, 18, 18); }
+      const nameMax = W - 2 * M - 60 - 150;
+      text(fit(label, font('700', 28), nameMax), M + 50, y + 32, font('700', 28), done ? '#93a198' : '#1e2b22');
+      if (sub) text(fit(sub, font('500', 21), nameMax), M + 50, y + 58, font('500', 21), '#5f6e64');
+      if (price) text(price, W - M, y + 32, font('800', 26), done ? '#93a198' : '#1e2b22', 'end');
+      y += sub ? 76 : 56;
+    };
+    const heading = s => {
+      ensure(110);
+      y += 18;
+      text(s.toUpperCase(), M, y + 26, font('800', 24), '#16a34a');
+      y += 44;
+    };
+    if (gm.custom.length) { heading(ccT('Added by you')); gm.custom.forEach(cu => row(cu.name, '', '', cu.done)); }
+    GL_SECTIONS.forEach(sec => {
+      const list = gm.items.filter(it => !it.have && (GL_SECTIONS.some(s => s.id === it.section) ? it.section : 'other') === sec.id)
+        .sort((a, b) => a.name.localeCompare(b.name));
+      if (!list.length) return;
+      heading(ccT(sec.label));
+      list.forEach(it => row(it.name, qtyText(it), money(it.cost), it.checked));
+    });
+    const have = gm.items.filter(it => it.have);
+    if (have.length) {
+      heading(ccT('Already at home'));
+      ensure(50);
+      text(fit(have.map(it => it.name).join(', '), font('500', 24), W - 2 * M), M, y + 26, font('500', 24), '#5f6e64');
+      y += 50;
+    }
+    pages.push(c);
+    // Page footers once the count is known.
+    pages.forEach((pg, i) => {
+      const g = pg.getContext('2d');
+      g.font = font('600', 20); g.fillStyle = '#93a198'; g.direction = rtl ? 'rtl' : 'ltr';
+      g.textAlign = 'center';
+      g.fillText(ccT('Made with Capture & Cook') + (pages.length > 1 ? '  ·  ' + (i + 1) + ' / ' + pages.length : ''), W / 2, H - 50);
+    });
+    return pages.map(pg => {
+      const b64 = pg.toDataURL('image/jpeg', 0.88).split(',')[1];
+      const bin = atob(b64);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      return { bytes, w: pg.width, h: pg.height };
+    });
+  }
+  function jpegPagesToPdf(pages) {
+    const enc = new TextEncoder();
+    const parts = [];
+    let len = 0;
+    const offsets = [];
+    const push = x => { const b = typeof x === 'string' ? enc.encode(x) : x; parts.push(b); len += b.length; };
+    const obj = (n, write) => { offsets[n] = len; push(n + ' 0 obj\n'); write(); push('\nendobj\n'); };
+    const count = 2 + pages.length * 3;
+    push('%PDF-1.4\n');
+    obj(1, () => push('<< /Type /Catalog /Pages 2 0 R >>'));
+    obj(2, () => push('<< /Type /Pages /Kids [' + pages.map((_, k) => (3 + k * 3) + ' 0 R').join(' ') + '] /Count ' + pages.length + ' >>'));
+    pages.forEach((p, k) => {
+      const po = 3 + k * 3;
+      obj(po, () => push('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /XObject << /Im0 ' + (po + 2) + ' 0 R >> >> /Contents ' + (po + 1) + ' 0 R >>'));
+      const draw = 'q 595 0 0 842 0 0 cm /Im0 Do Q';
+      obj(po + 1, () => push('<< /Length ' + draw.length + ' >>\nstream\n' + draw + '\nendstream'));
+      obj(po + 2, () => {
+        push('<< /Type /XObject /Subtype /Image /Width ' + p.w + ' /Height ' + p.h + ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ' + p.bytes.length + ' >>\nstream\n');
+        push(p.bytes);
+        push('\nendstream');
+      });
+    });
+    const xref = len;
+    let x = 'xref\n0 ' + (count + 1) + '\n0000000000 65535 f \n';
+    for (let i = 1; i <= count; i++) x += String(offsets[i]).padStart(10, '0') + ' 00000 n \n';
+    push(x + 'trailer\n<< /Size ' + (count + 1) + ' /Root 1 0 R >>\nstartxref\n' + xref + '\n%%EOF\n');
+    const out = new Uint8Array(len);
+    let o = 0;
+    parts.forEach(b => { out.set(b, o); o += b.length; });
+    return out;
+  }
+  // Hand a file to the share sheet (app), or the browser's share or download.
+  async function shareBinary(bytes, filename, mime, title) {
+    const P = window.Capacitor && Capacitor.Plugins;
+    if (isNativeApp() && P && P.Filesystem && P.Share) {
+      let bin = '';
+      for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+      const w = await P.Filesystem.writeFile({ path: filename, data: btoa(bin), directory: 'CACHE' });
+      await P.Share.share({ title, files: [w.uri], dialogTitle: title });
+      return;
+    }
+    const blob = new Blob([bytes], { type: mime });
+    const file = typeof File === 'function' ? new File([blob], filename, { type: mime }) : null;
+    if (file && navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title }); return; }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 30000);
+  }
+
+  // ── Plan menu ──
+  async function togglePlanFavorite() { if (planCur && planCur.id) setPlanFavorite(planCur.id, !planCur.favorite); }
+  async function planMoreMenu() {
+    if (!planCur) return;
+    const choice = await ccSheet({
+      title: planCur.title,
+      actions: [
+        { key: 'edit', label: ccT('Change answers and rebuild'), icon: 'ti-adjustments' },
+        { key: 'new', label: ccT('Start a new plan'), icon: 'ti-plus' },
+        { key: 'delete', label: ccT('Delete plan'), icon: 'ti-trash', danger: true }
+      ]
+    });
+    if (choice === 'edit') {
+      openPlanFlow({ prefs: clone(planCur.prefs), replaceId: planCur.id });
+    } else if (choice === 'new') {
+      openPlanFlow();
+    } else if (choice === 'delete') {
+      const ok = await ccConfirm({ title: ccT('Delete this plan?'), message: ccT('Its meals and grocery list will be gone for good.'), confirmLabel: ccT('Delete plan'), icon: 'ti-trash' });
+      if (!ok) return;
+      const row = planCur;
+      clearTimeout(planSaveTimer);
+      if (row.id) {
+        const { error } = await supaClient.from('meal_plans').delete().eq('id', row.id);
+        if (error) { showToast(ccT("Couldn't delete the plan. Try again.")); return; }
+      }
+      planState.plans = (planState.plans || []).filter(p => p.id !== row.id);
+      try { localStorage.setItem(PLAN_CACHE_KEY(), JSON.stringify(planState.plans)); } catch (e) {}
+      planCur = null;
+      closePlanPage();
+      renderPlanList();
+      showToast(ccT('Plan deleted'));
+    }
+  }
+
+  // Android back, for the planner's pages. True when it handled it.
+  function planBackHandled() {
+    if (planFlowOpen()) { planFlowBack(); return true; }
+    if (planPageOpen()) { closePlanPage(); return true; }
+    return false;
   }
 </script>
 </body>

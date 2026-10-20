@@ -43,6 +43,13 @@ export default async function handler(req, res) {
       headers: adminHeaders,
       body: JSON.stringify({ username: '[deleted user]', avatar_photo: null, avatar_icon: null, avatar_color: null, favorites_public: false, daily_calorie_goal: null })
     }).catch(() => {});
+    // Separate, so the anonymizing above never fails over a column that a
+    // database without the Oct 19 migration doesn't have yet.
+    await fetch(`${SUPABASE_URL}/rest/v1/user_profiles?id=eq.${uid}`, {
+      method: 'PATCH',
+      headers: adminHeaders,
+      body: JSON.stringify({ meal_prefs: null })
+    }).catch(() => {});
 
     // 2) Delete every row keyed to this user. Anything not listed here outlives
     //    the account, so the list is deliberately exhaustive: leaving the
@@ -55,6 +62,7 @@ export default async function handler(req, res) {
       del(`dishes?user_id=eq.${uid}`),          // history and favorites
       del(`post_reactions?user_id=eq.${uid}`),
       del(`nutrition_log?user_id=eq.${uid}`),   // logged meals — health data
+      del(`meal_plans?user_id=eq.${uid}`),      // saved plans (diet, allergies)
       del(`device_tokens?user_id=eq.${uid}`),   // stop push to their devices
       del(`post_views?viewer_id=eq.${uid}`),
       del(`follows?follower_id=eq.${uid}`),

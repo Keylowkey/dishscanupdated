@@ -26,18 +26,31 @@ const MODEL = 'claude-sonnet-4-5';
 const SECTIONS = ['produce', 'meat-seafood', 'dairy-eggs', 'bakery', 'pantry', 'spices', 'frozen', 'beverages', 'other'];
 
 // Kept in step with ALLERGENS in index.html: anything matching is rejected.
+// `not` lists look-alikes that are safe for that allergy (coconut milk is
+// not dairy, eggplant is not egg), removed before matching.
 const ALLERGEN_WORDS = {
-  nuts: ['almond', 'walnut', 'pecan', 'cashew', 'pistachio', 'hazelnut', 'macadamia', 'peanut', 'pine nut', 'nut butter', 'praline', 'marzipan'],
-  dairy: ['milk', 'butter', 'cheese', 'cream', 'yogurt', 'yoghurt', 'ghee', 'custard', 'whey', 'casein', 'paneer', 'ricotta', 'mozzarella', 'parmesan'],
-  eggs: ['egg', 'mayonnaise', 'mayo', 'meringue', 'aioli'],
-  gluten: ['flour', 'wheat', 'bread', 'pasta', 'noodle', 'barley', 'rye', 'breadcrumb', 'couscous', 'bulgur', 'tortilla', 'pita', 'seitan', 'farro', 'semolina'],
-  shellfish: ['shrimp', 'prawn', 'crab', 'lobster', 'clam', 'mussel', 'oyster', 'scallop', 'crawfish', 'crayfish'],
-  soy: ['soy', 'soya', 'tofu', 'edamame', 'tempeh', 'miso', 'tamari']
+  nuts: { has: ['almond', 'walnut', 'pecan', 'cashew', 'pistachio', 'hazelnut', 'macadamia', 'peanut', 'pine nut',
+                'nut butter', 'praline', 'marzipan', 'nutella', 'chestnut', ' nut ', ' nuts '],
+          not: ['butternut', 'coconut', 'nutmeg', 'nut-free', 'peanut-free', 'water chestnut', 'doughnut', 'donut'] },
+  dairy: { has: ['milk', 'butter', 'cheese', 'cream', 'yogurt', 'yoghurt', 'ghee', 'custard', 'whey', 'casein',
+                 'paneer', 'ricotta', 'mozzarella', 'parmesan', 'cheddar', 'feta', 'mascarpone'],
+           not: ['coconut milk', 'coconut cream', 'almond milk', 'oat milk', 'soy milk', 'rice milk', 'cashew milk',
+                 'peanut butter', 'almond butter', 'nut butter', 'sunflower butter', 'seed butter', 'cocoa butter',
+                 'apple butter', 'butternut', 'butter bean', 'cream of tartar', 'dairy-free', 'dairy free', 'vegan'] },
+  eggs: { has: ['egg', 'mayonnaise', 'mayo', 'meringue', 'aioli', 'albumin', 'custard'],
+          not: ['eggplant', 'egg-free', 'egg free', 'vegan mayo'] },
+  gluten: { has: ['flour', 'wheat', 'bread', 'pasta', 'noodle', 'barley', 'rye', 'breadcrumb', 'panko', 'cracker',
+                  'crouton', 'tortilla', 'pita', 'soy sauce', 'seitan', 'semolina', 'couscous', 'farro', 'bulgur',
+                  'biscuit', 'dough', 'naan'],
+            not: ['gluten-free', 'gluten free', 'rice flour', 'almond flour', 'coconut flour', 'oat flour', 'corn tortilla',
+                  'rice noodle', 'rice paper', 'buckwheat', 'chickpea flour', 'cassava flour', 'tapioca flour',
+                  'cornflour', 'corn flour', 'potato flour'] },
+  shellfish: { has: ['shrimp', 'prawn', 'crab', 'lobster', 'clam', 'mussel', 'oyster', 'scallop', 'crawfish', 'crayfish',
+                     'squid', 'calamari', 'octopus', 'shellfish'],
+               not: ['oyster mushroom', 'imitation crab-free'] },
+  soy: { has: ['soy', 'soya', 'tofu', 'edamame', 'tempeh', 'miso', 'tamari'],
+         not: ['soy-free', 'soy free'] }
 };
-// Words that look like an allergen but aren't one.
-const ALLERGEN_EXCEPTIONS = ['coconut milk', 'almond-free', 'gluten-free', 'dairy-free', 'egg-free', 'nut-free',
-  'oat milk', 'soy-free', 'butternut', 'cream of tartar', 'eggplant', 'gluten free', 'dairy free', 'rice noodle',
-  'buckwheat noodle', 'corn tortilla', 'rice flour', 'almond milk', 'peanut-free'];
 
 const clip = (v, n) => String(v == null ? '' : v).slice(0, n);
 const list = (v, max, n) => (Array.isArray(v) ? v : []).map(x => clip(x, n).trim()).filter(Boolean).slice(0, max);
@@ -150,13 +163,17 @@ function cleanMeal(m, slot) {
   };
 }
 
-// Does this meal break an allergy? (Ingredients only; names can mislead.)
+// Does this meal break an allergy? Checks ingredients, which is where an
+// allergen actually is (a dish name can mislead either way).
 function allergyHit(meal, allergies) {
   for (const a of allergies) {
+    const rule = ALLERGEN_WORDS[a];
     for (const ing of meal.ingredients) {
-      let text = ' ' + ing.name.toLowerCase() + ' ' + ing.key + ' ';
-      ALLERGEN_EXCEPTIONS.forEach(x => { text = text.split(x).join(' '); });
-      if (ALLERGEN_WORDS[a].some(w => text.includes(w))) return a;
+      let text = ' ' + (ing.name + ' ' + ing.key).toLowerCase().replace(/[^a-z\- ]+/g, ' ') + ' ';
+      // "gluten-free pasta", "dairy-free cheese": labelled safe for this one.
+      if (new RegExp('\\b(' + a + '|' + a.replace(/s$/, '') + ')[- ]free\\b').test(text)) continue;
+      rule.not.forEach(x => { text = text.split(x).join(' '); });
+      if (rule.has.some(w => text.includes(w))) return a;
     }
   }
   return null;
@@ -277,7 +294,8 @@ export default async function handler(req, res) {
   const check = validatePlanRequest(prefs);
   if (!check.ok) return res.status(400).json({ error: check.error, minimum: check.minimum });
 
-  const me = await guard(req, res, { bucket: 'meal-plan', max: 40 });
+  // A month is four week requests; swaps are one each.
+  const me = await guard(req, res, { bucket: 'meal-plan', max: 60 });
   if (!me) return;
 
   const avoid = list(body.avoid, 120, 80);
