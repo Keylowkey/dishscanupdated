@@ -15715,9 +15715,10 @@
       else {
         const unit = fam.slice(2);
         if (unit === 'pinch') { parts.push('pinch'); return; }
-        const n = Math.ceil(v * 2) / 2;
-        const t = niceNum(n, 0.5);
-        parts.push(unit === 'each' ? t : t + ' ' + (n > 1 && UNIT_PLURAL[unit] ? UNIT_PLURAL[unit] : unit));
+        // Things you count are bought whole: 5½ cans means buying 6.
+        const n = Math.max(1, Math.ceil(v - 0.05));
+        const mixed = Object.keys(it.qty).length > 1;
+        parts.push(unit === 'each' ? n + (mixed ? ' whole' : '') : n + ' ' + (n > 1 && UNIT_PLURAL[unit] ? UNIT_PLURAL[unit] : unit));
       }
     });
     return parts.join(' + ');
