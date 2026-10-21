@@ -12948,7 +12948,11 @@
       const v = r.querySelector('video');
       if (!v) return;
       if (Math.abs(i - idx) <= 1) {
-        if (!v.getAttribute('src') && v.dataset.src) { v.preload = 'auto'; v.src = v.dataset.src; }
+        // Only the Bite on screen downloads in full. Its neighbours fetch just
+        // their first moments, so a swipe starts playing at once without
+        // paying for whole videos nobody watches.
+        v.preload = i === idx ? 'auto' : 'metadata';
+        if (!v.getAttribute('src') && v.dataset.src) v.src = v.dataset.src;
       } else if (v.getAttribute('src')) {
         v.pause(); v.removeAttribute('src'); v.load();
       }

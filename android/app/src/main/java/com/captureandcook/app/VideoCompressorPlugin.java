@@ -41,8 +41,9 @@ import java.util.List;
  *
  * Phones record at bitrates where a 35-second clip already exceeds 50 MB, the
  * per-file ceiling on Supabase Storage. Social apps re-encode before upload;
- * this does the same with Media3 Transformer: 720p H.264 at 3.5 Mbps plus AAC,
- * about 26 MB a minute. If that still exceeds the limit it retries at 540p.
+ * this does the same with Media3 Transformer: 720p H.264 at 2 Mbps plus AAC,
+ * about 16 MB a minute. If that still exceeds the limit it retries at 540p.
+ * Every view is paid for in bandwidth, so this matches the iOS encoder.
  * HDR footage is tone-mapped to SDR so it doesn't come out washed out.
  *
  * JS: VideoCompressor.pickAndCompress({ maxSeconds, maxBytes })
@@ -55,8 +56,8 @@ public class VideoCompressorPlugin extends Plugin {
 
     private static final int[][] ATTEMPTS = {
         // { short side in px, video bitrate in bit/s }
-        { 720, 3_500_000 },
-        { 540, 2_000_000 },
+        { 720, 2_000_000 },
+        { 540, 1_200_000 },
     };
 
     private final Handler main = new Handler(Looper.getMainLooper());

@@ -8,9 +8,11 @@ import UniformTypeIdentifiers
 ///
 /// Phones record at bitrates where a 35-second clip already exceeds 50 MB,
 /// the per-file ceiling on Supabase Storage. Social apps re-encode before
-/// uploading; this does the same. A clip is exported at 720p H.264, and only
-/// if that is still too large, at 540p. Apple's exporter handles iPhone HDR
-/// footage correctly, which hand-rolled encoding easily gets wrong.
+/// uploading; this does the same: 720p H.264 at 2 Mbps (about 16 MB a
+/// minute), and only if that is still too large, 540p at 1.2 Mbps. Every
+/// view of a video is paid for in bandwidth, so the bitrate is set here
+/// rather than left to Apple's 720p preset, which runs at ~7.5 Mbps.
+/// HDR footage is converted to standard colour (see ClipEncoder).
 ///
 /// JS: VideoCompressor.pickAndCompress({ maxSeconds, maxBytes })
 ///   → { path, duration, size, width, height }
@@ -85,10 +87,25 @@ public class VideoCompressorPlugin: CAPPlugin, CAPBridgedPlugin, PHPickerViewCon
         }
 
         // 720p first; fall back to 540p only when 720p is still over the limit.
-        for preset in [AVAssetExportPreset1280x720, AVAssetExportPreset960x540] {
+        let attempts: [ClipEncoder.Settings] = [
+            .init(shortSide: 720, videoBitrate: 2_000_000, audioBitrate: 96_000),
+            .init(shortSide: 540, videoBitrate: 1_200_000, audioBitrate: 64_000)
+        ]
+        for settings in attempts {
             let out = FileManager.default.temporaryDirectory
                 .appendingPathComponent("share-\(UUID().uuidString).mp4")
-            guard await export(asset: asset, preset: preset, to: out) else { continue }
+            var lastSent = -1.0
+            do {
+                // The encoder reports every frame; the progress bar needs 1% steps.
+                try await ClipEncoder.encode(asset: asset, to: out, settings: settings) { [weak self] p in
+                    guard p - lastSent >= 0.01 || p >= 1 else { return }
+                    lastSent = p
+                    self?.notifyListeners("progress", data: ["progress": p])
+                }
+            } catch {
+                try? FileManager.default.removeItem(at: out)
+                continue
+            }
             let size = (try? FileManager.default.attributesOfItem(atPath: out.path)[.size] as? Int64) ?? 0
             if size > 0 && size <= maxBytes {
                 var w = 0, h = 0
@@ -106,24 +123,128 @@ public class VideoCompressorPlugin: CAPPlugin, CAPBridgedPlugin, PHPickerViewCon
         }
         call.reject("That video is too large even after compressing. Try a shorter clip.", "TOO_LARGE")
     }
+}
 
-    private func export(asset: AVAsset, preset: String, to out: URL) async -> Bool {
-        guard let session = AVAssetExportSession(asset: asset, presetName: preset) else { return false }
-        session.outputURL = out
-        session.outputFileType = .mp4
-        session.shouldOptimizeForNetworkUse = true   // moov atom first, so playback starts early
+/// Re-encode a clip as H.264 at a set bitrate, scaled so its short side is at
+/// most `shortSide`, in standard (Rec. 709) colour so HDR footage doesn't come
+/// out washed out, with AAC audio. Orientation comes from the video
+/// composition, which applies the track's rotation.
+enum ClipEncoder {
+    struct Settings { let shortSide: CGFloat; let videoBitrate: Int; let audioBitrate: Int }
 
-        let timer = Timer(timeInterval: 0.25, repeats: true) { [weak self, weak session] _ in
-            guard let s = session else { return }
-            self?.notifyListeners("progress", data: ["progress": Double(s.progress)])
+    static func encode(asset: AVAsset, to out: URL, settings: Settings,
+                       progress: @escaping (Double) -> Void) async throws {
+        let duration = try await asset.load(.duration)
+        guard let videoTrack = try await asset.loadTracks(withMediaType: .video).first else {
+            throw NSError(domain: "ClipEncoder", code: 1, userInfo: [NSLocalizedDescriptionKey: "No video track"])
         }
-        RunLoop.main.add(timer, forMode: .common)
-        // A timer must be invalidated on the run loop it was scheduled on.
-        defer { DispatchQueue.main.async { timer.invalidate() } }
+        let audioTracks = try await asset.loadTracks(withMediaType: .audio)
+
+        // Composition: rotation applied, SDR colour, scaled render size.
+        let composition = try await AVMutableVideoComposition.videoComposition(withPropertiesOf: asset)
+        composition.colorPrimaries = AVVideoColorPrimaries_ITU_R_709_2
+        composition.colorTransferFunction = AVVideoTransferFunction_ITU_R_709_2
+        composition.colorYCbCrMatrix = AVVideoYCbCrMatrix_ITU_R_709_2
+        // The composition renders upright at full size; the writer scales down.
+        let natural = composition.renderSize
+        let scale = min(1, settings.shortSide / min(natural.width, natural.height))
+        let even = { (v: CGFloat) -> Int in Int((v * scale).rounded()) & ~1 }   // H.264 needs even sizes
+        let outW = even(natural.width), outH = even(natural.height)
+
+        let reader = try AVAssetReader(asset: asset)
+        let videoOut = AVAssetReaderVideoCompositionOutput(videoTracks: [videoTrack], videoSettings: [
+            kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange
+        ])
+        videoOut.videoComposition = composition
+        videoOut.alwaysCopiesSampleData = false
+        reader.add(videoOut)
+
+        var audioOut: AVAssetReaderAudioMixOutput?
+        if !audioTracks.isEmpty {
+            let a = AVAssetReaderAudioMixOutput(audioTracks: audioTracks, audioSettings: [
+                AVFormatIDKey: kAudioFormatLinearPCM, AVSampleRateKey: 44100, AVNumberOfChannelsKey: 2,
+                AVLinearPCMBitDepthKey: 16, AVLinearPCMIsFloatKey: false, AVLinearPCMIsBigEndianKey: false,
+                AVLinearPCMIsNonInterleaved: false
+            ])
+            a.alwaysCopiesSampleData = false
+            if reader.canAdd(a) { reader.add(a); audioOut = a }
+        }
+
+        let writer = try AVAssetWriter(outputURL: out, fileType: .mp4)
+        writer.shouldOptimizeForNetworkUse = true   // moov atom first, so playback starts early
+        let fps = try await videoTrack.load(.nominalFrameRate)
+        let videoIn = AVAssetWriterInput(mediaType: .video, outputSettings: [
+            AVVideoCodecKey: AVVideoCodecType.h264,
+            AVVideoWidthKey: outW,
+            AVVideoHeightKey: outH,
+            AVVideoScalingModeKey: AVVideoScalingModeResizeAspect,
+            AVVideoColorPropertiesKey: [
+                AVVideoColorPrimariesKey: AVVideoColorPrimaries_ITU_R_709_2,
+                AVVideoTransferFunctionKey: AVVideoTransferFunction_ITU_R_709_2,
+                AVVideoYCbCrMatrixKey: AVVideoYCbCrMatrix_ITU_R_709_2
+            ],
+            AVVideoCompressionPropertiesKey: [
+                AVVideoAverageBitRateKey: settings.videoBitrate,
+                AVVideoProfileLevelKey: AVVideoProfileLevelH264HighAutoLevel,
+                AVVideoMaxKeyFrameIntervalDurationKey: 2,
+                AVVideoExpectedSourceFrameRateKey: fps > 0 ? Int(fps.rounded()) : 30
+            ]
+        ])
+        videoIn.expectsMediaDataInRealTime = false
+        writer.add(videoIn)
+
+        var audioIn: AVAssetWriterInput?
+        if audioOut != nil {
+            let a = AVAssetWriterInput(mediaType: .audio, outputSettings: [
+                AVFormatIDKey: kAudioFormatMPEG4AAC, AVSampleRateKey: 44100, AVNumberOfChannelsKey: 2,
+                AVEncoderBitRateKey: settings.audioBitrate
+            ])
+            a.expectsMediaDataInRealTime = false
+            writer.add(a)
+            audioIn = a
+        }
+
+        guard reader.startReading() else { throw reader.error ?? NSError(domain: "ClipEncoder", code: 2) }
+        guard writer.startWriting() else { throw writer.error ?? NSError(domain: "ClipEncoder", code: 3) }
+        writer.startSession(atSourceTime: .zero)
+
+        let total = max(duration.seconds, 0.1)
+        let queue = DispatchQueue(label: "clip-encoder")
+        let group = DispatchGroup()
+
+        func pump(_ input: AVAssetWriterInput, _ output: AVAssetReaderOutput, reportsProgress: Bool) {
+            group.enter()
+            input.requestMediaDataWhenReady(on: queue) {
+                while input.isReadyForMoreMediaData {
+                    guard reader.status == .reading, let sample = output.copyNextSampleBuffer() else {
+                        input.markAsFinished()
+                        group.leave()
+                        return
+                    }
+                    if reportsProgress {
+                        progress(min(1, CMSampleBufferGetPresentationTimeStamp(sample).seconds / total))
+                    }
+                    if !input.append(sample) {
+                        reader.cancelReading()
+                        input.markAsFinished()
+                        group.leave()
+                        return
+                    }
+                }
+            }
+        }
+        pump(videoIn, videoOut, reportsProgress: true)
+        if let ai = audioIn, let ao = audioOut { pump(ai, ao, reportsProgress: false) }
 
         await withCheckedContinuation { (done: CheckedContinuation<Void, Never>) in
-            session.exportAsynchronously { done.resume() }
+            group.notify(queue: queue) { done.resume() }
         }
-        return session.status == .completed
+        if reader.status == .failed || writer.status == .failed {
+            writer.cancelWriting()
+            throw writer.error ?? reader.error ?? NSError(domain: "ClipEncoder", code: 4)
+        }
+        await writer.finishWriting()
+        if writer.status != .completed { throw writer.error ?? NSError(domain: "ClipEncoder", code: 5) }
+        progress(1)
     }
 }
