@@ -3034,19 +3034,37 @@
   }
   .composer-caption:focus { outline: none; border-color: var(--sage); box-shadow: 0 0 0 3px var(--sage-light); }
   .composer-actions { display: flex; gap: 10px; }
-  /* Equal thirds whatever the labels say: a flex item's minimum width is its
-     content by default, so a long label used to widen its button. */
-  .composer-actions > button { flex: 1 1 0; min-width: 0; }
-  .composer-actions > button span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-  .composer-actions > button i { flex-shrink: 0; }
-  .composer-status {
-    display: flex; align-items: center; gap: 8px; margin-top: 12px;
-    font-size: 13.5px; font-weight: 600; color: var(--text2);
-  }
-  .composer-status[hidden] { display: none; }
+  /* Photo and Video share a row; Share gets its own, full width. Three across
+     a phone was too narrow for whole words in every language ("Compartir"). */
+  .composer-actions { flex-wrap: wrap; }
+  .composer-actions > .upload-action-btn { flex: 1 1 0; min-width: 0; white-space: nowrap; }
+  .composer-actions > .composer-share-btn { flex: 1 1 100%; min-height: 52px; font-size: 15px; }
+  .composer-share-btn .cc-loader { margin: -10px 0; }
+  /* Busy is not "unavailable": full colour, so the loading logo reads clearly. */
+  .composer-share-btn[aria-busy="true"]:disabled { opacity: 1; cursor: progress; }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
   .composer-actions .upload-action-btn:disabled, .composer-remove:disabled { opacity: .45; cursor: default; }
-  .composer-status i { font-size: 17px; color: var(--sage); }
   .cc-spin { display: inline-block; animation: ccSpin .8s linear infinite; }
+
+  /* ── Loading: the Capture & Cook camera, fork and knife turning in the lens ──
+     Drawn as SVG (ccLogoLoader) so the utensils can move. They are clipped to
+     the lens, so they never leave it while they turn. */
+  .cc-loader { display: inline-block; line-height: 0; }
+  .cc-loader svg { width: 100%; height: 100%; display: block; overflow: visible; }
+  .cc-loader .ccl-utensils {
+    transform-box: view-box; transform-origin: 512px 555px;
+    animation: cclTurn 1.5s cubic-bezier(.65, 0, .35, 1) infinite;
+  }
+  @keyframes cclTurn {
+    0%   { transform: rotate(0deg); }
+    60%  { transform: rotate(360deg); }
+    100% { transform: rotate(360deg); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .cc-loader .ccl-utensils { animation-duration: 4s; }
+  }
+  /* On the app-icon tile (the meal plan screen). */
+  .cc-loader.tile { background: #22c55e; border-radius: 26%; border: 2px solid var(--ink); box-shadow: var(--shadow-sm); box-sizing: border-box; }
   @media (prefers-reduced-motion: reduce) { .cc-spin { animation-duration: 2.4s; } }
   .composer-share-btn {
     flex: 1; padding: 14px; background: var(--sage); color: #fff; border: none;
@@ -3344,6 +3362,7 @@
     animation: stageWiggle 1.6s ease-in-out infinite;
   }
   @media (prefers-reduced-motion: reduce) { .pf-gen-ico { animation: none; } }
+  .pf-gen-logo { margin: 0 auto 22px; width: 104px; height: 104px; transform: rotate(-4deg); }
   .pf-gen h3 { font-family: var(--font-display); font-size: 22px; font-weight: 800; margin-bottom: 6px; }
   .pf-gen p { color: var(--text2); font-size: 14.5px; line-height: 1.5; }
   .pf-gen-bar { height: 10px; border-radius: 99px; background: var(--surface2); border: 1.5px solid var(--ink); margin: 22px auto 10px; max-width: 320px; overflow: hidden; }
@@ -5703,11 +5722,9 @@
           <i class="ti ti-send"></i> <span>Share</span>
         </button>
       </div>
-      <!-- What's happening while a post goes up. Kept out of the Share button,
-           where a long label pushed the button out of the card. -->
-      <div class="composer-status" id="composerStatus" role="status" aria-live="polite" hidden>
-        <i class="ti ti-loader-2 cc-spin"></i><span id="composerStatusText"></span>
-      </div>
+      <!-- Read out by screen readers while a post goes up; on screen, the
+           Share button shows the loading logo instead. -->
+      <div class="sr-only" id="composerStatus" role="status" aria-live="polite"><span id="composerStatusText"></span></div>
       <input type="file" id="postFileInput" accept="image/*" style="display:none;" />
       <input type="file" id="postVideoInput" accept="video/*" style="display:none;" />
       <div class="error-banner" id="composerError"></div>
@@ -12503,18 +12520,17 @@
     const btn = document.getElementById('shareBtn');
     // Just the spinner while busy: any word long enough to say what's
     // happening doesn't fit a third of the row in every language.
-    btn.innerHTML = on ? '<i class="ti ti-loader-2 cc-spin"></i>' : '<i class="ti ti-send"></i> <span>Share</span>';
+    btn.innerHTML = on ? ccLogoLoader(44, false, typeof ccT === 'function' ? ccT('Sharing') : 'Sharing') : '<i class="ti ti-send"></i> <span>Share</span>';
     btn.setAttribute('aria-busy', on ? 'true' : 'false');
     if (on) btn.setAttribute('aria-label', typeof ccT === 'function' ? ccT('Sharing') : 'Sharing'); else btn.removeAttribute('aria-label');
     ['composerPhotoBtn', 'composerVideoBtn'].forEach(id => { const b = document.getElementById(id); if (b) b.disabled = on; });
     document.querySelectorAll('.composer-remove').forEach(b => { b.disabled = on; });
     const cap = document.getElementById('composerCaption');
     if (cap) cap.readOnly = on;
-    if (!on) document.getElementById('composerStatus').hidden = true;
+    if (!on) document.getElementById('composerStatusText').textContent = '';
   }
   function setComposerStatus(en) {
     document.getElementById('composerStatusText').textContent = typeof ccT === 'function' ? ccT(en) : en;
-    document.getElementById('composerStatus').hidden = false;
   }
 
   // ── Post photos in storage ──
@@ -13765,6 +13781,33 @@
       if (n > 0) { dd.textContent = n; dd.style.display = 'inline-block'; }
       else { dd.style.display = 'none'; }
     }
+  }
+
+  // ── Loading mark ──
+  // The app's logo with the fork and knife turning inside the lens. Used
+  // wherever the app is busy for a while (posting, building a meal plan).
+  // size in px; tile: true puts it on the green app-icon square.
+  let ccLoaderN = 0;
+  function ccLogoLoader(size, tile, label) {
+    const id = 'ccl' + (++ccLoaderN);
+    const ink = '#1e2b22';
+    return '<span class="cc-loader' + (tile ? ' tile' : '') + '" role="img" aria-label="' + escapeText(label || 'Loading') + '"' +
+      ' style="width:' + size + 'px;height:' + size + 'px' + (tile ? ';padding:' + Math.round(size * 0.1) + 'px' : '') + '">' +
+      '<svg viewBox="150 170 724 724" aria-hidden="true">' +
+        '<defs><clipPath id="' + id + '"><circle cx="512" cy="555" r="142"/></clipPath></defs>' +
+        '<g transform="rotate(-6 512 540)">' +
+          '<path d="M378 352 L410 258 L560 258 L604 352 Z" fill="#fffdf5" stroke="' + ink + '" stroke-width="38" stroke-linejoin="round"/>' +
+          '<rect x="196" y="340" width="636" height="436" rx="96" fill="#fffdf5" stroke="' + ink + '" stroke-width="38"/>' +
+          '<circle cx="738" cy="398" r="34" fill="' + ink + '"/><circle cx="738" cy="398" r="15" fill="#ff6f87"/>' +
+          '<circle cx="512" cy="555" r="160" fill="#fbbf24" stroke="' + ink + '" stroke-width="38"/>' +
+          '<g clip-path="url(#' + id + ')">' +
+            '<g class="ccl-utensils" stroke="' + ink + '" stroke-width="30" stroke-linecap="round" stroke-linejoin="round" fill="none">' +
+              '<path d="M440 494 L445 548 M466 492 L470 546 M491 492 L496 546 M445 548 Q470 562 496 546 M470 556 L478 632"/>' +
+              '<path d="M558 486 L572 628"/>' +
+            '</g>' +
+          '</g>' +
+        '</g>' +
+      '</svg></span>';
   }
 
   // ── Action sheet ──
@@ -15172,7 +15215,7 @@
         '<button class="plan-cta ghost" style="margin-top:10px" onclick="pfEditAnswers()"><i class="ti ti-pencil"></i> <span>Change my answers</span></button></div>';
       return;
     }
-    body.innerHTML = '<div class="pf-gen"><div class="pf-gen-ico"><i class="ti ti-chef-hat"></i></div>' +
+    body.innerHTML = '<div class="pf-gen"><div class="pf-gen-logo">' + ccLogoLoader(104, true, ccT('Planning your meals')) + '</div>' +
       '<h3>Planning your meals</h3><p id="pgText">' + escapeHtml(state.text) + '</p>' +
       '<div class="pf-gen-bar"><div id="pgBar"></div></div>' +
       '<ul class="pf-gen-steps" id="pgSteps">' +
