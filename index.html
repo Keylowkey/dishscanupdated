@@ -3034,7 +3034,20 @@
   }
   .composer-caption:focus { outline: none; border-color: var(--sage); box-shadow: 0 0 0 3px var(--sage-light); }
   .composer-actions { display: flex; gap: 10px; }
-  .composer-actions .upload-action-btn { flex: 1; }
+  /* Equal thirds whatever the labels say: a flex item's minimum width is its
+     content by default, so a long label used to widen its button. */
+  .composer-actions > button { flex: 1 1 0; min-width: 0; }
+  .composer-actions > button span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .composer-actions > button i { flex-shrink: 0; }
+  .composer-status {
+    display: flex; align-items: center; gap: 8px; margin-top: 12px;
+    font-size: 13.5px; font-weight: 600; color: var(--text2);
+  }
+  .composer-status[hidden] { display: none; }
+  .composer-actions .upload-action-btn:disabled, .composer-remove:disabled { opacity: .45; cursor: default; }
+  .composer-status i { font-size: 17px; color: var(--sage); }
+  .cc-spin { display: inline-block; animation: ccSpin .8s linear infinite; }
+  @media (prefers-reduced-motion: reduce) { .cc-spin { animation-duration: 2.4s; } }
   .composer-share-btn {
     flex: 1; padding: 14px; background: var(--sage); color: #fff; border: none;
     border-radius: var(--radius); font-family: var(--font-body); font-size: 14px;
@@ -5680,15 +5693,20 @@
       </div>
       <textarea class="composer-caption" id="composerCaption" placeholder="Share a dish, ask for a recipe, or get recommendations…" maxlength="300" oninput="updateShareBtnState()"></textarea>
       <div class="composer-actions">
-        <button class="upload-action-btn" onclick="document.getElementById('postFileInput').click()">
-          <i class="ti ti-photo"></i> Photo
+        <button class="upload-action-btn" id="composerPhotoBtn" onclick="document.getElementById('postFileInput').click()">
+          <i class="ti ti-photo"></i> <span>Photo</span>
         </button>
-        <button class="upload-action-btn" onclick="pickPostVideo()">
-          <i class="ti ti-video"></i> Video
+        <button class="upload-action-btn" id="composerVideoBtn" onclick="pickPostVideo()">
+          <i class="ti ti-video"></i> <span>Video</span>
         </button>
         <button class="composer-share-btn" id="shareBtn" onclick="sharePost()" disabled>
-          <i class="ti ti-send"></i> Share
+          <i class="ti ti-send"></i> <span>Share</span>
         </button>
+      </div>
+      <!-- What's happening while a post goes up. Kept out of the Share button,
+           where a long label pushed the button out of the card. -->
+      <div class="composer-status" id="composerStatus" role="status" aria-live="polite" hidden>
+        <i class="ti ti-loader-2 cc-spin"></i><span id="composerStatusText"></span>
       </div>
       <input type="file" id="postFileInput" accept="image/*" style="display:none;" />
       <input type="file" id="postVideoInput" accept="video/*" style="display:none;" />
@@ -9767,6 +9785,16 @@
     "Pick who gets it": ["Elige quién la recibe","Choisissez les destinataires","Wähle die Empfänger","चुनें कि किसे भेजना है","اختر من يستلمها"],
     "Recipes people sent you": ["Recetas que te enviaron","Recettes qu'on vous a envoyées","Rezepte, die dir gesendet wurden","आपको भेजी गई रेसिपी","وصفات أرسلها لك الآخرون"],
     "Pick a background you like": ["Elige un fondo que te guste","Choisissez un fond","Wähle einen Hintergrund","अपनी पसंद की पृष्ठभूमि चुनें","اختر خلفية تعجبك"],
+    // — posting —
+    "Sharing": ["Compartiendo","Partage","Wird geteilt","साझा हो रहा है","جارٍ النشر"],
+    "Checking your video…": ["Revisando tu video…","Vérification de votre vidéo…","Dein Video wird geprüft…","आपका वीडियो जांचा जा रहा है…","جارٍ فحص الفيديو…"],
+    "Checking your photo…": ["Revisando tu foto…","Vérification de votre photo…","Dein Foto wird geprüft…","आपकी फ़ोटो जांची जा रही है…","جارٍ فحص الصورة…"],
+    "Checking your post…": ["Revisando tu publicación…","Vérification de votre publication…","Dein Beitrag wird geprüft…","आपकी पोस्ट जांची जा रही है…","جارٍ فحص المنشور…"],
+    "Uploading your video…": ["Subiendo tu video…","Envoi de votre vidéo…","Dein Video wird hochgeladen…","आपका वीडियो अपलोड हो रहा है…","جارٍ رفع الفيديو…"],
+    "Uploading your photo…": ["Subiendo tu foto…","Envoi de votre photo…","Dein Foto wird hochgeladen…","आपकी फ़ोटो अपलोड हो रही है…","جارٍ رفع الصورة…"],
+    "Posting…": ["Publicando…","Publication…","Wird veröffentlicht…","पोस्ट हो रहा है…","جارٍ النشر…"],
+    "Photo": ["Foto","Photo","Foto","फ़ोटो","صورة"],
+    "Video": ["Video","Vidéo","Video","वीडियो","فيديو"],
     // — meal planner —
     "Show": ["Mostrar","Afficher","Anzeigen","दिखाएं","عرض"],
     "Meal Plan": ["Plan de comidas","Repas","Essensplan","भोजन योजना","خطة الوجبات"],
@@ -12363,13 +12391,13 @@
     const btn = document.getElementById('shareBtn');
     btn.disabled = true;
     hideComposerError();
+    setComposerBusy(true);
     try {
       // 1. Content gate. Photos must be food; both words and photos are
       //    screened for sexual, political, criminal, hateful and violent
       //    content. Text-only posts used to skip this entirely.
       if (composerImage || composerVideo || captionNow) {
-        btn.innerHTML = '<i class="ti ti-loader-2"></i> ' +
-          (composerVideo ? 'Checking video…' : composerImage ? 'Checking photo…' : 'Checking…');
+        setComposerStatus(composerVideo ? 'Checking your video…' : composerImage ? 'Checking your photo…' : 'Checking your post…');
         const vBody = { text: captionNow || '' };
         if (composerImage) {
           vBody.image_data = composerImage.base64;
@@ -12396,7 +12424,7 @@
       // 2a. A video goes to storage first; the post only records its URL.
       let videoUrl = null, videoPath = null;
       if (composerVideo) {
-        btn.innerHTML = '<i class="ti ti-loader-2"></i> Uploading video…';
+        setComposerStatus('Uploading your video…');
         const ext = composerVideo.ext === 'mov' ? 'mov' : composerVideo.ext === 'webm' ? 'webm' : 'mp4';
         const contentType = ext === 'mov' ? 'video/quicktime' : ext === 'webm' ? 'video/webm' : 'video/mp4';
         videoPath = currentUser.id + '/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.' + ext;
@@ -12423,12 +12451,12 @@
                          : composerVideo ? composerVideo.posterDataUrl : '';
       let photo = null;
       if (stillDataUrl) {
-        btn.innerHTML = '<i class="ti ti-loader-2"></i> Uploading photo…';
+        setComposerStatus(composerVideo ? 'Uploading your video…' : 'Uploading your photo…');
         photo = await uploadPostPhoto(stillDataUrl, !!composerImage);
       }
 
       // 2. Post it
-      btn.innerHTML = '<i class="ti ti-loader-2"></i> Sharing…';
+      setComposerStatus('Posting…');
       const row = {
         user_id: currentUser.id,
         username: myUsername,
@@ -12463,9 +12491,30 @@
     } catch (e) {
       showComposerError(e.message || 'Could not share. Please try again.');
     } finally {
+      setComposerBusy(false);
       updateShareBtnState();
-      btn.innerHTML = '<i class="ti ti-send"></i> Share';
     }
+  }
+
+  // While a post goes up: the Share button shows a spinner, the steps are
+  // spelled out underneath, and the media can't be changed or removed
+  // halfway (removing the video mid-upload used to break the post).
+  function setComposerBusy(on) {
+    const btn = document.getElementById('shareBtn');
+    // Just the spinner while busy: any word long enough to say what's
+    // happening doesn't fit a third of the row in every language.
+    btn.innerHTML = on ? '<i class="ti ti-loader-2 cc-spin"></i>' : '<i class="ti ti-send"></i> <span>Share</span>';
+    btn.setAttribute('aria-busy', on ? 'true' : 'false');
+    if (on) btn.setAttribute('aria-label', typeof ccT === 'function' ? ccT('Sharing') : 'Sharing'); else btn.removeAttribute('aria-label');
+    ['composerPhotoBtn', 'composerVideoBtn'].forEach(id => { const b = document.getElementById(id); if (b) b.disabled = on; });
+    document.querySelectorAll('.composer-remove').forEach(b => { b.disabled = on; });
+    const cap = document.getElementById('composerCaption');
+    if (cap) cap.readOnly = on;
+    if (!on) document.getElementById('composerStatus').hidden = true;
+  }
+  function setComposerStatus(en) {
+    document.getElementById('composerStatusText').textContent = typeof ccT === 'function' ? ccT(en) : en;
+    document.getElementById('composerStatus').hidden = false;
   }
 
   // ── Post photos in storage ──
@@ -12524,7 +12573,7 @@
   // Share is allowed with a photo, a caption, or both.
   function updateShareBtnState() {
     const btn = document.getElementById('shareBtn');
-    if (!btn) return;
+    if (!btn || btn.getAttribute('aria-busy') === 'true') return;   // posting: stays disabled
     const hasText = (document.getElementById('composerCaption')?.value || '').trim().length > 0;
     btn.disabled = !(composerImage || composerVideo || hasText);
   }
