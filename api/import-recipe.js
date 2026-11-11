@@ -1,30 +1,52 @@
 // /api/import-recipe.js
-// Turn a shared social link into a full recipe (same JSON shape as /api/analyze).
-//  - YouTube: title + full description (rich text) -> recipe.
-//  - Instagram / TikTok: caption is blocked/short, so the cover thumbnail image
-//    is run through vision -> recipe.
-// Returns the identical recipe object the app already renders.
+// Turn a shared link into a full recipe (same JSON shape as /api/analyze).
+//
+// POST { url, post?, caption?, lang? }
+//   post     what the app read from the page on the phone (lib/social-post.js)
+//   caption  recipe text the user pasted themselves; overrides everything
+//
+// The recipe in a food video is usually written in its caption, so the
+// caption decides:
+//   1. caption has a recipe      → that recipe, followed faithfully. The cover
+//                                  is not even shown to the AI.
+//   2. caption names the dish    → an authentic recipe for that dish
+//   3. caption says nothing, or
+//      could not be read         → the dish in the cover image (a guess)
+// recipe.source = { platform, author, basis, captionRead } says which, so
+// the app can tell the user and offer to paste the caption when it's a guess.
 
 import { languageInstruction } from '../lib/i18n-data.js';
 import { guard } from '../lib/guard.js';
 import { store as storeDishImage } from '../lib/dish-images.js';
+import { readPost, cleanCaption, captionHasWords } from '../lib/social-post.js';
 import crypto from 'node:crypto';
 import { MAKEABLE_EXAMPLE, COOKING_EQUIPMENT_EXAMPLE, EXTRA_RULES, normalizeRecipeExtras } from '../lib/recipe-extras.js';
 
 const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15';
+const PLATFORM_NAMES = { instagram: 'Instagram', tiktok: 'TikTok', youtube: 'YouTube', facebook: 'Facebook', other: 'web' };
 
-const RECIPE_JSON = `{"dish":"Specific Full Dish Name","servings":2,"time":"30 min","difficulty":"Easy","dietary":"Vegetarian or Contains meat etc","calories":420,"nutrition":{"protein_g":28,"carbs_g":45,"fat_g":14,"saturated_fat_g":4,"fiber_g":6,"sugar_g":8,"sodium_mg":620,"cholesterol_mg":75},"equipment":[{"emoji":"🍳","name":"Large skillet"},{"emoji":"🔪","name":"Chef's knife"}],${COOKING_EQUIPMENT_EXAMPLE},"ingredients":[{"emoji":"appropriate food emoji","name":"Ingredient name","qty":"1 cup","cost":2.50,${MAKEABLE_EXAMPLE}}],"steps":["Detailed step one.","Detailed step two."],"swaps":[{"from":"Original ingredient","to":"Healthier alternative","saving":60}],"searchKeyword":"short keyword","totalCost":15.50,"costNote":"Based on US national average grocery prices"}`;
+const RECIPE_JSON = `{"basis":"caption_recipe","dish":"Specific Full Dish Name","servings":2,"time":"30 min","difficulty":"Easy","dietary":"Vegetarian or Contains meat etc","calories":420,"nutrition":{"protein_g":28,"carbs_g":45,"fat_g":14,"saturated_fat_g":4,"fiber_g":6,"sugar_g":8,"sodium_mg":620,"cholesterol_mg":75},"equipment":[{"emoji":"🍳","name":"Large skillet"},{"emoji":"🔪","name":"Chef's knife"}],${COOKING_EQUIPMENT_EXAMPLE},"ingredients":[{"emoji":"appropriate food emoji","name":"Ingredient name","qty":"1 cup","cost":2.50,${MAKEABLE_EXAMPLE}}],"steps":["Detailed step one.","Detailed step two."],"swaps":[{"from":"Original ingredient","to":"Healthier alternative","saving":60}],"searchKeyword":"short keyword","totalCost":15.50,"costNote":"Based on US national average grocery prices"}`;
 
-const RULES = `Rules:
-- 6-8 ingredients with accurate emojis AND realistic cost estimates (USD)
+// `followText`: the post's own recipe is being followed, so counts come from it.
+function rules(followText) {
+  return `Rules:
+- ingredients: ${followText ? 'every ingredient the post lists, however many, in its order; 6-8 only if you are writing the recipe yourself' : '6-8'}, each with an accurate emoji AND a realistic cost estimate (USD)
 - 3-6 pieces of equipment with appropriate emojis
-- 4-6 detailed cooking steps
+- steps: ${followText ? 'as many as the method needs (3-8)' : '4-6'}, detailed
 - 3 calorie-reducing swaps that preserve flavor
 - Accurate per-serving calorie estimate
 - nutrition: realistic PER-SERVING numeric values for all eight fields
 - 1-3 word searchKeyword
 - totalCost should equal the sum of all ingredient costs${EXTRA_RULES}
 Respond ONLY with a raw JSON object — no markdown, no backticks, no text outside the JSON.`;
+}
+
+// A caption that carries amounts is a recipe, not a description.
+function looksLikeRecipe(text) {
+  const t = String(text || '');
+  const amounts = (t.match(/(\d|½|¼|¾)\s*(g|kg|oz|lbs?|ml|l|cups?|tbsp|tbs|tsp|tablespoons?|teaspoons?|cloves?|sheets?|slices?|cans?|pinch|handful)\b/gi) || []).length;
+  return amounts >= 3 || (amounts >= 1 && /\b(ingredients|instructions|method|directions|recipe)\b/i.test(t));
+}
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -41,56 +63,69 @@ export default async function handler(req, res) {
   if (!ANTHROPIC_KEY) return res.status(500).json({ error: 'AI is not configured on the server.' });
 
   try {
-    let { url, lang } = req.body || {};
+    const body = req.body || {};
+    let { url, lang } = body;
     if (!url || typeof url !== 'string' || !/^https?:\/\//i.test(url.trim())) {
       return res.status(400).json({ error: 'Please share a valid link.' });
     }
     url = url.trim();
-    const platform = detectPlatform(url);
 
-    let content;
-    let sourceTitle = '';
-    let cover = null;   // the video's cover image, kept as the dish's picture
+    const pasted = cleanCaption(typeof body.caption === 'string' ? body.caption : '');
+    const post = await readPost(url, body.post);
+    const platform = post.platform;
+    const caption = pasted || post.caption;
+    // YouTube and web pages also have a title worth reading on its own.
+    const title = (platform === 'youtube' || platform === 'other' || platform === 'facebook') ? post.title : '';
+    const hasText = captionHasWords(caption) || captionHasWords(title);
+    const followText = looksLikeRecipe(caption);
 
-    if (platform === 'youtube') {
-      const info = await youtubeInfo(url);
-      if (!info.title && !info.description) {
-        return res.status(422).json({ error: "Couldn't read that YouTube video." });
-      }
-      sourceTitle = info.title || '';
-      content = [{ type: 'text', text: textPrompt(info.title, info.description) }];
-    } else {
-      // Instagram / TikTok / other → thumbnail image
-      const thumb = await ogImage(url);
-      if (!thumb || !isRealThumb(thumb, platform)) {
-        return res.status(422).json({ error: platform === 'instagram'
-          ? "Instagram didn't share the dish this time (they block servers from reading reels). Screenshot the reel and use “Choose Photo” instead."
-          : "Couldn't read that link. Try sharing a screenshot of the dish instead." });
-      }
-      const img = await fetchImageAsBase64(thumb);
-      if (!img) return res.status(422).json({ error: "Couldn't load the video's thumbnail." });
-      cover = img;
-      content = [
-        { type: 'image', source: { type: 'base64', media_type: img.media_type, data: img.data } },
-        { type: 'text', text: imagePrompt() }
-      ];
+    // The cover is the dish's picture either way; the AI only sees it when
+    // the words alone don't settle what the dish is.
+    const cover = post.coverUrl ? await fetchImageAsBase64(post.coverUrl) : null;
+    const showImage = !!cover && !followText;
+
+    if (!hasText && !cover) {
+      return res.status(422).json({
+        code: 'unreadable', platform,
+        error: platform === 'instagram' || platform === 'tiktok'
+          ? `${PLATFORM_NAMES[platform]} didn't let us read that post. Paste its caption, or share a screenshot of the dish.`
+          : "Couldn't read that link. Paste the recipe text, or share a screenshot of the dish."
+      });
     }
+
+    const content = [];
+    if (showImage) content.push({ type: 'image', source: { type: 'base64', media_type: cover.media_type, data: cover.data } });
+    content.push({ type: 'text', text: hasText
+      ? postPrompt({ platform, author: post.author, title, caption, hasImage: showImage, followText, pasted: !!pasted })
+      : imagePrompt() });
 
     // Ask for the recipe in the user's language.
     const li = languageInstruction(lang);
     if (li) content.push({ type: 'text', text: li });
     const recipe = await callAnthropic(ANTHROPIC_KEY, content);
     if (recipe && recipe.error) return res.status(502).json(recipe);
+    if (!recipe || recipe.notRecipe || !recipe.dish) {
+      return res.status(422).json({ code: 'not_recipe', platform, error: "That post doesn't seem to be about a dish. Try another link, or share a screenshot of the food." });
+    }
+
+    let basis = ['caption_recipe', 'caption_dish', 'image'].includes(recipe.basis) ? recipe.basis : (hasText ? 'caption_dish' : 'image');
+    if (!hasText) basis = 'image';
+    if (!showImage && basis === 'image') basis = 'caption_dish';
+    delete recipe.basis;
+
     // Guard: if the AI ended up describing a logo / brand image / screenshot chrome
     // rather than a dish, don't return a junk recipe.
-    if (recipe && /\b(logo|instagram|tiktok|youtube|screenshot|watermark|app icon|profile (picture|photo)|placeholder)\b/i.test(String(recipe.dish || ''))) {
-      return res.status(422).json({ error: "Couldn't read a dish from that link. Try sharing a screenshot of the dish instead." });
+    if (basis === 'image' && /\b(logo|instagram|tiktok|youtube|screenshot|watermark|app icon|profile (picture|photo)|placeholder)\b/i.test(String(recipe.dish || ''))) {
+      return res.status(422).json({ code: 'unreadable', platform, error: "Couldn't read a dish from that link. Paste its caption, or share a screenshot of the dish." });
     }
-    if (sourceTitle && recipe) recipe.sourceTitle = sourceTitle;
+
+    recipe.source = { platform, author: post.author || '', basis, captionRead: !!pasted || post.read, pasted: !!pasted };
+    recipe.sourceUrl = url;
+    if (post.title) recipe.sourceTitle = post.title;
     // Keep the cover as the dish image. Instagram and TikTok image URLs expire
     // within days, so it's copied into our own storage. Best-effort: without
     // it the app falls back to a generated image.
-    if (recipe && cover && process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY) {
+    if (cover && process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY) {
       try {
         const ext = /png/.test(cover.media_type) ? 'png' : /webp/.test(cover.media_type) ? 'webp' : 'jpg';
         const name = crypto.createHash('sha1').update(url).digest('hex').slice(0, 20);
@@ -105,55 +140,6 @@ export default async function handler(req, res) {
   }
 }
 
-function detectPlatform(url) {
-  if (/youtube\.com|youtu\.be/i.test(url)) return 'youtube';
-  if (/instagram\.com/i.test(url)) return 'instagram';
-  if (/tiktok\.com/i.test(url)) return 'tiktok';
-  return 'other';
-}
-
-// True only if the thumbnail looks like real post CONTENT (not a brand logo /
-// static asset served on a login/blocked page).
-function isRealThumb(u, platform) {
-  if (!/^https?:\/\//i.test(u || '')) return false;
-  if (/\/static\/|logo|sprite|favicon|\bicon\b|placeholder/i.test(u)) return false;
-  if (platform === 'instagram') return /cdninstagram\.com|fbcdn\.net|scontent/i.test(u);
-  if (platform === 'tiktok') return /tiktokcdn|ibyteimg|muscdn|p\d+-sign/i.test(u);
-  return true;
-}
-
-async function youtubeInfo(url) {
-  let title = '', description = '';
-  try {
-    const o = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`);
-    if (o.ok) { const j = await o.json(); title = j.title || ''; }
-  } catch (e) { /* ignore */ }
-  try {
-    const r = await fetch(url, { headers: { 'User-Agent': UA, 'Accept-Language': 'en-US,en;q=0.9' } });
-    if (r.ok) {
-      const html = await r.text();
-      if (!title) title = extractOg(html, 'title');
-      const m = html.match(/"shortDescription":"((?:\\.|[^"\\])*)"/);
-      if (m) {
-        description = m[1]
-          .replace(/\\n/g, '\n').replace(/\\r/g, '').replace(/\\"/g, '"')
-          .replace(/\\u0026/g, '&').replace(/\\\//g, '/');
-      }
-      if (!description) description = extractOg(html, 'description');
-    }
-  } catch (e) { /* ignore */ }
-  if (description.length > 3000) description = description.slice(0, 3000);
-  return { title, description };
-}
-
-async function ogImage(url) {
-  try {
-    const r = await fetch(url, { headers: { 'User-Agent': UA, 'Accept-Language': 'en-US,en;q=0.9' } });
-    if (!r.ok) return '';
-    return extractOg(await r.text(), 'image');
-  } catch (e) { return ''; }
-}
-
 async function fetchImageAsBase64(imgUrl) {
   try {
     const r = await fetch(imgUrl, { headers: { 'User-Agent': UA } });
@@ -166,48 +152,49 @@ async function fetchImageAsBase64(imgUrl) {
   } catch (e) { return null; }
 }
 
-function extractOg(html, prop) {
-  const res = [
-    new RegExp('<meta[^>]+property=["\']og:' + prop + '["\'][^>]*content=["\']([^"\']*)["\']', 'i'),
-    new RegExp('<meta[^>]+content=["\']([^"\']*)["\'][^>]*property=["\']og:' + prop + '["\']', 'i')
-  ];
-  for (const re of res) { const m = html.match(re); if (m) return decodeHtml(m[1]); }
-  return '';
-}
+function postPrompt({ platform, author, title, caption, hasImage, followText, pasted }) {
+  const where = pasted ? 'the recipe text of a post' : platform === 'other' ? 'a web page' : `a ${PLATFORM_NAMES[platform]} post`;
+  return `You are an expert chef, nutritionist, and grocery cost estimator. A user shared ${where} and wants its recipe.
+${title ? `\nTITLE: ${title}\n` : ''}
+${pasted ? 'THE TEXT THE USER PASTED' : platform === 'youtube' ? 'THE VIDEO DESCRIPTION' : platform === 'other' ? 'THE PAGE TEXT' : 'THE CAPTION'}${author ? ` (by ${platform === 'other' || platform === 'youtube' ? author : '@' + author})` : ''}:
+"""
+${caption || '(empty)'}
+"""
+${hasImage ? '\nThe attached image is the post\'s cover frame.\n' : ''}
+Decide what to make, in this order, and set "basis" to match:
 
-function decodeHtml(s) {
-  return String(s)
-    .replace(/&amp;/g, '&').replace(/&quot;/g, '"')
-    .replace(/&#0?39;/g, "'").replace(/&#x27;/g, "'")
-    .replace(/&lt;/g, '<').replace(/&gt;/g, '>');
-}
+1. "caption_recipe" — the text contains a recipe (an ingredient list, amounts, or cooking instructions). Then THAT is the recipe:
+   - Use its dish name.
+   - Include EVERY ingredient it lists, with its exact quantities and units. Do not drop, swap or add ingredients. Parts such as a dip, sauce or marinade belong to the dish: list their ingredients too and give them a step.
+   - Keep its method: the same order, times and temperatures, rewritten as clear separate steps.
+   - If it states servings, calories or macros, use those numbers for servings, calories and nutrition.
+   - Fill in only what it leaves out: an amount for "salt" or "a handful", any missing step, equipment, costs, the remaining nutrition fields.
+2. "caption_dish" — the text names or clearly describes the dish but gives no recipe. Write an authentic recipe for exactly that dish.
+3. "image" — the text says nothing useful about the food${hasImage ? '. Identify the dish in the image and write its recipe' : ''}.
 
-function textPrompt(title, description) {
-  return `You are an expert chef, nutritionist, and grocery cost estimator. A user shared a cooking video. From its title and description, produce the COMPLETE recipe for the dish. If the description already lists ingredients/steps, follow them faithfully; otherwise reconstruct an authentic recipe for the named dish. Ignore promotional links, hashtags, and channel boilerplate.
-
-VIDEO TITLE: ${title}
-VIDEO DESCRIPTION: ${description || '(none provided)'}
+The text always wins over the image. Ignore hashtags, @mentions, promo codes, "link in bio", giveaways and requests to follow or comment.
+If neither the text${hasImage ? ' nor the image' : ''} is about a dish or drink someone could make, respond with exactly {"notRecipe":true}.
 
 Estimate each ingredient's cost in USD (US national average) and realistic per-serving nutrition. Respond ONLY with a raw JSON object in EXACTLY this structure:
 ${RECIPE_JSON}
 
-${RULES}`;
+${rules(followText)}`;
 }
 
 function imagePrompt() {
   return `You are an expert chef, nutritionist, and grocery cost estimator. This image is the cover/thumbnail frame of a cooking video. Identify the EXACT dish shown and produce its complete recipe. Be SPECIFIC with the dish name (e.g. "Chicken Biryani" not "Rice with Chicken").
 
 Estimate each ingredient's cost in USD (US national average) and realistic per-serving nutrition. Respond ONLY with a raw JSON object in EXACTLY this structure:
-${RECIPE_JSON}
+${RECIPE_JSON.replace('"basis":"caption_recipe"', '"basis":"image"')}
 
-${RULES}`;
+${rules(false)}`;
 }
 
 async function callAnthropic(key, content) {
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
-    body: JSON.stringify({ model: 'claude-sonnet-4-5', max_tokens: 2500, temperature: 0.2, messages: [{ role: 'user', content }] })
+    body: JSON.stringify({ model: 'claude-sonnet-4-5', max_tokens: 3500, temperature: 0.2, messages: [{ role: 'user', content }] })
   });
   const responseText = await response.text();
   if (!response.ok) return { error: 'AI error ' + response.status + ': ' + responseText.slice(0, 300) };

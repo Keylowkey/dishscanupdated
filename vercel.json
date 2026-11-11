@@ -4,6 +4,7 @@
   ],
   "functions": {
     "api/dish-image.js": { "maxDuration": 60 },
-    "api/meal-plan.js": { "maxDuration": 60 }
+    "api/meal-plan.js": { "maxDuration": 60 },
+    "api/import-recipe.js": { "maxDuration": 60 }
   }
 }
