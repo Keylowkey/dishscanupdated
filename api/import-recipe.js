@@ -1,9 +1,12 @@
 // /api/import-recipe.js
 // Turn a shared link into a full recipe (same JSON shape as /api/analyze).
 //
-// POST { url, post?, caption?, lang? }
-//   post     what the app read from the page on the phone (lib/social-post.js)
-//   caption  recipe text the user pasted themselves; overrides everything
+// POST { url, post?, caption?, captionImages?, lang? }
+//   post          what the app read from the page on the phone (lib/social-post.js)
+//   caption       recipe text the user pasted themselves; overrides everything
+//   captionImages [{ data, media_type }], up to 3: screenshots of the caption,
+//                 read by the AI. For posts nothing else can read: Instagram's
+//                 app doesn't let people copy a caption, but they can screenshot it.
 //
 // The recipe in a food video is usually written in its caption, so the
 // caption decides:
@@ -41,6 +44,16 @@ function rules(followText) {
 Respond ONLY with a raw JSON object — no markdown, no backticks, no text outside the JSON.`;
 }
 
+// Screenshots of the caption, as sent by the app (already resized there).
+function captionScreenshots(list) {
+  return (Array.isArray(list) ? list : []).slice(0, 3).map(img => {
+    if (!img || typeof img !== 'object' || typeof img.data !== 'string') return null;
+    const media_type = /^image\/(png|jpeg|webp)$/.test(img.media_type) ? img.media_type : 'image/jpeg';
+    if (img.data.length < 2000 || img.data.length > 1400000 || /[^A-Za-z0-9+/=]/.test(img.data.slice(0, 200))) return null;
+    return { media_type, data: img.data };
+  }).filter(Boolean);
+}
+
 // A caption that carries amounts is a recipe, not a description.
 function looksLikeRecipe(text) {
   const t = String(text || '');
@@ -71,18 +84,20 @@ export default async function handler(req, res) {
     url = url.trim();
 
     const pasted = cleanCaption(typeof body.caption === 'string' ? body.caption : '');
+    const shots = !pasted ? captionScreenshots(body.captionImages) : [];
+    const shot = shots.length > 0;
     const post = await readPost(url, body.post);
     const platform = post.platform;
-    const caption = pasted || post.caption;
+    const caption = pasted || (shot ? '' : post.caption);
     // YouTube and web pages also have a title worth reading on its own.
     const title = (platform === 'youtube' || platform === 'other' || platform === 'facebook') ? post.title : '';
-    const hasText = captionHasWords(caption) || captionHasWords(title);
-    const followText = looksLikeRecipe(caption);
+    const hasText = shot || captionHasWords(caption) || captionHasWords(title);
+    const followText = shot || looksLikeRecipe(caption);
 
     // The cover is the dish's picture either way; the AI only sees it when
     // the words alone don't settle what the dish is.
     const cover = post.coverUrl ? await fetchImageAsBase64(post.coverUrl) : null;
-    const showImage = !!cover && !followText;
+    const showImage = !!cover && !followText;   // never alongside a caption screenshot
 
     if (!hasText && !cover) {
       return res.status(422).json({
@@ -94,9 +109,10 @@ export default async function handler(req, res) {
     }
 
     const content = [];
-    if (showImage) content.push({ type: 'image', source: { type: 'base64', media_type: cover.media_type, data: cover.data } });
+    if (shot) shots.forEach(i => content.push({ type: 'image', source: { type: 'base64', media_type: i.media_type, data: i.data } }));
+    else if (showImage) content.push({ type: 'image', source: { type: 'base64', media_type: cover.media_type, data: cover.data } });
     content.push({ type: 'text', text: hasText
-      ? postPrompt({ platform, author: post.author, title, caption, hasImage: showImage, followText, pasted: !!pasted })
+      ? postPrompt({ platform, author: post.author, title, caption, hasImage: showImage, followText, pasted: !!pasted, screenshot: shot })
       : imagePrompt() });
 
     // Ask for the recipe in the user's language.
@@ -119,7 +135,7 @@ export default async function handler(req, res) {
       return res.status(422).json({ code: 'unreadable', platform, error: "Couldn't read a dish from that link. Paste its caption, or share a screenshot of the dish." });
     }
 
-    recipe.source = { platform, author: post.author || '', basis, captionRead: !!pasted || post.read, pasted: !!pasted };
+    recipe.source = { platform, author: post.author || '', basis, captionRead: !!pasted || shot || post.read, pasted: !!pasted || shot };
     recipe.sourceUrl = url;
     if (post.title) recipe.sourceTitle = post.title;
     // Keep the cover as the dish image. Instagram and TikTok image URLs expire
@@ -152,14 +168,17 @@ async function fetchImageAsBase64(imgUrl) {
   } catch (e) { return null; }
 }
 
-function postPrompt({ platform, author, title, caption, hasImage, followText, pasted }) {
+function postPrompt({ platform, author, title, caption, hasImage, followText, pasted, screenshot }) {
   const where = pasted ? 'the recipe text of a post' : platform === 'other' ? 'a web page' : `a ${PLATFORM_NAMES[platform]} post`;
-  return `You are an expert chef, nutritionist, and grocery cost estimator. A user shared ${where} and wants its recipe.
-${title ? `\nTITLE: ${title}\n` : ''}
-${pasted ? 'THE TEXT THE USER PASTED' : platform === 'youtube' ? 'THE VIDEO DESCRIPTION' : platform === 'other' ? 'THE PAGE TEXT' : 'THE CAPTION'}${author ? ` (by ${platform === 'other' || platform === 'youtube' ? author : '@' + author})` : ''}:
+  const text = screenshot
+    ? `THE CAPTION is in the attached image(s): screenshots of the post, taken by the user (in order, if there are several). Read ALL of the caption text in them carefully (ingredients, amounts, instructions, nutrition) and treat that text as the caption. Ignore the app's buttons, like counts, usernames of commenters and the status bar.`
+    : `${pasted ? 'THE TEXT THE USER PASTED' : platform === 'youtube' ? 'THE VIDEO DESCRIPTION' : platform === 'other' ? 'THE PAGE TEXT' : 'THE CAPTION'}${author ? ` (by ${platform === 'other' || platform === 'youtube' ? author : '@' + author})` : ''}:
 """
 ${caption || '(empty)'}
-"""
+"""`;
+  return `You are an expert chef, nutritionist, and grocery cost estimator. A user shared ${where} and wants its recipe.
+${title ? `\nTITLE: ${title}\n` : ''}
+${text}
 ${hasImage ? '\nThe attached image is the post\'s cover frame.\n' : ''}
 Decide what to make, in this order, and set "basis" to match:
 
