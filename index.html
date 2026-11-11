@@ -1424,6 +1424,36 @@
     background: transparent; color: inherit; font: inherit; font-weight: 700; cursor: pointer;
   }
 
+  .error-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  /* ── Where an imported recipe came from ── */
+  .recipe-source { margin: 4px 0 14px; }
+  .recipe-source[hidden] { display: none; }
+  .rs-line {
+    display: inline-flex; align-items: center; gap: 7px; max-width: 100%;
+    padding: 7px 12px; border-radius: 99px; border: 1.5px solid var(--border-med);
+    background: var(--surface); color: var(--text2); font: inherit; font-size: 13px; font-weight: 700;
+    cursor: pointer; text-align: left;
+  }
+  .rs-line[disabled] { cursor: default; }
+  .rs-line > i:first-child { font-size: 17px; color: var(--sage-dark); flex-shrink: 0; }
+  .rs-line span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rs-line .rs-go { font-size: 14px; color: var(--text3); flex-shrink: 0; }
+  .rs-note {
+    margin-top: 10px; border-radius: 16px; padding: 12px 14px; font-size: 13.5px; line-height: 1.45;
+    border: 1.5px solid var(--border); background: var(--surface2); color: var(--text2);
+  }
+  .rs-note.guess { border: 2px solid var(--amber); background: var(--amber-light); color: var(--text); }
+  .rs-note b { display: block; color: var(--text); margin-bottom: 2px; }
+  .rs-note .pf-fix { margin-top: 10px; }
+
+  /* Add-the-caption sheet */
+  #captionModal textarea { min-height: 150px; }
+  #captionModal .plan-cta { font-size: 14.5px; padding: 12px 14px; box-shadow: 2px 2px 0 var(--ink-shadow); }
+  .cap-or { display: flex; align-items: center; gap: 10px; margin: 14px 0; color: var(--text3); font-size: 12.5px; font-weight: 700; }
+  .cap-or::before, .cap-or::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .cap-hint { font-size: 12.5px; color: var(--text3); line-height: 1.5; margin-top: 10px; }
+
   /* ── Results ── */
   .results-section { display: none; }
   .results-section.visible { display: block; }
@@ -4531,6 +4561,9 @@
     background: rgba(0,0,0,.55); color: #fff; font-size: 11.5px; font-weight: 700;
     display: inline-flex; align-items: center; gap: 4px;
   }
+  /* display:inline-flex above would otherwise beat the hidden attribute, and
+     label every picture "AI image", real photos and video covers included. */
+  .dish-hero-tag[hidden] { display: none; }
 
   /* Feed: next page loads as this comes into view */
   .feed-more { padding: 22px 0 30px; }
@@ -5280,6 +5313,9 @@
       </div>
       <div class="recipe-name" id="recipeName"></div>
       <div class="recipe-meta" id="recipeMeta"></div>
+      <!-- For a recipe from a shared link: whose caption it follows, or that
+           it is a guess from the cover. See renderRecipeSource(). -->
+      <div class="recipe-source" id="recipeSource" hidden></div>
 
       <button class="allergy-btn" id="allergyBtn" onclick="openAllergyCheck()">
         <i class="ti ti-shield-heart"></i> Make this allergy-friendly
@@ -5785,6 +5821,33 @@
       <div class="page-view-title">Favorites</div>
     </div>
     <div id="favoritesContent"><!-- Filled by renderFavorites() --></div>
+  </div>
+</div>
+
+<!-- Add the caption of a shared post: paste its text, or use screenshots of it. -->
+<div class="support-modal" id="captionModal">
+  <div class="support-card">
+    <button class="support-close" onclick="closeCaptionModal()" aria-label="Close"><i class="ti ti-x" style="font-size:16px;"></i></button>
+    <div class="support-card-header">
+      <div class="support-card-icon"><i class="ti ti-text-caption"></i></div>
+      <div>
+        <div class="support-card-title">Add the caption</div>
+        <div class="support-card-sub">We'll follow its recipe exactly</div>
+      </div>
+    </div>
+    <div class="support-field">
+      <label for="captionText">Paste the caption or recipe text</label>
+      <textarea id="captionText" maxlength="4000" placeholder="Ingredients, amounts and steps from the post…" oninput="updateCaptionSubmit()"></textarea>
+    </div>
+    <button class="support-submit" id="captionSubmit" onclick="submitCaption()" disabled>
+      <i class="ti ti-wand"></i> <span>Get the recipe</span>
+    </button>
+    <div class="cap-or"><span>or</span></div>
+    <button class="plan-cta ghost" id="captionShotBtn" onclick="document.getElementById('captionShotInput').click()">
+      <i class="ti ti-photo"></i> <span>Use a screenshot of the caption</span>
+    </button>
+    <p class="cap-hint">Instagram doesn't let you copy a caption. Take a screenshot with the whole caption showing, then choose it here. For a long caption, choose up to three.</p>
+    <input type="file" id="captionShotInput" accept="image/*" multiple style="display:none;" onchange="submitCaptionShots(this)" />
   </div>
 </div>
 
@@ -6521,7 +6584,7 @@
     <!-- PRIVACY -->
     <div class="legal-body" id="legalPrivacy" style="display:none;">
       <h1>Privacy Policy</h1>
-      <div class="legal-dates">Effective date: June 16, 2026 · Last updated: October 19, 2026</div>
+      <div class="legal-dates">Effective date: June 16, 2026 · Last updated: November 10, 2026</div>
 
       <p>This Privacy Policy explains what information Capture &amp; Cook LLC ("we," "us") collects, how we use it, and your choices. It applies to captureandcook.com.</p>
 
@@ -6532,6 +6595,7 @@
         <p><strong>About allergy &amp; dietary preferences.</strong> If you choose to save allergies or dietary preferences, this may be considered sensitive health-related information. Providing it is entirely optional. We use it only to flag ingredients and suggest substitutions for you inside the app. We do not sell it, and it is not shown to other users.</p>
       </div>
       <p><strong>Photos and videos you upload.</strong> Food photos you submit for dish analysis, takeout scanning, or community sharing, and cooking videos you post to the community (up to 60 seconds). Photos and videos are compressed on your device before upload.</p>
+      <p><strong>Links you share.</strong> When you share or paste a link to a post or video (Instagram, TikTok, YouTube, or a web page), we read that post's public caption or description, the name of the account that posted it, and its cover image, so we can build the recipe. In the app, your phone loads the post's page to read these. If you add a caption yourself, by pasting it or choosing screenshots of it, we receive that text or those screenshots. The cover image is kept as the recipe's picture.</p>
       <p><strong>Meal plan answers.</strong> If you use Choose for Me, the answers you give: plan length, how many people you cook for, your goal, diet, allergies, cooking time and skill, cuisines you like, foods to avoid, and your grocery budget. We save them to your account so your next plan starts filled in, along with the plans and grocery lists you make.</p>
       <p><strong>Content you create.</strong> Recipes saved to your history, favorites, ratings, community posts, captions, comments, reactions, and reports you submit.</p>
       <p><strong>Support messages.</strong> If you contact support, we receive your name, email, and message.</p>
@@ -6548,7 +6612,7 @@
       </ul>
 
       <h2>3. AI Processing</h2>
-      <p>Photos you submit for analysis, takeout scanning, or community-feed screening are processed by our AI provider (Anthropic) to generate results. Videos you post are screened the same way, using a few still frames taken from the video. To show a picture for recipes that don't come with a photo, the dish name and its main ingredients are sent to OpenAI to create an image, which is stored and reused for that dish; your photos and account details are never sent to OpenAI. When you make a meal plan, your meal plan answers are sent to the AI provider to choose dishes, estimate costs and nutrition, and write the grocery list; your name and email are not included. When you run an allergy check, the dish name, its ingredient list, and the allergens being checked are sent to the AI provider to generate substitution suggestions. Saved addresses and store searches are processed by Google's mapping services to return nearby results. We send only what is needed for the feature to work.</p>
+      <p>Photos you submit for analysis, takeout scanning, or community-feed screening are processed by our AI provider (Anthropic) to generate results. Videos you post are screened the same way, using a few still frames taken from the video. To show a picture for recipes that don't come with a photo, the dish name and its main ingredients are sent to OpenAI to create an image, which is stored and reused for that dish; your photos and account details are never sent to OpenAI. When you share a link, the post's caption or description (or the screenshots of it you choose) and, when the caption doesn't describe the dish, its cover image are sent to the AI provider to write the recipe. When you make a meal plan, your meal plan answers are sent to the AI provider to choose dishes, estimate costs and nutrition, and write the grocery list; your name and email are not included. When you run an allergy check, the dish name, its ingredient list, and the allergens being checked are sent to the AI provider to generate substitution suggestions. Saved addresses and store searches are processed by Google's mapping services to return nearby results. We send only what is needed for the feature to work.</p>
 
       <h2>4. Who Can See Your Information</h2>
       <ul>
@@ -7889,7 +7953,9 @@
     importFromLink(url);
   }
 
-  async function importFromLink(url) {
+  // extra: { caption } or { captionImages } when the user supplies the post's
+  // text themselves (see openCaptionModal).
+  async function importFromLink(url, extra) {
     if (!url || !/^https?:\/\//i.test(url.trim())) { showToast('Please paste a valid link.'); return; }
     url = url.trim();
     hideError();
@@ -7904,23 +7970,30 @@
     document.getElementById('resultsSection').classList.remove('visible');
     document.getElementById('newAnalysisBtn').classList.remove('visible');
     document.getElementById('loadingSection').classList.add('visible');
-    document.getElementById('dishDetectedLabel').textContent = 'Reading the link…';
+    document.getElementById('dishDetectedLabel').textContent = extra ? 'Reading the recipe…' : 'Reading the caption…';
     resetStages('ls'); activateStage('ls', 1); activateStage('ls', 2);
     setTimeout(() => {
       document.getElementById('loadingSection').scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, 60);
     try {
+      // The recipe is usually in the caption. In the app, read the post here
+      // on the phone first (Instagram turns servers away now and then) and
+      // send what it says along with the link.
+      const payload = { url };
+      if (extra && extra.caption) payload.caption = extra.caption;
+      else if (extra && extra.captionImages) payload.captionImages = extra.captionImages;
+      else { const post = await readPostOnDevice(url); if (post) payload.post = post; }
       const response = await fetch('/api/import-recipe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url })
+        body: JSON.stringify(payload)
       });
       if (!response.ok) {
         const err = await response.json().catch(() => ({}));
         const e = new Error(err.error || 'Could not import that link (' + response.status + ').');
-        // Instagram often refuses to let servers read a reel. The reliable way
-        // round it is a screenshot of the dish, so offer exactly that.
-        e.needsScreenshot = response.status === 422 && /instagram\.com|instagr\.am/i.test(url);
+        // Nothing could read the post. The user still can: offer to take its
+        // caption from them, or a photo of the dish.
+        e.unreadable = response.status === 422 && err.code !== 'not_recipe';
         throw e;
       }
       const recipe = await response.json();
@@ -7947,17 +8020,163 @@
       }, 500);
     } catch (err) {
       document.getElementById('loadingSection').classList.remove('visible');
-      if (err && err.needsScreenshot) {
-        showError('<strong>Instagram didn\u2019t let us read this reel.</strong><br>' +
-          'Take a screenshot of the dish in the reel, then choose it here and we\u2019ll get the recipe.' +
-          '<br><button class="error-action" onclick="hideError(); document.getElementById(\'fileInput\').click()">' +
-          '<i class="ti ti-photo"></i> Choose screenshot</button>');
+      if (err && err.unreadable) {
+        captionForUrl = url;
+        showError('<strong>' + escapeText(ccT('We couldn\u2019t read that post.')) + '</strong><br>' +
+          escapeText(ccT('Add its caption and we\u2019ll follow the recipe in it, or choose a photo of the dish.')) +
+          '<div class="error-actions">' +
+          '<button class="error-action" onclick="hideError(); openCaptionModal()"><i class="ti ti-text-caption"></i> <span>Add the caption</span></button>' +
+          '<button class="error-action" onclick="hideError(); document.getElementById(\'fileInput\').click()"><i class="ti ti-photo"></i> <span>Photo of the dish</span></button>' +
+          '</div>');
         document.getElementById('errorBanner').scrollIntoView({ behavior: 'smooth', block: 'center' });
       } else {
         showError(err.message || 'Could not import that link.');
       }
     } finally {
       if (goBtn) { goBtn.disabled = false; goBtn.textContent = 'Import'; }
+    }
+  }
+
+  // ── Reading a shared post on the phone ──
+  // Instagram turns servers away now and then, but not the phone its user is
+  // holding. In the app, the post's page is fetched here (natively, so the
+  // browser's cross-site rules don't apply) and the raw pieces go to the
+  // server with the link; the server does the parsing (lib/social-post.js).
+  // On the website this is skipped and the server reads the post itself.
+  const POST_UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15';
+  function htmlDecode(s) { const t = document.createElement('textarea'); t.innerHTML = String(s || ''); return t.value; }
+  function metaOg(html, prop) {
+    const m = html.match(new RegExp('<meta[^>]+(?:property|name)=["\']og:' + prop + '["\'][^>]*content="([^"]*)"', 'i')) ||
+              html.match(new RegExp('<meta[^>]+content="([^"]*)"[^>]*(?:property|name)=["\']og:' + prop + '["\']', 'i'));
+    return m ? htmlDecode(m[1]) : '';
+  }
+  // The raw pieces of a post's page. No network, so it can be tested.
+  function sharedPostPieces(url, html) {
+    html = String(html || '');
+    if (/tiktok\.com/i.test(url)) {
+      const m = html.match(/<script id="__UNIVERSAL_DATA_FOR_REHYDRATION__"[^>]*>([\s\S]*?)<\/script>/i);
+      try {
+        const item = JSON.parse(m[1]).__DEFAULT_SCOPE__['webapp.video-detail'].itemInfo.itemStruct;
+        return { read: true, caption: String(item.desc || ''), author: (item.author && item.author.uniqueId) || '', image: (item.video && item.video.cover) || '' };
+      } catch (e) {
+        const d = metaOg(html, 'description');
+        return d ? { read: true, caption: d, image: metaOg(html, 'image') } : null;
+      }
+    }
+    // Instagram: the post page's preview text, or the embed page's caption block.
+    const description = metaOg(html, 'description'), title = metaOg(html, 'title');
+    if (description || title) return { read: true, description, title, image: metaOg(html, 'image') };
+    const block = html.match(/<div class="Caption"[^>]*>([\s\S]*?)<div class="CaptionComments"/i);
+    if (!block) return null;
+    const user = block[1].match(/<a class="CaptionUsername"[^>]*>([^<]*)<\/a>/i);
+    const img = html.match(/<img[^>]+class="EmbeddedMediaImage"[^>]*src="([^"]+)"/i);
+    return {
+      read: true, author: user ? htmlDecode(user[1]).trim() : '',
+      caption: htmlDecode(block[1].replace(/<a class="CaptionUsername"[^>]*>[^<]*<\/a>/i, '').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '')).trim(),
+      image: img ? htmlDecode(img[1]) : ''
+    };
+  }
+  async function readPostOnDevice(url) {
+    const http = CC_NATIVE && window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.CapacitorHttp;
+    const ig = /instagram\.com|instagr\.am/i.test(url);
+    if (!http || !(ig || /tiktok\.com/i.test(url))) return null;
+    const get = async (u) => {
+      try {
+        const r = await http.get({ url: u, headers: { 'User-Agent': POST_UA, 'Accept-Language': 'en-US,en;q=0.9' }, responseType: 'text', connectTimeout: 6000, readTimeout: 6000 });
+        return r && r.status >= 200 && r.status < 300 && typeof r.data === 'string' ? r.data : '';
+      } catch (e) { return ''; }
+    };
+    const work = (async () => {
+      let post = sharedPostPieces(url, await get(url));
+      if (ig && !(post && (post.description || post.caption))) {
+        const m = url.match(/instagram\.com\/(?:[\w.]+\/)?(reels?|p|tv)\/([\w-]+)/i);
+        if (m) {
+          const kind = m[1].toLowerCase() === 'reels' ? 'reel' : m[1].toLowerCase();
+          post = sharedPostPieces(url, await get('https://www.instagram.com/' + kind + '/' + m[2] + '/embed/captioned/')) || post;
+        }
+      }
+      return post;
+    })();
+    // Never hold the import up for long: the server can read the post too.
+    return Promise.race([work, new Promise(r => setTimeout(() => r(null), 9000))]).catch(() => null);
+  }
+
+  // ── Where an imported recipe came from ──
+  // A recipe from a shared link says whose caption it follows; when the
+  // caption couldn't settle the dish it says so, and offers to take the
+  // caption from the user (pasted, or as screenshots).
+  let recipeSourceUrl = null;
+  function renderRecipeSource(r) {
+    const el = document.getElementById('recipeSource');
+    if (!el) return;
+    const s = r && r.source;
+    if (!s || !s.basis) { el.hidden = true; el.innerHTML = ''; recipeSourceUrl = null; return; }
+    recipeSourceUrl = /^https?:\/\//i.test(r.sourceUrl || '') ? r.sourceUrl : null;
+    const named = s.platform === 'youtube' || s.platform === 'other' || s.platform === 'facebook';
+    const who = s.author ? (named ? s.author : '@' + s.author) : '';
+    const icon = { instagram: 'ti-brand-instagram', tiktok: 'ti-brand-tiktok', youtube: 'ti-brand-youtube', facebook: 'ti-brand-facebook' }[s.platform] || 'ti-link';
+    let line, note = '', title = '', action = '';
+    if (s.basis === 'caption_recipe') {
+      line = s.pasted ? ccT('From the caption you added')
+        : s.platform === 'youtube' ? (who ? ccFmt('From {who}\u2019s video description', { who }) : ccT('From the video description'))
+        : s.platform === 'other' ? (who ? ccFmt('Recipe by {who}', { who }) : ccT('From the page you shared'))
+        : (who ? ccFmt('From {who}\u2019s caption', { who }) : ccT('From the caption'));
+    } else if (s.basis === 'caption_dish') {
+      line = who ? ccFmt('Based on {who}\u2019s post', { who }) : ccT('Based on the post');
+      note = ccT('The post names the dish but doesn\u2019t include a recipe, so we wrote one for it.');
+      action = ccT('I have the recipe text');
+    } else {
+      line = who ? ccFmt('From {who}\u2019s post', { who }) : ccT('From the post you shared');
+      title = ccT('This is a guess from the video\u2019s cover');
+      note = s.captionRead ? ccT('The caption doesn\u2019t say what the dish is. If the recipe is written somewhere, add it and we\u2019ll follow it.')
+        : ccT('We couldn\u2019t read the caption. Add it and we\u2019ll follow its recipe exactly.');
+      action = ccT('Add the caption');
+    }
+    el.innerHTML =
+      '<button class="rs-line" ' + (recipeSourceUrl ? 'onclick="openExternal(recipeSourceUrl)"' : 'disabled') + '>' +
+        '<i class="ti ' + icon + '"></i><span>' + escapeText(line) + '</span>' +
+        (recipeSourceUrl ? '<i class="ti ti-external-link rs-go"></i>' : '') + '</button>' +
+      (note ? '<div class="rs-note' + (title ? ' guess' : '') + '">' + (title ? '<b>' + escapeText(title) + '</b>' : '') + escapeText(note) +
+        (recipeSourceUrl ? '<br><button class="pf-fix" onclick="openCaptionModal(recipeSourceUrl)"><i class="ti ti-text-caption"></i> ' + escapeText(action) + '</button>' : '') +
+        '</div>' : '');
+    el.hidden = false;
+  }
+
+  // ── Add the caption ──
+  let captionForUrl = null;
+  function openCaptionModal(url) {
+    if (url) captionForUrl = url;
+    if (!captionForUrl) return;
+    document.getElementById('captionText').value = '';
+    updateCaptionSubmit();
+    document.getElementById('captionModal').classList.add('open');
+  }
+  function closeCaptionModal() { document.getElementById('captionModal').classList.remove('open'); }
+  function updateCaptionSubmit() {
+    document.getElementById('captionSubmit').disabled = document.getElementById('captionText').value.trim().length < 15;
+  }
+  function submitCaption() {
+    const text = document.getElementById('captionText').value.trim();
+    if (text.length < 15 || !captionForUrl) return;
+    closeCaptionModal();
+    importFromLink(captionForUrl, { caption: text });
+  }
+  async function submitCaptionShots(input) {
+    const files = Array.from(input.files || []).slice(0, 3);
+    input.value = '';
+    if (!files.length || !captionForUrl) return;
+    const btn = document.getElementById('captionShotBtn');
+    btn.disabled = true;
+    try {
+      // Big enough that small caption text stays readable.
+      const shots = [];
+      for (const f of files) { const img = await processImage(f, 2000, 0.85); shots.push({ data: img.base64, media_type: img.mediaType }); }
+      closeCaptionModal();
+      importFromLink(captionForUrl, { captionImages: shots });
+    } catch (e) {
+      showToast(e.message || ccT('Could not read that image.'));
+    } finally {
+      btn.disabled = false;
     }
   }
 
@@ -8608,6 +8827,8 @@
     baseServings = (r.servings && r.servings > 0) ? r.servings : 1;
     currentServings = baseServings;
     document.getElementById('recipeName').textContent = r.dish;
+    // An appliance variant keeps the source of the recipe it was rewritten from.
+    renderRecipeSource(r.source ? r : (r.__methodBase || r));
 
     // Collapse the healthier-swaps panel for a clean view
     document.getElementById('swapPanel').classList.remove('visible');
@@ -9802,6 +10023,37 @@
     "Pick who gets it": ["Elige quién la recibe","Choisissez les destinataires","Wähle die Empfänger","चुनें कि किसे भेजना है","اختر من يستلمها"],
     "Recipes people sent you": ["Recetas que te enviaron","Recettes qu'on vous a envoyées","Rezepte, die dir gesendet wurden","आपको भेजी गई रेसिपी","وصفات أرسلها لك الآخرون"],
     "Pick a background you like": ["Elige un fondo que te guste","Choisissez un fond","Wähle einen Hintergrund","अपनी पसंद की पृष्ठभूमि चुनें","اختر خلفية تعجبك"],
+    // — shared links —
+    "Add the caption": ["Añadir la descripción","Ajouter la légende","Bildunterschrift hinzufügen","कैप्शन जोड़ें","أضف الوصف"],
+    "We'll follow its recipe exactly": ["Seguiremos su receta al pie de la letra","Nous suivrons sa recette à la lettre","Wir folgen dem Rezept genau","हम इसकी रेसिपी का ठीक वैसे ही पालन करेंगे","سنتبع وصفته بدقة"],
+    "Paste the caption or recipe text": ["Pega la descripción o el texto de la receta","Collez la légende ou le texte de la recette","Bildunterschrift oder Rezepttext einfügen","कैप्शन या रेसिपी का टेक्स्ट पेस्ट करें","الصق الوصف أو نص الوصفة"],
+    "Ingredients, amounts and steps from the post…": ["Ingredientes, cantidades y pasos de la publicación…","Ingrédients, quantités et étapes de la publication…","Zutaten, Mengen und Schritte aus dem Beitrag…","पोस्ट की सामग्री, मात्रा और चरण…","المكونات والكميات والخطوات من المنشور…"],
+    "Get the recipe": ["Obtener la receta","Obtenir la recette","Rezept holen","रेसिपी पाएं","احصل على الوصفة"],
+    "or": ["o","ou","oder","या","أو"],
+    "Use a screenshot of the caption": ["Usar una captura de la descripción","Utiliser une capture de la légende","Screenshot der Bildunterschrift verwenden","कैप्शन का स्क्रीनशॉट इस्तेमाल करें","استخدم لقطة شاشة للوصف"],
+    "Instagram doesn't let you copy a caption. Take a screenshot with the whole caption showing, then choose it here. For a long caption, choose up to three.": ["Instagram no deja copiar la descripción. Haz una captura donde se vea completa y elígela aquí. Si es larga, elige hasta tres.","Instagram ne permet pas de copier une légende. Faites une capture montrant toute la légende, puis choisissez-la ici. Pour une longue légende, choisissez-en jusqu'à trois.","Instagram lässt dich Bildunterschriften nicht kopieren. Mach einen Screenshot mit der ganzen Bildunterschrift und wähle ihn hier aus. Bei langen Texten bis zu drei.","Instagram कैप्शन कॉपी नहीं करने देता। पूरा कैप्शन दिखाते हुए स्क्रीनशॉट लें, फिर उसे यहां चुनें। लंबे कैप्शन के लिए तीन तक चुनें।","لا يسمح إنستغرام بنسخ الوصف. التقط لقطة شاشة يظهر فيها الوصف كاملًا ثم اخترها هنا. للوصف الطويل اختر حتى ثلاث لقطات."],
+    "Photo of the dish": ["Foto del plato","Photo du plat","Foto vom Gericht","व्यंजन की फ़ोटो","صورة للطبق"],
+    "We couldn’t read that post.": ["No pudimos leer esa publicación.","Impossible de lire cette publication.","Wir konnten diesen Beitrag nicht lesen.","हम वह पोस्ट नहीं पढ़ सके।","تعذّرت قراءة هذا المنشور."],
+    "Add its caption and we’ll follow the recipe in it, or choose a photo of the dish.": ["Añade su descripción y seguiremos la receta, o elige una foto del plato.","Ajoutez sa légende et nous suivrons la recette, ou choisissez une photo du plat.","Füge die Bildunterschrift hinzu und wir folgen dem Rezept, oder wähle ein Foto vom Gericht.","इसका कैप्शन जोड़ें और हम उसकी रेसिपी का पालन करेंगे, या व्यंजन की फ़ोटो चुनें।","أضف وصفه وسنتبع الوصفة فيه، أو اختر صورة للطبق."],
+    "From the caption you added": ["De la descripción que añadiste","D'après la légende que vous avez ajoutée","Aus deiner hinzugefügten Bildunterschrift","आपके जोड़े गए कैप्शन से","من الوصف الذي أضفته"],
+    "From {who}’s video description": ["De la descripción del video de {who}","D'après la description de la vidéo de {who}","Aus der Videobeschreibung von {who}","{who} के वीडियो विवरण से","من وصف فيديو {who}"],
+    "From the video description": ["De la descripción del video","D'après la description de la vidéo","Aus der Videobeschreibung","वीडियो विवरण से","من وصف الفيديو"],
+    "Recipe by {who}": ["Receta de {who}","Recette de {who}","Rezept von {who}","{who} की रेसिपी","وصفة من {who}"],
+    "From the page you shared": ["De la página que compartiste","D'après la page partagée","Von der geteilten Seite","आपके साझा किए पेज से","من الصفحة التي شاركتها"],
+    "From {who}’s caption": ["De la descripción de {who}","D'après la légende de {who}","Aus der Bildunterschrift von {who}","{who} के कैप्शन से","من وصف {who}"],
+    "From the caption": ["De la descripción","D'après la légende","Aus der Bildunterschrift","कैप्शन से","من الوصف"],
+    "Based on {who}’s post": ["Basada en la publicación de {who}","D'après la publication de {who}","Nach dem Beitrag von {who}","{who} की पोस्ट पर आधारित","بناءً على منشور {who}"],
+    "Based on the post": ["Basada en la publicación","D'après la publication","Nach dem Beitrag","पोस्ट पर आधारित","بناءً على المنشور"],
+    "The post names the dish but doesn’t include a recipe, so we wrote one for it.": ["La publicación nombra el plato pero no incluye receta, así que escribimos una.","La publication nomme le plat sans donner de recette, nous en avons donc écrit une.","Der Beitrag nennt das Gericht, enthält aber kein Rezept, also haben wir eins geschrieben.","पोस्ट में व्यंजन का नाम है पर रेसिपी नहीं, इसलिए हमने एक लिखी।","المنشور يذكر الطبق دون وصفة، لذا كتبنا له واحدة."],
+    "I have the recipe text": ["Tengo el texto de la receta","J'ai le texte de la recette","Ich habe den Rezepttext","मेरे पास रेसिपी का टेक्स्ट है","لديّ نص الوصفة"],
+    "From {who}’s post": ["De la publicación de {who}","D'après la publication de {who}","Aus dem Beitrag von {who}","{who} की पोस्ट से","من منشور {who}"],
+    "From the post you shared": ["De la publicación que compartiste","D'après la publication partagée","Aus dem geteilten Beitrag","आपकी साझा की गई पोस्ट से","من المنشور الذي شاركته"],
+    "This is a guess from the video’s cover": ["Es una suposición a partir de la portada del video","C'est une estimation d'après la couverture de la vidéo","Das ist eine Schätzung anhand des Titelbilds","यह वीडियो के कवर से लगाया गया अनुमान है","هذا تخمين من غلاف الفيديو"],
+    "The caption doesn’t say what the dish is. If the recipe is written somewhere, add it and we’ll follow it.": ["La descripción no dice qué plato es. Si la receta está escrita en algún sitio, añádela y la seguiremos.","La légende ne dit pas de quel plat il s'agit. Si la recette est écrite quelque part, ajoutez-la et nous la suivrons.","Die Bildunterschrift nennt das Gericht nicht. Wenn das Rezept irgendwo steht, füge es hinzu und wir folgen ihm.","कैप्शन में नहीं लिखा कि व्यंजन क्या है। अगर रेसिपी कहीं लिखी है तो उसे जोड़ें, हम उसका पालन करेंगे।","الوصف لا يذكر اسم الطبق. إن كانت الوصفة مكتوبة في مكان ما فأضفها وسنتبعها."],
+    "We couldn’t read the caption. Add it and we’ll follow its recipe exactly.": ["No pudimos leer la descripción. Añádela y seguiremos su receta al pie de la letra.","Impossible de lire la légende. Ajoutez-la et nous suivrons sa recette à la lettre.","Wir konnten die Bildunterschrift nicht lesen. Füge sie hinzu und wir folgen dem Rezept genau.","हम कैप्शन नहीं पढ़ सके। उसे जोड़ें और हम उसकी रेसिपी का ठीक पालन करेंगे।","تعذّرت قراءة الوصف. أضفه وسنتبع وصفته بدقة."],
+    "Could not read that image.": ["No se pudo leer esa imagen.","Impossible de lire cette image.","Das Bild konnte nicht gelesen werden.","वह इमेज पढ़ी नहीं जा सकी।","تعذّرت قراءة تلك الصورة."],
+    "Reading the caption…": ["Leyendo la descripción…","Lecture de la légende…","Bildunterschrift wird gelesen…","कैप्शन पढ़ा जा रहा है…","جارٍ قراءة الوصف…"],
+    "Reading the recipe…": ["Leyendo la receta…","Lecture de la recette…","Rezept wird gelesen…","रेसिपी पढ़ी जा रही है…","جارٍ قراءة الوصفة…"],
     // — posting —
     "Sharing": ["Compartiendo","Partage","Wird geteilt","साझा हो रहा है","جارٍ النشر"],
     "Checking your video…": ["Revisando tu video…","Vérification de votre vidéo…","Dein Video wird geprüft…","आपका वीडियो जांचा जा रहा है…","جارٍ فحص الفيديو…"],
